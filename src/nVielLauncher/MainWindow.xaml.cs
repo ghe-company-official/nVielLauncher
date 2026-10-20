@@ -128,12 +128,19 @@ public partial class MainWindow : Window
             if (result.Status != UpdateStatus.Available || result.Update is not { } update) return;
 
             _updatePrompted = true;
-            Notify.Show("Доступно обновление",
-                $"nViel Launcher {update.Version} · Настройки → Обновления");
+            Log.Write("UPDATE: доступно " + update.Tag + ", открываю окно.");
+
+            if (WindowState == WindowState.Minimized)
+                WindowState = WindowState.Normal;
+
+            Activate();
+
+            var prompt = new UpdatePromptWindow(update) { Owner = this };
+            prompt.ShowDialog();
         }
-        catch
+        catch (Exception ex)
         {
-            // an update check must never disturb the launch
+            Log.Write("UPDATE: окно обновления не открылось: " + ex);
         }
     }
 

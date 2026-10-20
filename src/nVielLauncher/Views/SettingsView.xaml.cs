@@ -13,7 +13,6 @@ public partial class SettingsView : UserControl, IRefreshable
 {
     private static readonly Brush OkBrush = Freeze(new SolidColorBrush(Color.FromRgb(0x7B, 0xE3, 0xA0)));
     private static readonly Brush IdleBrush = Freeze(new SolidColorBrush(Color.FromRgb(0x56, 0x56, 0x60)));
-    private static readonly Brush ErrorBrush = Freeze(new SolidColorBrush(Color.FromRgb(0xFF, 0x6B, 0x6B)));
 
     private readonly DispatcherTimer _saveTimer;
     private readonly DispatcherTimer _monitorTimer;
@@ -22,10 +21,6 @@ public partial class SettingsView : UserControl, IRefreshable
     private bool _loading;
     private bool _javaChecked;
     private bool _started;
-    private bool _updateChecked;
-    private bool _updateBusy;
-    private UpdateInfo? _availableUpdate;
-    private CancellationTokenSource? _updateCts;
 
     public SettingsView()
     {
@@ -60,15 +55,7 @@ public partial class SettingsView : UserControl, IRefreshable
         StartAmbientAnimations();
         StartMonitor();
 
-        UpdateVersionText.Text = $"Версия {AppInfo.VersionLabel} · {AppServices.Updates.SourceLabel}";
-        UpdateVersionText.ToolTip = AppServices.Updates.SourceLabel;
         AboutVersionText.Text = $"nViel Launcher {AppInfo.VersionLabel} · Fabric 1.21.4";
-
-        if (!_updateChecked)
-        {
-            _updateChecked = true;
-            _ = CheckUpdatesAsync(silent: true);
-        }
 
         Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
         {
@@ -81,7 +68,6 @@ public partial class SettingsView : UserControl, IRefreshable
     {
         _monitorTimer.Stop();
         _saveTimer.Stop();
-        _updateCts?.Cancel();
     }
 
     public void Refresh()
@@ -98,8 +84,6 @@ public partial class SettingsView : UserControl, IRefreshable
         RamValueText.Text = $"{settings.RamMb} МБ";
 
         GameDirText.Text = settings.EffectiveGameDirectory;
-
-        RefreshUpdateSourceUi();
 
         CloseLauncherToggle.IsChecked = settings.CloseLauncherOnLaunch;
         FullscreenToggle.IsChecked = settings.Fullscreen;
@@ -195,8 +179,8 @@ public partial class SettingsView : UserControl, IRefreshable
             _started = true;
             var totalGb = SystemMonitor.TotalPhysicalMemoryMb / 1024.0;
             CoresText.Text = totalGb > 0
-                ? $"{Environment.ProcessorCount} логических ядер · {totalGb:0.0} ГБ ОЗУ · обновление раз в секунду"
-                : $"{Environment.ProcessorCount} логических ядер · обновление раз в секунду";
+                ? $"{Environment.ProcessorCount} логических ядер · {totalGb:0.0} ГБ ОЗУ · опрос раз в секунду"
+                : $"{Environment.ProcessorCount} логических ядер · опрос раз в секунду";
         }
 
         if (!_monitorTimer.IsEnabled)
@@ -512,280 +496,7 @@ public partial class SettingsView : UserControl, IRefreshable
         ShowToast("Настройки сброшены");
     }
 
-    // ------------------------------------------------------------------ updates / recovery
+    // ------------------------------------------------------------------ recovery
 
     private void OpenRe_Click(object sender, RoutedEventArgs e) => ReLauncher.OpenRe();
-
-    private void RefreshUpdateSourceUi()
-    {
-        var settings = AppServices.Settings.Current;
-        UpdateRepoBox.Text = settings.UpdateRepository;
-        UpdateTokenBox.Clear();
-        UpdateSourceStatus.Text = BuildUpdateSourceStatus();
-        UpdateVersionText.Text = $"Версия {AppInfo.VersionLabel} · {AppServices.Updates.SourceLabel}";
-        UpdateVersionText.ToolTip = AppServices.Updates.SourceLabel;
-    }
-
-    private static string BuildUpdateSourceStatus()
-    {
-        var configured = AppServices.Settings.Current.UpdateRepository;
-        if (!string.IsNullOrWhiteSpace(configured) && !AppServices.Updates.HasCustomSource)
-            return "Некорректный репозиторий — используется репозиторий релизов по умолчанию.";
-
-        var repo = AppServices.Updates.SourceLabel;
-        var token = AppServices.Updates.TokenSourceLabel;
-
-        return AppServices.Updates.HasCustomSource
-            ? $"Свой репозиторий: {repo} · {token}"
-            : $"Репозиторий релизов: {repo} · {token}";
-    }
-
-    private void SaveUpdateSource_Click(object sender, RoutedEventArgs e)
-    {
-        if (_updateBusy)
-        {
-            ShowToast("Дождись завершения текущей операции");
-            return;
-        }
-
-        var repoText = UpdateRepoBox.Text.Trim();
-        var normalizedRepo = "";
-
-        if (!string.IsNullOrWhiteSpace(repoText))
-        {
-            if (!UpdateService.TryParseRepository(repoText, out var owner, out var repository))
-            {
-                UpdateSourceStatus.Text = "Неверный формат. Укажи owner/repo.";
-                ShowToast("Формат: owner/repo");
-                return;
-            }
-
-            normalizedRepo = owner + "/" + repository;
-        }
-
-        var token = UpdateTokenBox.Password.Trim();
-        string? protectedToken = null;
-
-        if (!string.IsNullOrEmpty(token))
-        {
-            protectedToken = SecretProtector.Protect(token);
-            if (string.IsNullOrEmpty(protectedToken))
-            {
-                UpdateSourceStatus.Text = "Не удалось зашифровать токен.";
-                ShowToast("Ошибка шифрования токена");
-                return;
-            }
-        }
-
-        var settings = AppServices.Settings.Current;
-        settings.UpdateRepository = normalizedRepo;
-        if (protectedToken is not null)
-            settings.UpdateTokenProtected = protectedToken;
-
-        AppServices.Settings.Save();
-        RefreshUpdateSourceUi();
-        ShowToast("Источник обновлений сохранён");
-
-        _availableUpdate = null;
-        InstallUpdateButton.Visibility = Visibility.Collapsed;
-        UpdateNotesText.Visibility = Visibility.Collapsed;
-        _updateChecked = true;
-        _ = CheckUpdatesAsync(silent: true, force: true);
-    }
-
-    private void ClearUpdateToken_Click(object sender, RoutedEventArgs e)
-    {
-        if (_updateBusy)
-        {
-            ShowToast("Дождись завершения текущей операции");
-            return;
-        }
-
-        var settings = AppServices.Settings.Current;
-        if (string.IsNullOrWhiteSpace(settings.UpdateTokenProtected))
-        {
-            if (AppServices.Updates.TokenSourceLabel == "токен из Git Credential Manager")
-            {
-                UpdateSourceStatus.Text = "Токен берётся из Git Credential Manager; здесь его удалить нельзя.";
-                ShowToast("Токен из Git Credential Manager");
-            }
-            else
-            {
-                UpdateSourceStatus.Text = "Токен не задан.";
-                ShowToast("Токен не задан");
-            }
-            return;
-        }
-
-        settings.UpdateTokenProtected = "";
-        AppServices.Settings.Save();
-        RefreshUpdateSourceUi();
-        ShowToast("Токен удалён");
-
-        _availableUpdate = null;
-        InstallUpdateButton.Visibility = Visibility.Collapsed;
-        UpdateNotesText.Visibility = Visibility.Collapsed;
-        UpdateStatusText.Text = "нужна проверка";
-        UpdateDot.Fill = IdleBrush;
-        UpdateStepText.Visibility = Visibility.Collapsed;
-        UpdateStepText.Text = "";
-    }
-
-    private async void CheckUpdate_Click(object sender, RoutedEventArgs e)
-        => await CheckUpdatesAsync(silent: false);
-
-    private async Task CheckUpdatesAsync(bool silent, bool force = false)
-    {
-        if (_updateBusy) return;
-
-        _updateBusy = true;
-        _updateChecked = true;
-        CheckUpdateButton.IsEnabled = false;
-        InstallUpdateButton.Visibility = Visibility.Collapsed;
-        UpdateNotesText.Visibility = Visibility.Collapsed;
-        UpdateStepText.Visibility = Visibility.Collapsed;
-        UpdateStepText.Text = "";
-        UpdateStatusText.Text = "проверяем...";
-        UpdateDot.Fill = IdleBrush;
-
-        try
-        {
-            var result = await AppServices.Updates.CheckAsync(CancellationToken.None, force: force || !silent);
-
-            switch (result.Status)
-            {
-                case UpdateStatus.Available when result.Update is not null:
-                    _availableUpdate = result.Update;
-                    UpdateDot.Fill = OkBrush;
-                    UpdateStatusText.Text = "доступно обновление";
-                    UpdateNotesText.Text = BuildNotes(result.Update.Notes);
-                    UpdateNotesText.Visibility = string.IsNullOrWhiteSpace(UpdateNotesText.Text)
-                        ? Visibility.Collapsed
-                        : Visibility.Visible;
-                    InstallUpdateButton.Content = "Обновить до " + result.Update.Version;
-                    InstallUpdateButton.Visibility = Visibility.Visible;
-                    UpdateStepText.Visibility = Visibility.Collapsed;
-                    if (!silent) ShowToast("Доступно обновление " + result.Update.Version);
-                    break;
-
-                case UpdateStatus.UpToDate:
-                    _availableUpdate = null;
-                    UpdateDot.Fill = OkBrush;
-                    UpdateStatusText.Text = "актуальная версия";
-                    UpdateStepText.Visibility = Visibility.Collapsed;
-                    if (!silent) ShowToast("Обновлений нет");
-                    break;
-
-                case UpdateStatus.NoReleases:
-                    _availableUpdate = null;
-                    UpdateDot.Fill = IdleBrush;
-                    UpdateStatusText.Text = "нет релизов / доступа";
-                    UpdateStepText.Text = result.Message;
-                    UpdateStepText.Visibility = Visibility.Visible;
-                    if (!silent) ShowToast("Нет релизов или доступа к репозиторию");
-                    break;
-
-                default:
-                    _availableUpdate = null;
-                    UpdateDot.Fill = ErrorBrush;
-                    UpdateStatusText.Text = "ошибка проверки";
-                    UpdateStepText.Text = result.Message;
-                    UpdateStepText.Visibility = Visibility.Visible;
-                    if (!silent) ShowToast("Не удалось проверить обновления");
-                    break;
-            }
-        }
-        catch (Exception ex)
-        {
-            _availableUpdate = null;
-            UpdateDot.Fill = ErrorBrush;
-            UpdateStatusText.Text = "не удалось проверить";
-            UpdateStepText.Text = "Проверь подключение к интернету и повтори попытку.";
-            UpdateStepText.Visibility = Visibility.Visible;
-            Log.Write("UPDATE: " + ex);
-            if (!silent) ShowToast("Не удалось проверить обновления");
-        }
-        finally
-        {
-            _updateBusy = false;
-            CheckUpdateButton.IsEnabled = true;
-            UpdateSourceStatus.Text = BuildUpdateSourceStatus();
-        }
-    }
-
-    private async void InstallUpdate_Click(object sender, RoutedEventArgs e)
-    {
-        if (_availableUpdate is null || _updateBusy) return;
-
-        var update = _availableUpdate;
-        _updateBusy = true;
-        CheckUpdateButton.IsEnabled = false;
-        InstallUpdateButton.IsEnabled = false;
-        UpdateProgress.Visibility = Visibility.Visible;
-        UpdateProgress.Value = 0;
-        UpdateNotesText.Visibility = Visibility.Collapsed;
-        UpdateStepText.Visibility = Visibility.Visible;
-        UpdateStatusText.Text = "скачивание...";
-        UpdateDot.Fill = IdleBrush;
-        _updateCts = new CancellationTokenSource();
-
-        try
-        {
-            UpdateStepText.Text = "1 / 3 · Скачивание обновления";
-            var progress = new Progress<double>(p =>
-            {
-                if (p >= 0) UpdateProgress.Value = Math.Clamp(p * 100, 0, 100);
-            });
-
-            var stage = new Progress<string>(text =>
-            {
-                UpdateStepText.Text = text;
-                UpdateStatusText.Text = text.Contains("Проверка", StringComparison.OrdinalIgnoreCase)
-                    ? "проверка..."
-                    : "скачивание...";
-            });
-
-            var path = await AppServices.Updates.DownloadAsync(update, progress, _updateCts.Token, stage);
-
-            UpdateProgress.Value = 100;
-            UpdateStatusText.Text = "установка...";
-            UpdateStepText.Text = "3 / 3 · Установка и перезапуск лаунчера";
-            await Task.Delay(500);
-
-            AppServices.Updates.ApplyAndRestart(path);
-        }
-        catch (OperationCanceledException)
-        {
-            UpdateStatusText.Text = "отменено";
-            UpdateStepText.Text = "Обновление отменено.";
-            UpdateDot.Fill = IdleBrush;
-            InstallUpdateButton.IsEnabled = true;
-        }
-        catch (Exception ex)
-        {
-            Log.Write("UPDATE: установка не удалась: " + ex);
-            UpdateStatusText.Text = "ошибка обновления";
-            UpdateStepText.Text = ex.Message;
-            UpdateDot.Fill = ErrorBrush;
-            UpdateProgress.Visibility = Visibility.Collapsed;
-            InstallUpdateButton.IsEnabled = true;
-            Notify.Show("Обновление не установлено", ex.Message, "error");
-        }
-        finally
-        {
-            _updateBusy = false;
-            CheckUpdateButton.IsEnabled = true;
-            _updateCts?.Dispose();
-            _updateCts = null;
-        }
-    }
-
-    private static string BuildNotes(string notes)
-    {
-        if (string.IsNullOrWhiteSpace(notes)) return "";
-
-        var text = notes.Replace("\r", "").Trim();
-        if (text.Length > 280) text = text[..280].TrimEnd() + "…";
-        return text;
-    }
 }

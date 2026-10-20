@@ -4,8 +4,8 @@ using System.Text;
 namespace nVielLauncher.Services;
 
 /// <summary>
-/// Resolves a GitHub token without embedding it in the executable:
-/// saved DPAPI token → environment variables → Git Credential Manager.
+/// Resolves a GitHub token without storing it in the app:
+/// environment variables → Git Credential Manager.
 /// The token is kept in memory only and is never written to the log.
 /// </summary>
 public static class GitHubTokenProvider
@@ -17,34 +17,16 @@ public static class GitHubTokenProvider
         "GH_TOKEN"
     };
 
-    /// <summary>"settings", "environment", "git" or "none".</summary>
-    public static string LastSource { get; private set; } = "none";
-
-    public static bool HasEnvironmentToken =>
-        EnvironmentNames.Any(name => !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(name)));
-
-    public static async Task<string> ResolveAsync(string? protectedToken, CancellationToken ct)
+    public static async Task<string> ResolveAsync(CancellationToken ct)
     {
-        var saved = SecretProtector.Unprotect(protectedToken);
-        if (!string.IsNullOrWhiteSpace(saved))
-        {
-            LastSource = "settings";
-            return saved;
-        }
-
         foreach (var name in EnvironmentNames)
         {
             var value = Environment.GetEnvironmentVariable(name);
             if (!string.IsNullOrWhiteSpace(value))
-            {
-                LastSource = "environment";
                 return value.Trim();
-            }
         }
 
-        var git = await TryGitCredentialAsync(ct);
-        LastSource = string.IsNullOrWhiteSpace(git) ? "none" : "git";
-        return git;
+        return await TryGitCredentialAsync(ct);
     }
 
     private static async Task<string> TryGitCredentialAsync(CancellationToken ct)

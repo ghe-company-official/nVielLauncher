@@ -7,7 +7,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 using System.Windows;
 
 namespace nVielLauncher.Services;
@@ -34,9 +33,8 @@ public sealed record UpdateInfo(
 public sealed record UpdateCheckResult(UpdateStatus Status, string Message, UpdateInfo? Update = null);
 
 /// <summary>
-/// Checks GitHub Releases (public or a private repository configured in settings),
-/// downloads the new single-file launcher, verifies it and replaces the running exe
-/// through a small detached PowerShell helper.
+/// Checks the private GitHub Releases repository, downloads the new single-file launcher,
+/// verifies it and replaces the running exe through a small detached PowerShell helper.
 /// </summary>
 public sealed class UpdateService : IDisposable
 {
@@ -68,33 +66,6 @@ public sealed class UpdateService : IDisposable
             Timeout = TimeSpan.FromMinutes(15)
         };
         _github.DefaultRequestHeaders.UserAgent.ParseAdd("nVielLauncher/" + AppInfo.VersionLabel);
-    }
-
-    public bool HasCustomSource => GetConfiguredSource().Custom;
-
-    public string TokenSourceLabel
-    {
-        get
-        {
-            if (!string.IsNullOrWhiteSpace(AppServices.Settings?.Current.UpdateTokenProtected))
-                return "токен сохранён";
-
-            if (GitHubTokenProvider.HasEnvironmentToken)
-                return "токен из окружения";
-
-            return GitHubTokenProvider.LastSource == "git"
-                ? "токен из Git Credential Manager"
-                : "токен не задан";
-        }
-    }
-
-    public string SourceLabel
-    {
-        get
-        {
-            var source = GetConfiguredSource();
-            return source.Owner + "/" + source.Repository;
-        }
     }
 
     public async Task<UpdateCheckResult> CheckAsync(CancellationToken ct, bool force = false)
@@ -480,68 +451,13 @@ if ($copied) {{ Remove-Item -LiteralPath $src -Force }}
         }
     }
 
-    // ------------------------------------------------------------------ repository parsing
-
-    /// <summary>Accepts owner/repo, a GitHub URL, or a git@github.com:owner/repo.git value.</summary>
-    public static bool TryParseRepository(string? value, out string owner, out string repository)
-    {
-        owner = "";
-        repository = "";
-
-        if (string.IsNullOrWhiteSpace(value)) return false;
-
-        var text = value.Trim();
-
-        if (text.StartsWith("https://github.com/", StringComparison.OrdinalIgnoreCase))
-            text = text["https://github.com/".Length..];
-        else if (text.StartsWith("http://github.com/", StringComparison.OrdinalIgnoreCase))
-            text = text["http://github.com/".Length..];
-        else if (text.StartsWith("git@github.com:", StringComparison.OrdinalIgnoreCase))
-            text = text["git@github.com:".Length..];
-
-        text = text.Trim().Trim('/');
-        if (text.EndsWith(".git", StringComparison.OrdinalIgnoreCase))
-            text = text[..^4];
-
-        var parts = text.Split('/', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length != 2) return false;
-
-        owner = parts[0].Trim();
-        repository = parts[1].Trim();
-
-        if (owner.Length is < 1 or > 39 || repository.Length is < 1 or > 100)
-            return false;
-
-        if (!Regex.IsMatch(owner, @"^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$"))
-            return false;
-
-        // GitHub repository names may contain letters, digits, dots, hyphens and underscores.
-        return Regex.IsMatch(repository, @"^[A-Za-z0-9._-]+$");
-    }
-
     // ------------------------------------------------------------------ helpers
-
-    private static (string Owner, string Repository, bool Custom) GetConfiguredSource()
-    {
-        var settings = AppServices.Settings?.Current;
-
-        if (settings is not null &&
-            !string.IsNullOrWhiteSpace(settings.UpdateRepository) &&
-            TryParseRepository(settings.UpdateRepository, out var owner, out var repository))
-        {
-            return (owner, repository, true);
-        }
-
-        return (AppInfo.GitHubOwner, AppInfo.ReleasesRepository, false);
-    }
 
     private static async Task<(string Owner, string Repository, string Token)> GetSourceAsync(
         CancellationToken ct)
     {
-        var configured = GetConfiguredSource();
-        var token = await GitHubTokenProvider.ResolveAsync(
-            AppServices.Settings?.Current.UpdateTokenProtected, ct);
-        return (configured.Owner, configured.Repository, token);
+        var token = await GitHubTokenProvider.ResolveAsync(ct);
+        return (AppInfo.GitHubOwner, AppInfo.ReleasesRepository, token);
     }
 
     private static bool IsRedirect(HttpStatusCode code) =>
