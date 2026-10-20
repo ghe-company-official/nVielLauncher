@@ -26,6 +26,3 @@ if ($LASTEXITCODE -ne 0) { throw "Publish failed" }
 $exe = Get-ChildItem $out -Filter *.exe | Select-Object -First 1
 if (-not $exe) { throw "No exe in $out" }
 
-Write-Host ""
-Write-Host ("Готово: {0} ({1} МБ)" -f $exe.FullName, [math]::Round($exe.Length / 1MB, 1))
-Write-Host "При запуске exe сам установится в %APPDATA%\.nviel\app и удалит копию из Загрузок."
