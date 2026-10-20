@@ -37,6 +37,7 @@ public partial class MainWindow : Window
     private readonly ObservableCollection<DiagnosticRow> _diagnostics = new();
     private string? _currentPage;
     private bool _started;
+    private bool _updatePrompted;
 
     private static readonly (string Title, string Body, string Target)[] TourSteps =
     {
@@ -114,6 +115,26 @@ public partial class MainWindow : Window
             ShowMain();
 
         await RunSplashAsync();
+        _ = CheckForUpdatesAsync();
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        if (_updatePrompted) return;
+
+        try
+        {
+            var result = await AppServices.Updates.CheckAsync(CancellationToken.None);
+            if (result.Status != UpdateStatus.Available || result.Update is not { } update) return;
+
+            _updatePrompted = true;
+            Notify.Show("Доступно обновление",
+                $"nViel Launcher {update.Version} · Настройки → Обновления");
+        }
+        catch
+        {
+            // an update check must never disturb the launch
+        }
     }
 
     private void StartSplash()
@@ -1343,6 +1364,8 @@ public partial class MainWindow : Window
     }
 
     private void ChangeNick_Click(object sender, RoutedEventArgs e) => OpenProfiles();
+
+    private void OpenRe_Click(object sender, RoutedEventArgs e) => ReLauncher.OpenRe();
 
     /// <summary>Opens the player-profile picker (used by Home/Settings shortcuts).</summary>
     public void ShowProfiles() => OpenProfiles();

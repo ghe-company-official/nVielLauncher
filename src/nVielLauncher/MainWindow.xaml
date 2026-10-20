@@ -284,6 +284,36 @@
                             </Grid>
 
                             <StackPanel Grid.Row="4" Margin="6,0,6,8">
+                                <Button Style="{StaticResource ActionTile}" Padding="10,9" Margin="0,0,0,10"
+                                        Click="OpenRe_Click" ToolTip="nVielRE — обслуживание и восстановление">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Border Style="{StaticResource IconTile}" Width="30" Height="30" CornerRadius="9">
+                                            <Path Data="{StaticResource IconRefresh}" Width="14" Height="14" Stretch="Uniform"
+                                                  Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+
+                                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="nVielRE" FontSize="12.5" FontWeight="SemiBold" />
+                                            <TextBlock Text="Repair &amp; Recovery" FontSize="9.5"
+                                                       Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                                        </StackPanel>
+
+                                        <Border Grid.Column="2" Background="#16FFFFFF" BorderBrush="#2AFFFFFF"
+                                                BorderThickness="1" CornerRadius="6" Padding="6,2" VerticalAlignment="Center">
+                                            <TextBlock Text="RE" FontSize="9" FontWeight="Bold"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" />
+                                        </Border>
+                                    </Grid>
+                                </Button>
+
                                 <Border Style="{StaticResource InsetCard}" Padding="12,11">
                                     <StackPanel>
                                         <TextBlock Text="FABRIC LOADER" Style="{StaticResource Overline}" />

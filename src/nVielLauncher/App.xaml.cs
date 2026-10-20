@@ -38,6 +38,41 @@ public partial class App : Application
             return;
         }
 
+        var reMode = e.Args.Any(a => string.Equals(a, "--re", StringComparison.OrdinalIgnoreCase));
+        var mode = reMode ? "re" : "main";
+
+        // One window per mode: the normal launcher and nVielRE may run side by side,
+        // but repeated launches wake the existing window instead of duplicating it.
+        if (!SingleInstance.TryAcquire(mode))
+        {
+            SingleInstance.SignalExisting(mode);
+            Shutdown(0);
+            return;
+        }
+
         base.OnStartup(e);
+
+        Window window = reMode ? new ReWindow() : new MainWindow();
+        MainWindow = window;
+
+        SingleInstance.StartListening(() => Dispatcher.BeginInvoke(() => ActivateWindow(window)));
+        window.Show();
+    }
+
+    private static void ActivateWindow(Window window)
+    {
+        if (!window.IsVisible) window.Show();
+        if (window.WindowState == WindowState.Minimized) window.WindowState = WindowState.Normal;
+
+        window.Activate();
+        window.Topmost = true;
+        window.Topmost = false;
+        window.Focus();
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        SingleInstance.Release();
+        base.OnExit(e);
     }
 }

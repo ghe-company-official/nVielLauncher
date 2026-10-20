@@ -13,6 +13,7 @@ public static class AppServices
     public static ModrinthService Modrinth { get; private set; } = null!;
     public static MinecraftInstaller Installer { get; private set; } = null!;
     public static LauncherService Launcher { get; private set; } = null!;
+    public static UpdateService Updates { get; private set; } = null!;
 
     public static void Initialize()
     {
@@ -29,5 +30,6 @@ public static class AppServices
         Modrinth = new ModrinthService(Http);
         Installer = new MinecraftInstaller(Http);
         Launcher = new LauncherService(Settings, Java, Installer, Mods, Modrinth);
+        Updates = new UpdateService();
     }
 }

@@ -186,10 +186,12 @@ public sealed class ModrinthService
 
         lock (_gate)
         {
-            if (_state.Mods.TryGetValue(projectId, out var info) &&
-                info.VersionId == best.Id &&
-                File.Exists(Path.Combine(modsDirectory, info.FileName)))
-                return true;
+            if (_state.Mods.TryGetValue(projectId, out var info))
+            {
+                var path = Path.Combine(modsDirectory, info.FileName);
+                if (info.VersionId == best.Id && (File.Exists(path) || File.Exists(path + ".disabled")))
+                    return true;
+            }
         }
 
         return await InstallVersionAsync(best, modsDirectory, progress, ct, visited);
@@ -211,10 +213,43 @@ public sealed class ModrinthService
         Directory.CreateDirectory(modsDirectory);
         var destination = Path.Combine(modsDirectory, file.Filename);
 
+        InstalledModInfo? previous = null;
+        lock (_gate)
+        {
+            if (!string.IsNullOrWhiteSpace(version.ProjectId))
+                _state.Mods.TryGetValue(version.ProjectId, out previous);
+        }
+
+        var wasDisabled = previous is not null &&
+                          File.Exists(Path.Combine(modsDirectory, previous.FileName) + ".disabled");
+
         progress?.Report(new LaunchProgress(0, "Установка мода", version.Name));
 
         await _http.DownloadAsync(file.Url, destination, file.Size, file.Hashes?.Sha1, null, ct,
             verifySha1OnExisting: false);
+
+        // the file name may change between versions — remove the stale jar either way
+        if (previous is not null &&
+            !string.Equals(previous.FileName, file.Filename, StringComparison.OrdinalIgnoreCase))
+        {
+            TryDelete(Path.Combine(modsDirectory, previous.FileName));
+            TryDelete(Path.Combine(modsDirectory, previous.FileName) + ".disabled");
+        }
+
+        // a disabled mod stays disabled after an update
+        if (wasDisabled)
+        {
+            try
+            {
+                var disabledPath = destination + ".disabled";
+                TryDelete(disabledPath);
+                File.Move(destination, disabledPath);
+            }
+            catch (Exception ex)
+            {
+                Log.Write("Не удалось сохранить отключённое состояние мода: " + ex.Message);
+            }
+        }
 
         if (!string.IsNullOrWhiteSpace(version.ProjectId))
         {
@@ -280,22 +315,90 @@ public sealed class ModrinthService
 
     // ------------------------------------------------------------------ managed mods
 
-    public sealed record ManagedMod(string ProjectId, string Title, string VersionNumber, string FileName);
+    public sealed record ManagedMod(
+        string ProjectId,
+        string Title,
+        string VersionNumber,
+        string FileName,
+        bool Enabled);
 
-    public IReadOnlyList<ManagedMod> GetInstalledMods()
+    public IReadOnlyList<ManagedMod> GetInstalledMods(string modsDirectory)
     {
         lock (_gate)
         {
             return _state.Mods
                 .Where(kv => !string.IsNullOrWhiteSpace(kv.Value.FileName))
                 .Where(kv => !string.Equals(kv.Key, FabricApiProjectId, StringComparison.OrdinalIgnoreCase))
-                .Select(kv => new ManagedMod(
-                    kv.Key,
-                    string.IsNullOrWhiteSpace(kv.Value.Title) ? kv.Key : kv.Value.Title,
-                    kv.Value.VersionNumber,
-                    kv.Value.FileName))
+                .Select(kv =>
+                {
+                    var enabledPath = Path.Combine(modsDirectory, kv.Value.FileName);
+                    var disabledPath = enabledPath + ".disabled";
+                    var enabled = File.Exists(enabledPath) || !File.Exists(disabledPath);
+
+                    return new ManagedMod(
+                        kv.Key,
+                        string.IsNullOrWhiteSpace(kv.Value.Title) ? kv.Key : kv.Value.Title,
+                        kv.Value.VersionNumber,
+                        kv.Value.FileName,
+                        enabled);
+                })
                 .OrderBy(m => m.Title, StringComparer.OrdinalIgnoreCase)
                 .ToList();
+        }
+    }
+
+    /// <summary>Enables or disables a managed mod by renaming its jar to .jar.disabled.</summary>
+    public bool SetEnabled(string projectId, string modsDirectory, bool enabled)
+    {
+        InstalledModInfo? info;
+        lock (_gate)
+        {
+            if (!_state.Mods.TryGetValue(projectId, out info)) return false;
+        }
+
+        var path = Path.Combine(modsDirectory, info.FileName);
+        var disabledPath = path + ".disabled";
+
+        try
+        {
+            if (enabled)
+            {
+                if (File.Exists(disabledPath))
+                {
+                    if (!File.Exists(path))
+                    {
+                        File.SetAttributes(disabledPath, FileAttributes.Normal);
+                        File.Move(disabledPath, path);
+                    }
+                    else
+                    {
+                        // both copies exist after a failed rename — keep the enabled one
+                        TryDelete(disabledPath);
+                    }
+                }
+                else if (!File.Exists(path))
+                {
+                    return false;
+                }
+            }
+            else if (File.Exists(path))
+            {
+                TryDelete(disabledPath);
+                File.SetAttributes(path, FileAttributes.Normal);
+                File.Move(path, disabledPath);
+            }
+            else if (!File.Exists(disabledPath))
+            {
+                return false;
+            }
+
+            Log.Write($"Мод {(enabled ? "включён" : "выключен")}: {info.Title}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.Write("Не удалось переключить мод: " + ex.Message);
+            return false;
         }
     }
 
@@ -312,11 +415,8 @@ public sealed class ModrinthService
         try
         {
             var path = Path.Combine(modsDirectory, info.FileName);
-            if (File.Exists(path))
-            {
-                File.SetAttributes(path, FileAttributes.Normal);
-                File.Delete(path);
-            }
+            TryDelete(path);
+            TryDelete(path + ".disabled");
         }
         catch
         {
@@ -492,6 +592,21 @@ public sealed class ModrinthService
     }
 
     // ------------------------------------------------------------------ state
+
+    private static void TryDelete(string path)
+    {
+        try
+        {
+            if (!File.Exists(path)) return;
+
+            File.SetAttributes(path, FileAttributes.Normal);
+            File.Delete(path);
+        }
+        catch
+        {
+            // a locked file is not fatal
+        }
+    }
 
     private static ModrinthState LoadState()
     {

@@ -190,7 +190,7 @@ public sealed class LauncherService
             ["version_type"] = "release",
             ["natives_directory"] = plan.NativesDirectory,
             ["launcher_name"] = "nViel",
-            ["launcher_version"] = "1.0.0",
+            ["launcher_version"] = AppInfo.VersionLabel,
             ["classpath"] = classpath,
             ["classpath_separator"] = ";",
             ["library_directory"] = Path.Combine(plan.GameDirectory, "libraries"),
@@ -216,7 +216,7 @@ public sealed class LauncherService
             "-XX:MaxGCPauseMillis=50",
             "-Dfile.encoding=UTF-8",
             "-Dminecraft.launcher.brand=nViel",
-            "-Dminecraft.launcher.version=1.0.0"
+            "-Dminecraft.launcher.version=" + AppInfo.VersionLabel
         };
 
         if (!string.IsNullOrWhiteSpace(plan.LogConfigPath))

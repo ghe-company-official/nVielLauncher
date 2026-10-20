@@ -503,6 +503,166 @@
                     </StackPanel>
                 </Border>
 
+                <!-- ================= recovery mode ================= -->
+                <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource IconTile}" Width="34" Height="34" CornerRadius="10" VerticalAlignment="Top">
+                            <Path Data="{StaticResource IconShield}" Width="15" Height="15" Stretch="Uniform"
+                                  Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                                  StrokeLineJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+
+                        <StackPanel Grid.Column="1" Margin="12,0,16,0" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Восстановление" Style="{StaticResource CardTitle}" />
+                                <Border Background="#14FFFFFF" BorderBrush="#26FFFFFF" BorderThickness="1"
+                                        CornerRadius="6" Padding="7,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="nVielRE" FontSize="9" FontWeight="Bold"
+                                               Foreground="{StaticResource TextSecondaryBrush}" />
+                                </Border>
+                            </StackPanel>
+                            <TextBlock Text="Сервисный режим: проверит Java, файлы Minecraft, Fabric и моды, покажет журнал и вернёт в лаунчер."
+                                       FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"
+                                       Margin="0,5,0,0" />
+                        </StackPanel>
+
+                        <Button Grid.Column="2" Style="{StaticResource PrimaryButton}" Content="Открыть nVielRE"
+                                Padding="18,10" FontSize="12.5" VerticalAlignment="Center" Click="OpenRe_Click" />
+                    </Grid>
+                </Border>
+
+                <!-- ================= updates ================= -->
+                <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource IconTile}" Width="34" Height="34" CornerRadius="10" VerticalAlignment="Top">
+                            <Path Data="{StaticResource IconRefresh}" Width="15" Height="15" Stretch="Uniform"
+                                  Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+
+                        <StackPanel Grid.Column="1" Margin="12,0,16,0" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Обновления" Style="{StaticResource CardTitle}" />
+                                <Ellipse x:Name="UpdateDot" Width="6" Height="6" Fill="#FF565660"
+                                         VerticalAlignment="Center" Margin="10,0,0,0" />
+                                <TextBlock x:Name="UpdateStatusText" Text="проверка" FontSize="10.5"
+                                           Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"
+                                           Margin="6,0,0,0" />
+                            </StackPanel>
+
+                            <TextBlock x:Name="UpdateVersionText" Text="Версия 1.0.1 · GitHub Releases"
+                                       FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"
+                                       TextTrimming="CharacterEllipsis" Margin="0,7,0,0" />
+
+                            <TextBlock x:Name="UpdateNotesText" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}"
+                                       TextWrapping="Wrap" MaxHeight="52" Margin="0,7,0,0" Visibility="Collapsed" />
+
+                            <ProgressBar x:Name="UpdateProgress" Style="{StaticResource SlimProgress}"
+                                         Value="0" Margin="0,11,0,0" Visibility="Collapsed" />
+
+                            <TextBlock x:Name="UpdateStepText" FontSize="10" Foreground="{StaticResource TextMutedBrush}"
+                                       TextWrapping="Wrap" Margin="0,7,0,0" Visibility="Collapsed" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button x:Name="CheckUpdateButton" Style="{StaticResource SmallGhostButton}"
+                                    Content="Проверить" Click="CheckUpdate_Click" />
+                            <Button x:Name="InstallUpdateButton" Style="{StaticResource PrimaryButton}"
+                                    Content="Обновить" Padding="16,9" FontSize="12" Margin="8,0,0,0"
+                                    Visibility="Collapsed" Click="InstallUpdate_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- ================= update source ================= -->
+                <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,12">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Style="{StaticResource IconTile}" Width="34" Height="34" CornerRadius="10"
+                                    VerticalAlignment="Top">
+                                <Path Data="{StaticResource IconShield}" Width="15" Height="15" Stretch="Uniform"
+                                      Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                                      StrokeLineJoin="Round"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+
+                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Источник обновлений" Style="{StaticResource CardTitle}" />
+                                    <Border Background="#14FFFFFF" BorderBrush="#26FFFFFF" BorderThickness="1"
+                                            CornerRadius="6" Padding="7,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="PRIVATE" FontSize="9" FontWeight="Bold"
+                                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock Text="Закрытый GitHub-репозиторий для релизов и скачивания обновлений."
+                                           FontSize="11.5" Foreground="{StaticResource TextMutedBrush}"
+                                           TextWrapping="Wrap" Margin="0,5,0,0" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                <TextBlock Text="Репозиторий" Style="{StaticResource Caption}" Margin="2,0,0,5" />
+                                <TextBox x:Name="UpdateRepoBox" Style="{StaticResource InputBox}"
+                                         Tag="owner/repo" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                <TextBlock Text="Токен GitHub" Style="{StaticResource Caption}" Margin="2,0,0,5" />
+                                <PasswordBox x:Name="UpdateTokenBox" Style="{StaticResource PasswordInput}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock x:Name="UpdateSourceStatus" FontSize="10.5"
+                                       Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"
+                                       VerticalAlignment="Center" Margin="0,0,12,0"
+                                       Text="Публичный репозиторий по умолчанию." />
+
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <Button x:Name="ClearUpdateTokenButton" Style="{StaticResource SmallGhostButton}"
+                                        Content="Удалить токен" Click="ClearUpdateToken_Click" />
+                                <Button x:Name="SaveUpdateSourceButton" Style="{StaticResource PrimaryButton}"
+                                        Content="Сохранить" Padding="16,9" FontSize="12" Margin="8,0,0,0"
+                                        Click="SaveUpdateSource_Click" />
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock FontSize="10" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"
+                                   Margin="0,9,0,0"
+                                   Text="Пустое поле сохраняет текущий токен. Если токена нет, лаунчер попробует Git Credential Manager или переменные окружения. Токен шифруется Windows DPAPI и не попадает в логи. Для закрытого репозитория нужен fine-grained token с правом Contents: Read." />
+                    </StackPanel>
+                </Border>
+
                 <!-- ================= about ================= -->
                 <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,12">
                     <Grid>
@@ -521,7 +681,7 @@
 
                         <StackPanel Grid.Column="1" Margin="16,0,16,0" VerticalAlignment="Center">
                             <TextBlock Text="О лаунчере" Style="{StaticResource CardTitle}" />
-                            <TextBlock Text="nViel Launcher 1.0.0 · Fabric 1.21.4" FontSize="11.5"
+                            <TextBlock x:Name="AboutVersionText" Text="nViel Launcher 1.0.1 · Fabric 1.21.4" FontSize="11.5"
                                        Foreground="{StaticResource TextSecondaryBrush}" Margin="0,6,0,0" />
                             <TextBlock Text="Minecraft 1.21.4 · Java 21 · оффлайн-профиль"
                                        Style="{StaticResource Caption}" Margin="0,4,0,0" />

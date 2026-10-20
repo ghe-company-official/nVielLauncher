@@ -240,19 +240,35 @@
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
 
                                             <StackPanel Margin="0,0,12,0" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="Medium"
-                                                           TextTrimming="CharacterEllipsis" />
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="Medium"
+                                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                    <Border Grid.Column="1" CornerRadius="6" Background="#14FFFFFF"
+                                                            Padding="6,2" Margin="8,0,0,0" VerticalAlignment="Center"
+                                                            Visibility="{Binding BadgeVisibility}">
+                                                        <TextBlock Text="ВЫКЛ" FontSize="9" FontWeight="SemiBold"
+                                                                   Foreground="{StaticResource TextMutedBrush}" />
+                                                    </Border>
+                                                </Grid>
                                                 <TextBlock Text="{Binding Meta}" FontSize="11"
                                                            Foreground="{StaticResource TextSecondaryBrush}"
                                                            TextTrimming="CharacterEllipsis" Margin="0,3,0,0" />
                                             </StackPanel>
 
-                                            <Button Grid.Column="1" Style="{StaticResource SmallGhostButton}" Content="Обновить"
-                                                    VerticalAlignment="Center" Click="UpdateManaged_Click" />
-                                            <Button Grid.Column="2" Style="{StaticResource SmallGhostButton}" Content="Удалить"
+                                            <Button Grid.Column="1" Style="{StaticResource SmallGhostButton}"
+                                                    Content="{Binding ToggleLabel}" VerticalAlignment="Center"
+                                                    Click="ToggleManaged_Click" />
+                                            <Button Grid.Column="2" Style="{StaticResource SmallGhostButton}" Content="Обновить"
+                                                    Margin="8,0,0,0" VerticalAlignment="Center" Click="UpdateManaged_Click" />
+                                            <Button Grid.Column="3" Style="{StaticResource SmallGhostButton}" Content="Удалить"
                                                     Margin="8,0,0,0" VerticalAlignment="Center" Click="RemoveManaged_Click" />
                                         </Grid>
                                     </Border>

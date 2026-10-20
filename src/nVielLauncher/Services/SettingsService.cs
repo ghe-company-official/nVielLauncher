@@ -29,6 +29,10 @@ public sealed class LauncherSettings
     public bool SetupCompleted { get; set; }
     public DateTime? LastLaunchUtc { get; set; }
 
+    // Update source: empty repository means the public AppInfo repository.
+    public string UpdateRepository { get; set; } = "";
+    public string UpdateTokenProtected { get; set; } = "";
+
     public string EffectiveGameDirectory =>
         string.IsNullOrWhiteSpace(GameDirectory) ? AppPaths.DefaultGameDirectory : GameDirectory;
 }

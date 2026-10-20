@@ -128,6 +128,49 @@ public sealed class ModsService
 
     public int CountBundled() => GetBundledJars().Count;
 
+    /// <summary>
+    /// Reports how many built-in mods are present without exposing their names.
+    /// Used by the recovery mode / status cards.
+    /// </summary>
+    public (int Installed, int Total) GetCoreModStatus(string gameDirectory)
+    {
+        try
+        {
+            var assembly = typeof(ModsService).Assembly;
+            var resources = assembly.GetManifestResourceNames()
+                .Where(n => n.StartsWith(EmbeddedPrefix, StringComparison.Ordinal))
+                .ToList();
+
+            if (resources.Count == 0) return (0, 0);
+
+            var folder = Path.Combine(gameDirectory, "mods");
+            var installed = 0;
+
+            foreach (var resource in resources)
+            {
+                var destination = Path.Combine(folder, resource[EmbeddedPrefix.Length..]);
+                if (!File.Exists(destination)) continue;
+
+                try
+                {
+                    using var source = assembly.GetManifestResourceStream(resource);
+                    if (source is not null && new FileInfo(destination).Length == source.Length)
+                        installed++;
+                }
+                catch
+                {
+                    // a locked file counts as missing
+                }
+            }
+
+            return (installed, resources.Count);
+        }
+        catch
+        {
+            return (0, 0);
+        }
+    }
+
     /// <summary>Copies bundled mods into the game's mods folder. Returns number copied.</summary>
     public Task<int> SyncAsync(string gameDirectory, IProgress<LaunchProgress>? progress, CancellationToken ct)
     {

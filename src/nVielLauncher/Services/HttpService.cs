@@ -29,7 +29,7 @@ public sealed class HttpService : IDisposable
         {
             Timeout = TimeSpan.FromMinutes(15)
         };
-        _client.DefaultRequestHeaders.UserAgent.ParseAdd("nVielLauncher/1.0");
+        _client.DefaultRequestHeaders.UserAgent.ParseAdd("nVielLauncher/" + AppInfo.VersionLabel);
         _client.DefaultRequestHeaders.Accept.ParseAdd("*/*");
     }
 

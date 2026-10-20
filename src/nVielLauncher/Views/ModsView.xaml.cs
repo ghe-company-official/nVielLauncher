@@ -30,6 +30,9 @@ public sealed class ManagedRow
     public string ProjectId { get; init; } = "";
     public string Title { get; init; } = "";
     public string Meta { get; init; } = "";
+    public bool Enabled { get; init; } = true;
+    public string ToggleLabel => Enabled ? "Выключить" : "Включить";
+    public Visibility BadgeVisibility => Enabled ? Visibility.Collapsed : Visibility.Visible;
 }
 
 public partial class ModsView : UserControl, IRefreshable
@@ -168,7 +171,8 @@ public partial class ModsView : UserControl, IRefreshable
 
     private async Task LoadManagedAsync()
     {
-        var installed = AppServices.Modrinth.GetInstalledMods();
+        var modsDirectory = Path.Combine(AppServices.Settings.Current.EffectiveGameDirectory, "mods");
+        var installed = AppServices.Modrinth.GetInstalledMods(modsDirectory);
 
         _managed.Clear();
         foreach (var mod in installed)
@@ -178,16 +182,42 @@ public partial class ModsView : UserControl, IRefreshable
             {
                 ProjectId = mod.ProjectId,
                 Title = mod.Title,
-                Meta = "версия " + version
+                Meta = "версия " + version + (mod.Enabled ? "" : " · выключен"),
+                Enabled = mod.Enabled
             });
         }
 
         ManagedEmpty.Visibility = _managed.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         SearchStatus.Text = _managed.Count == 0
             ? "Установленных модов нет. Найди мод на Modrinth — он появится здесь."
-            : $"Установлено: {_managed.Count}. Можно обновлять и удалять.";
+            : $"Установлено: {_managed.Count}. Можно включать, обновлять и удалять.";
 
         await Task.CompletedTask;
+    }
+
+    private async void ToggleManaged_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: ManagedRow row } button) return;
+
+        var modsDirectory = Path.Combine(AppServices.Settings.Current.EffectiveGameDirectory, "mods");
+        button.IsEnabled = false;
+
+        try
+        {
+            if (AppServices.Modrinth.SetEnabled(row.ProjectId, modsDirectory, !row.Enabled))
+            {
+                Notify.Show(row.Enabled ? "Мод выключен" : "Мод включён", row.Title, "success");
+            }
+            else
+            {
+                Notify.Show("Не удалось переключить мод", row.Title, "error");
+            }
+        }
+        finally
+        {
+            button.IsEnabled = true;
+            await LoadManagedAsync();
+        }
     }
 
     private async void UpdateManaged_Click(object sender, RoutedEventArgs e)
