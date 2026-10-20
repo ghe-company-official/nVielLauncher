@@ -1,0 +1,541 @@
+<UserControl x:Class="nVielLauncher.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FontFamily="{StaticResource TextFont}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- ============ header ============ -->
+        <Grid Grid.Row="0" Margin="2,6,2,18">
+            <StackPanel>
+                <TextBlock Text="Настройки" Style="{StaticResource SectionTitle}" />
+                <TextBlock Text="Всё сохраняется автоматически · профиль, память, Java и игра"
+                           FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,5,0,0" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <TextBlock x:Name="ToastText" Text="Сохранено" FontSize="11.5" Opacity="0"
+                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,14,0" />
+                <Button Style="{StaticResource PrimaryButton}" Content="Сохранить" Padding="20,10" Click="Save_Click" />
+            </StackPanel>
+        </Grid>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                      Margin="0,0,6,0" PanningMode="VerticalOnly">
+            <StackPanel x:Name="CardsPanel">
+
+                <!-- ================= profile ================= -->
+                <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Grid Width="60" Height="60" VerticalAlignment="Center">
+                            <Ellipse Fill="#10FFFFFF" Stroke="#24FFFFFF" StrokeThickness="1" />
+                            <Ellipse Width="48" Height="48" Fill="#FF0C0C11" Stroke="#FF262631" StrokeThickness="1" />
+                            <TextBlock x:Name="AvatarLetter" Text="S" FontSize="20" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="Профиль" Style="{StaticResource CardTitle}" />
+                            <TextBlock Text="Ник, под которым ты заходишь в игру" FontSize="11.5"
+                                       Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0" />
+                            <TextBox x:Name="NickBox" Style="{StaticResource InputBox}" Tag="Steve" MaxLength="16"
+                                     Width="260" HorizontalAlignment="Left" Margin="0,12,0,0" />
+                        </StackPanel>
+
+                        <Border Grid.Column="2" Style="{StaticResource InsetCard}" Padding="12,7" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse x:Name="OfflineDot" Width="6" Height="6" Fill="#FF7BE3A0" VerticalAlignment="Center" />
+                                <TextBlock Text="Оффлайн" FontSize="11" Margin="8,0,0,0"
+                                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- ================= live monitor ================= -->
+                <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,12">
+                    <StackPanel>
+                        <Grid>
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource IconTile}" Width="34" Height="34" CornerRadius="10">
+                                    <Path Data="{StaticResource IconCpu}" Width="16" Height="16" Stretch="Uniform"
+                                          Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                                          StrokeLineJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Система" Style="{StaticResource CardTitle}" />
+                                    <TextBlock Text="Живой монитор нагрузки" FontSize="11.5"
+                                               Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <Border HorizontalAlignment="Right" VerticalAlignment="Center" Background="#0DFFFFFF"
+                                    BorderBrush="#1FFFFFFF" BorderThickness="1" CornerRadius="8" Padding="9,4">
+                                <StackPanel Orientation="Horizontal">
+                                    <Ellipse x:Name="LiveDot" Width="5" Height="5" Fill="#FF7BE3A0" VerticalAlignment="Center" />
+                                    <TextBlock Text="LIVE" FontSize="9" FontWeight="SemiBold" Margin="6,0,0,0"
+                                               Foreground="{StaticResource TextSecondaryBrush}" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <!-- cpu -->
+                        <Grid Margin="0,20,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="92" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="104" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Data="{StaticResource IconCpu}" Width="13" Height="13" Stretch="Uniform"
+                                      Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                                      StrokeLineJoin="Round" VerticalAlignment="Center" />
+                                <TextBlock Text="CPU" FontSize="12" Margin="8,0,0,0" VerticalAlignment="Center"
+                                           Foreground="{StaticResource TextSecondaryBrush}" />
+                            </StackPanel>
+
+                            <Grid x:Name="CpuTrack" Grid.Column="1" Height="6" VerticalAlignment="Center" Margin="0,0,14,0">
+                                <Border Background="#16FFFFFF" CornerRadius="3" />
+                                <Border x:Name="CpuFill" HorizontalAlignment="Left" Width="0" CornerRadius="3">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                            <GradientStop Color="#FFFFFFFF" Offset="0" />
+                                            <GradientStop Color="#8CFFFFFF" Offset="1" />
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="White" BlurRadius="10" ShadowDepth="0" Opacity="0.35" />
+                                    </Border.Effect>
+                                </Border>
+                            </Grid>
+
+                            <TextBlock x:Name="CpuText" Grid.Column="2" Text="0%" FontSize="12.5" FontWeight="SemiBold"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <!-- ram -->
+                        <Grid Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="92" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="104" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Data="{StaticResource IconRam}" Width="13" Height="13" Stretch="Uniform"
+                                      Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                                      StrokeLineJoin="Round" VerticalAlignment="Center" />
+                                <TextBlock Text="RAM" FontSize="12" Margin="8,0,0,0" VerticalAlignment="Center"
+                                           Foreground="{StaticResource TextSecondaryBrush}" />
+                            </StackPanel>
+
+                            <Grid x:Name="RamTrack" Grid.Column="1" Height="6" VerticalAlignment="Center" Margin="0,0,14,0">
+                                <Border Background="#16FFFFFF" CornerRadius="3" />
+                                <Border x:Name="RamFill" HorizontalAlignment="Left" Width="0" CornerRadius="3">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                            <GradientStop Color="#FFFFFFFF" Offset="0" />
+                                            <GradientStop Color="#8CFFFFFF" Offset="1" />
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="White" BlurRadius="10" ShadowDepth="0" Opacity="0.35" />
+                                    </Border.Effect>
+                                </Border>
+                            </Grid>
+
+                            <TextBlock x:Name="RamText" Grid.Column="2" Text="—" FontSize="12.5" FontWeight="SemiBold"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <TextBlock x:Name="CoresText" Style="{StaticResource Caption}" Margin="0,16,0,0"
+                                   Text="Определяем характеристики системы..." />
+                    </StackPanel>
+                </Border>
+
+                <!-- ================= performance ================= -->
+                <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,12">
+                    <StackPanel>
+                        <Grid>
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource IconTile}" Width="34" Height="34" CornerRadius="10">
+                                    <Path Data="{StaticResource IconBolt}" Width="15" Height="15" Stretch="Uniform"
+                                          Fill="{StaticResource TextSecondaryBrush}"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Производительность" Style="{StaticResource CardTitle}" />
+                                    <TextBlock Text="Сколько памяти выделять и как запускать игру" FontSize="11.5"
+                                               Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <Border HorizontalAlignment="Right" VerticalAlignment="Center" Style="{StaticResource InsetCard}"
+                                    Padding="11,6">
+                                <TextBlock x:Name="RamValueText" Text="4096 МБ" FontSize="12.5" FontWeight="SemiBold" />
+                            </Border>
+                        </Grid>
+
+                        <Slider x:Name="RamSlider" Style="{StaticResource SlimSlider}" Minimum="2048" Maximum="16384"
+                                TickFrequency="512" IsSnapToTickEnabled="True" Margin="0,22,0,0"
+                                ValueChanged="RamSlider_ValueChanged" />
+
+                        <Grid Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid x:Name="RamAllocTrack" Height="5" VerticalAlignment="Center" Margin="0,0,14,0">
+                                <Border Background="#14FFFFFF" CornerRadius="2.5" />
+                                <Border x:Name="RamAllocFill" HorizontalAlignment="Left" Width="0" CornerRadius="2.5">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                            <GradientStop Color="#C4FFFFFF" Offset="0" />
+                                            <GradientStop Color="#59FFFFFF" Offset="1" />
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                </Border>
+                            </Grid>
+                            <TextBlock x:Name="RamAllocText" Grid.Column="1" Text="—" FontSize="11"
+                                       Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <TextBlock x:Name="RamHintText" Style="{StaticResource Caption}" Margin="0,10,0,0" TextWrapping="Wrap" />
+
+                        <Border Height="1" Background="{StaticResource StrokeSoftBrush}" Margin="0,16,0,2" />
+
+                        <CheckBox x:Name="FullscreenToggle" Style="{StaticResource ToggleSwitch}" Margin="0,12,0,0"
+                                  Checked="Behavior_Changed" Unchecked="Behavior_Changed">
+                            <StackPanel>
+                                <TextBlock Text="Полноэкранный режим" FontSize="13" />
+                                <TextBlock Text="Игра откроется на весь экран" FontSize="10.5"
+                                           Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </CheckBox>
+
+                        <CheckBox x:Name="ShowResolutionToggle" Style="{StaticResource ToggleSwitch}" Margin="0,14,0,0"
+                                  Checked="Behavior_Changed" Unchecked="Behavior_Changed">
+                            <StackPanel>
+                                <TextBlock Text="Своё разрешение окна" FontSize="13" />
+                                <TextBlock Text="Применить ширину и высоту при запуске" FontSize="10.5"
+                                           Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </CheckBox>
+
+                        <Border x:Name="ResolutionPanel" Style="{StaticResource InsetCard}" Padding="12,10" Margin="0,10,0,0">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="Ширина" FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                           VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <TextBox x:Name="ResolutionWidthBox" Style="{StaticResource InputBox}" Width="86"
+                                         FontSize="12" Padding="10,7" MaxLength="4" Tag="1280"
+                                         TextChanged="ResolutionBox_TextChanged" LostFocus="ResolutionBox_LostFocus" />
+                                <TextBlock Text="×" FontSize="14" Foreground="{StaticResource TextMutedBrush}"
+                                           VerticalAlignment="Center" Margin="10,0,10,0" />
+                                <TextBlock Text="Высота" FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                           VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <TextBox x:Name="ResolutionHeightBox" Style="{StaticResource InputBox}" Width="86"
+                                         FontSize="12" Padding="10,7" MaxLength="4" Tag="720"
+                                         TextChanged="ResolutionBox_TextChanged" LostFocus="ResolutionBox_LostFocus" />
+                                <TextBlock Text="px" FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                           VerticalAlignment="Center" Margin="8,0,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <CheckBox x:Name="ShowLogToggle" Style="{StaticResource ToggleSwitch}" Margin="0,14,0,0"
+                                  Checked="Behavior_Changed" Unchecked="Behavior_Changed">
+                            <StackPanel>
+                                <TextBlock Text="Показывать журнал на главной" FontSize="13" />
+                                <TextBlock Text="Скрыть блок лога, если он не нужен" FontSize="10.5"
+                                           Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </CheckBox>
+
+                        <CheckBox x:Name="CloseLauncherToggle" Style="{StaticResource ToggleSwitch}" Margin="0,14,0,0"
+                                  Checked="Behavior_Changed" Unchecked="Behavior_Changed">
+                            <StackPanel>
+                                <TextBlock Text="Закрывать лаунчер после запуска" FontSize="13" />
+                                <TextBlock Text="Освободит память, пока игра работает" FontSize="10.5"
+                                           Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </CheckBox>
+                    </StackPanel>
+                </Border>
+
+                <!-- ================= appearance ================= -->
+                <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,12">
+                    <StackPanel>
+                        <Grid>
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource IconTile}" Width="34" Height="34" CornerRadius="10">
+                                    <Path Data="{StaticResource IconSparkles}" Width="15" Height="15" Stretch="Uniform"
+                                          Fill="{StaticResource TextSecondaryBrush}"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Внешний вид" Style="{StaticResource CardTitle}" />
+                                    <TextBlock Text="Акцент, свечение, анимации и обучение" FontSize="11.5"
+                                               Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <Button HorizontalAlignment="Right" VerticalAlignment="Center"
+                                    Style="{StaticResource SmallGhostButton}" Content="Показать обучение"
+                                    Click="ReplayTour_Click" />
+                        </Grid>
+
+                        <CheckBox x:Name="AnimationsToggle" Style="{StaticResource ToggleSwitch}" Margin="0,18,0,0"
+                                  Checked="Behavior_Changed" Unchecked="Behavior_Changed">
+                            <StackPanel>
+                                <TextBlock Text="Плавные анимации" FontSize="13" />
+                                <TextBlock Text="Переходы между страницами и появление карточек" FontSize="10.5"
+                                           Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </CheckBox>
+
+                        <CheckBox x:Name="BlurToggle" Style="{StaticResource ToggleSwitch}" Margin="0,14,0,0"
+                                  Checked="Behavior_Changed" Unchecked="Behavior_Changed">
+                            <StackPanel>
+                                <TextBlock Text="Размытие фона" FontSize="13" />
+                                <TextBlock Text="Затемнять и размывать лаунчер во время обучения" FontSize="10.5"
+                                           Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </CheckBox>
+
+                        <CheckBox x:Name="GlowToggle" Style="{StaticResource ToggleSwitch}" Margin="0,14,0,0"
+                                  Checked="Behavior_Changed" Unchecked="Behavior_Changed">
+                            <StackPanel>
+                                <TextBlock Text="Фоновое свечение" FontSize="13" />
+                                <TextBlock Text="Плавные световые пятна за интерфейсом" FontSize="10.5"
+                                           Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </CheckBox>
+
+                        <CheckBox x:Name="SplashToggle" Style="{StaticResource ToggleSwitch}" Margin="0,14,0,0"
+                                  Checked="Behavior_Changed" Unchecked="Behavior_Changed">
+                            <StackPanel>
+                                <TextBlock Text="Экран загрузки при старте" FontSize="13" />
+                                <TextBlock Text="Показывать логотип и прогресс при открытии лаунчера" FontSize="10.5"
+                                           Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </CheckBox>
+
+                        <StackPanel Margin="0,20,0,0">
+                            <TextBlock Text="Акцентный оттенок" FontSize="13" />
+                            <TextBlock Text="Цвет кнопки запуска, статусов и переключателей" FontSize="10.5"
+                                       Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                <Border x:Name="Accent0" Width="26" Height="26" CornerRadius="13" Background="#FFFFFFFF"
+                                        BorderBrush="#33FFFFFF" BorderThickness="2" Cursor="Hand" Tag="#FFFFFFFF"
+                                        MouseLeftButtonUp="Accent_Click" />
+                                <Border x:Name="Accent1" Width="26" Height="26" CornerRadius="13" Background="#FFC8CDD6"
+                                        BorderBrush="#33FFFFFF" BorderThickness="2" Cursor="Hand" Tag="#FFC8CDD6"
+                                        Margin="10,0,0,0" MouseLeftButtonUp="Accent_Click" />
+                                <Border x:Name="Accent2" Width="26" Height="26" CornerRadius="13" Background="#FFBFD4E8"
+                                        BorderBrush="#33FFFFFF" BorderThickness="2" Cursor="Hand" Tag="#FFBFD4E8"
+                                        Margin="10,0,0,0" MouseLeftButtonUp="Accent_Click" />
+                                <Border x:Name="Accent3" Width="26" Height="26" CornerRadius="13" Background="#FFE8D9BF"
+                                        BorderBrush="#33FFFFFF" BorderThickness="2" Cursor="Hand" Tag="#FFE8D9BF"
+                                        Margin="10,0,0,0" MouseLeftButtonUp="Accent_Click" />
+                                <Border x:Name="Accent4" Width="26" Height="26" CornerRadius="13" Background="#FFBFE8D0"
+                                        BorderBrush="#33FFFFFF" BorderThickness="2" Cursor="Hand" Tag="#FFBFE8D0"
+                                        Margin="10,0,0,0" MouseLeftButtonUp="Accent_Click" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- ================= java ================= -->
+                <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource IconTile}" Width="34" Height="34" CornerRadius="10" VerticalAlignment="Top">
+                            <Path Data="{StaticResource IconJava}" Width="16" Height="16" Stretch="Uniform"
+                                  Fill="{StaticResource TextSecondaryBrush}"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+
+                        <StackPanel Grid.Column="1" Margin="12,0,16,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Java" Style="{StaticResource CardTitle}" />
+                                <Ellipse x:Name="JavaStatusDot" Width="6" Height="6" Fill="#FF565660"
+                                         VerticalAlignment="Center" Margin="10,0,0,0" />
+                                <TextBlock x:Name="JavaStatusText" Text="проверка" FontSize="10.5" Margin="6,0,0,0"
+                                           Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <TextBlock x:Name="JavaPathText" Text="не найдена" FontSize="11.5" Margin="0,8,0,0"
+                                       Foreground="{StaticResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock x:Name="JavaInfoText" Style="{StaticResource Caption}" Margin="0,5,0,0"
+                                       Text="Для Minecraft 1.21.4 нужна Java 21. Если её нет — скачаем автоматически." />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Style="{StaticResource SmallGhostButton}" Content="Найти" Click="FindJava_Click" />
+                            <Button Style="{StaticResource SmallGhostButton}" Content="Указать" Margin="8,0,0,0" Click="BrowseJava_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- ================= game folder ================= -->
+                <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource IconTile}" Width="34" Height="34" CornerRadius="10" VerticalAlignment="Top">
+                            <Path Data="{StaticResource IconFolder}" Width="16" Height="16" Stretch="Uniform"
+                                  Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                                  StrokeLineJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+
+                        <StackPanel Grid.Column="1" Margin="12,0,16,0">
+                            <TextBlock Text="Папка игры" Style="{StaticResource CardTitle}" />
+                            <TextBlock x:Name="GameDirText" Text="—" FontSize="11.5" Margin="0,8,0,0"
+                                       Foreground="{StaticResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Style="{StaticResource Caption}" Margin="0,5,0,0"
+                                       Text="Версии, ресурсы, миры и папка mods." />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Style="{StaticResource SmallGhostButton}" Content="Изменить" Click="BrowseGameDir_Click" />
+                            <Button Style="{StaticResource SmallGhostButton}" Content="Открыть" Margin="8,0,0,0" Click="OpenGameDir_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- ================= quick actions ================= -->
+                <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="Быстрые действия" Style="{StaticResource CardTitle}" />
+                        <TextBlock Text="Всё важное — в один клик" FontSize="11.5"
+                                   Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0" />
+
+                        <Grid Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <Button Style="{StaticResource ActionTile}" Margin="0,0,6,6" Click="OpenGameDir_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Style="{StaticResource IconTile}" Width="30" Height="30" CornerRadius="9">
+                                        <Path Data="{StaticResource IconFolder}" Width="14" Height="14" Stretch="Uniform"
+                                              Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                                              StrokeLineJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Папка игры" FontSize="12.5" FontWeight="Medium" />
+                                        <TextBlock Text="Открыть каталог" FontSize="10" Foreground="{StaticResource TextMutedBrush}"
+                                                   Margin="0,2,0,0" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Button>
+
+                            <Button Grid.Column="1" Style="{StaticResource ActionTile}" Margin="6,0,0,6" Click="OpenModsFolder_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Style="{StaticResource IconTile}" Width="30" Height="30" CornerRadius="9">
+                                        <Path Data="{StaticResource IconMods}" Width="14" Height="14" Stretch="Uniform"
+                                              Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                                              StrokeLineJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Моды" FontSize="12.5" FontWeight="Medium" />
+                                        <TextBlock Text="Открыть папку mods" FontSize="10" Foreground="{StaticResource TextMutedBrush}"
+                                                   Margin="0,2,0,0" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Button>
+
+                            <Button Grid.Row="1" Style="{StaticResource ActionTile}" Margin="0,6,0,0" Click="OpenLogs_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Style="{StaticResource IconTile}" Width="30" Height="30" CornerRadius="9">
+                                        <Path Data="{StaticResource IconLogs}" Width="14" Height="14" Stretch="Uniform"
+                                              Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                                              StrokeLineJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Журналы" FontSize="12.5" FontWeight="Medium" />
+                                        <TextBlock Text="Открыть логи лаунчера" FontSize="10" Foreground="{StaticResource TextMutedBrush}"
+                                                   Margin="0,2,0,0" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Button>
+
+                            <Button Grid.Row="1" Grid.Column="1" Style="{StaticResource ActionTile}" Margin="6,6,0,0"
+                                    Click="FindJava_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Style="{StaticResource IconTile}" Width="30" Height="30" CornerRadius="9">
+                                        <Path Data="{StaticResource IconRefresh}" Width="14" Height="14" Stretch="Uniform"
+                                              Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Java" FontSize="12.5" FontWeight="Medium" />
+                                        <TextBlock Text="Найти заново" FontSize="10" Foreground="{StaticResource TextMutedBrush}"
+                                                   Margin="0,2,0,0" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- ================= about ================= -->
+                <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Grid Width="66" Height="66" VerticalAlignment="Center">
+                            <Ellipse x:Name="AboutRing" Stroke="#30FFFFFF" StrokeThickness="1" StrokeDashArray="2 5" />
+                            <Ellipse Width="44" Height="44" Fill="#FF0B0B10" Stroke="#22FFFFFF" StrokeThickness="1" />
+                            <TextBlock Text="nViel" FontFamily="{StaticResource DisplayFont}" FontSize="11"
+                                       FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <StackPanel Grid.Column="1" Margin="16,0,16,0" VerticalAlignment="Center">
+                            <TextBlock Text="О лаунчере" Style="{StaticResource CardTitle}" />
+                            <TextBlock Text="nViel Launcher 1.0.0 · Fabric 1.21.4" FontSize="11.5"
+                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,6,0,0" />
+                            <TextBlock Text="Minecraft 1.21.4 · Java 21 · оффлайн-профиль"
+                                       Style="{StaticResource Caption}" Margin="0,4,0,0" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Style="{StaticResource SmallGhostButton}" Content="Сбросить" Click="Reset_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <TextBlock Style="{StaticResource Caption}" Margin="4,2,0,16" TextWrapping="Wrap"
+                           Text="Файлы игры скачиваются с официальных серверов Mojang и FabricMC. Настройки хранятся локально." />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

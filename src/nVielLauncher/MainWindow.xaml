@@ -1,0 +1,978 @@
+<Window x:Class="nVielLauncher.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="nViel Launcher"
+        Width="1180" Height="760"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        AllowsTransparency="False"
+        Background="{StaticResource BgBrush}"
+        FontFamily="{StaticResource TextFont}"
+        FontSize="13"
+        Foreground="{StaticResource TextPrimaryBrush}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="0" GlassFrameThickness="0" CornerRadius="16" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Window.Triggers>
+        <EventTrigger RoutedEvent="Loaded">
+            <BeginStoryboard>
+                <Storyboard>
+                    <DoubleAnimation Storyboard.TargetName="Blob1Transform" Storyboard.TargetProperty="X"
+                                     From="-50" To="110" Duration="0:0:28" AutoReverse="True" RepeatBehavior="Forever">
+                        <DoubleAnimation.EasingFunction>
+                            <SineEase EasingMode="EaseInOut" />
+                        </DoubleAnimation.EasingFunction>
+                    </DoubleAnimation>
+                    <DoubleAnimation Storyboard.TargetName="Blob1Transform" Storyboard.TargetProperty="Y"
+                                     From="-30" To="70" Duration="0:0:21" AutoReverse="True" RepeatBehavior="Forever">
+                        <DoubleAnimation.EasingFunction>
+                            <SineEase EasingMode="EaseInOut" />
+                        </DoubleAnimation.EasingFunction>
+                    </DoubleAnimation>
+                    <DoubleAnimation Storyboard.TargetName="Blob2Transform" Storyboard.TargetProperty="X"
+                                     From="40" To="-90" Duration="0:0:34" AutoReverse="True" RepeatBehavior="Forever">
+                        <DoubleAnimation.EasingFunction>
+                            <SineEase EasingMode="EaseInOut" />
+                        </DoubleAnimation.EasingFunction>
+                    </DoubleAnimation>
+                    <DoubleAnimation Storyboard.TargetName="Blob2Transform" Storyboard.TargetProperty="Y"
+                                     From="20" To="-70" Duration="0:0:26" AutoReverse="True" RepeatBehavior="Forever">
+                        <DoubleAnimation.EasingFunction>
+                            <SineEase EasingMode="EaseInOut" />
+                        </DoubleAnimation.EasingFunction>
+                    </DoubleAnimation>
+                    <DoubleAnimation Storyboard.TargetName="Blob3Transform" Storyboard.TargetProperty="X"
+                                     From="-40" To="60" Duration="0:0:38" AutoReverse="True" RepeatBehavior="Forever">
+                        <DoubleAnimation.EasingFunction>
+                            <SineEase EasingMode="EaseInOut" />
+                        </DoubleAnimation.EasingFunction>
+                    </DoubleAnimation>
+                </Storyboard>
+            </BeginStoryboard>
+        </EventTrigger>
+    </Window.Triggers>
+
+    <Border x:Name="RootBorder" Background="{StaticResource BgBrush}" BorderBrush="#18FFFFFF" BorderThickness="1" CornerRadius="16" ClipToBounds="True">
+        <Grid x:Name="RootGrid">
+            <Grid.RenderTransform>
+                <ScaleTransform x:Name="RootScale" ScaleX="1" ScaleY="1" />
+            </Grid.RenderTransform>
+            <Grid.RenderTransformOrigin>
+                <Point X="0.5" Y="0.5" />
+            </Grid.RenderTransformOrigin>
+
+            <Grid x:Name="AppContent">
+
+            <!-- ================= animated backdrop ================= -->
+            <Grid x:Name="BackdropLayer" IsHitTestVisible="False">
+                <Rectangle Fill="{StaticResource BgBrush}" />
+
+                <Ellipse Width="860" Height="860" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-280,-360,0,0">
+                    <Ellipse.Fill>
+                        <RadialGradientBrush>
+                            <GradientStop Color="#14FFFFFF" Offset="0" />
+                            <GradientStop Color="#08FFFFFF" Offset="0.45" />
+                            <GradientStop Color="#00FFFFFF" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                    <Ellipse.RenderTransform>
+                        <TranslateTransform x:Name="Blob1Transform" />
+                    </Ellipse.RenderTransform>
+                </Ellipse>
+
+                <Ellipse Width="780" Height="780" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-260,-340">
+                    <Ellipse.Fill>
+                        <RadialGradientBrush>
+                            <GradientStop Color="#0DFFFFFF" Offset="0" />
+                            <GradientStop Color="#05FFFFFF" Offset="0.5" />
+                            <GradientStop Color="#00FFFFFF" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                    <Ellipse.RenderTransform>
+                        <TranslateTransform x:Name="Blob2Transform" />
+                    </Ellipse.RenderTransform>
+                </Ellipse>
+
+                <Ellipse Width="520" Height="520" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-260,-180,0">
+                    <Ellipse.Fill>
+                        <RadialGradientBrush>
+                            <GradientStop Color="#08FFFFFF" Offset="0" />
+                            <GradientStop Color="#00FFFFFF" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                    <Ellipse.RenderTransform>
+                        <TranslateTransform x:Name="Blob3Transform" />
+                    </Ellipse.RenderTransform>
+                </Ellipse>
+
+                <Rectangle Opacity="0.55">
+                    <Rectangle.Fill>
+                        <DrawingBrush TileMode="Tile" Viewport="0,0,54,54" ViewportUnits="Absolute">
+                            <DrawingBrush.Drawing>
+                                <DrawingGroup>
+                                    <GeometryDrawing Geometry="M0,0 H54 M0,0 V54">
+                                        <GeometryDrawing.Pen>
+                                            <Pen Brush="#0AFFFFFF" Thickness="1" />
+                                        </GeometryDrawing.Pen>
+                                    </GeometryDrawing>
+                                </DrawingGroup>
+                            </DrawingBrush.Drawing>
+                        </DrawingBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+
+                <Rectangle>
+                    <Rectangle.Fill>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#00000000" Offset="0" />
+                            <GradientStop Color="#55060608" Offset="0.75" />
+                            <GradientStop Color="#CC060608" Offset="1" />
+                        </LinearGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+            </Grid>
+
+            <!-- ================= chrome ================= -->
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="50" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- title bar -->
+                <Grid Grid.Row="0" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="22,0,0,0">
+                        <Grid Width="16" Height="16">
+                            <Ellipse Fill="{DynamicResource AccentBrush}" />
+                            <Ellipse Width="6" Height="6" Fill="{StaticResource BgBrush}" />
+                        </Grid>
+                        <TextBlock Text="nViel" FontFamily="{StaticResource DisplayFont}" FontSize="13.5" FontWeight="Bold"
+                                   Margin="10,0,0,0" VerticalAlignment="Center" />
+                        <Border Background="#0DFFFFFF" BorderBrush="#14FFFFFF" BorderThickness="1" CornerRadius="6"
+                                Padding="7,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="FABRIC 1.21.4" FontSize="9.5" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextSecondaryBrush}" />
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <Button x:Name="HelpButton" Style="{StaticResource TitleBarButton}" Click="Help_Click" ToolTip="Обучение">
+                            <Path Data="{StaticResource IconHelp}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="14" Height="14" Stretch="Uniform" />
+                        </Button>
+                        <Button x:Name="MinimizeButton" Style="{StaticResource TitleBarButton}" Click="Minimize_Click" ToolTip="Свернуть" Margin="4,0,0,0">
+                            <Path Data="{StaticResource IconMinimize}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="12" Height="12" Stretch="Uniform" />
+                        </Button>
+                        <Button x:Name="CloseButton" Style="{StaticResource TitleBarButton}" Click="Close_Click" Margin="4,0,0,0" ToolTip="Закрыть">
+                            <Path Data="{StaticResource IconClose}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="11" Height="11" Stretch="Uniform" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <!-- body -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- ================= sidebar ================= -->
+                    <Border x:Name="Sidebar" Grid.Column="0" Width="232" Margin="16,0,0,16"
+                            BorderBrush="#22FFFFFF" BorderThickness="1" CornerRadius="16" Visibility="Collapsed">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0.75,1">
+                                <GradientStop Color="#10FFFFFF" Offset="0" />
+                                <GradientStop Color="#07FFFFFF" Offset="0.55" />
+                                <GradientStop Color="#04FFFFFF" Offset="1" />
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Grid Margin="12">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <Button Grid.Row="0" x:Name="ProfileBlock" Margin="6,8,6,14" Cursor="Hand"
+                                    Click="ProfileBlock_Click" ToolTip="Профили игрока"
+                                    HorizontalContentAlignment="Stretch" Background="Transparent"
+                                    BorderThickness="0" Padding="0">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="Transparent" Padding="0">
+                                            <ContentPresenter />
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="42" Height="42" CornerRadius="21" Background="#101014" BorderBrush="#26FFFFFF" BorderThickness="1">
+                                        <TextBlock x:Name="ProfileLetter" Text="S" FontSize="16" FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock x:Name="ProfileName" Text="Steve" FontSize="13.5" FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="Оффлайн-профиль" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                                    </StackPanel>
+                                </Grid>
+                            </Button>
+
+                            <Border Grid.Row="1" Height="1" Background="{StaticResource StrokeSoftBrush}" Margin="6,0,6,12" />
+
+                            <Grid Grid.Row="2" x:Name="NavArea">
+                                <Border x:Name="NavPill" Height="46" Background="#10FFFFFF" BorderBrush="#1AFFFFFF" BorderThickness="1"
+                                        CornerRadius="12" VerticalAlignment="Top" IsHitTestVisible="False">
+                                    <Border.RenderTransform>
+                                        <TranslateTransform x:Name="NavPillTransform" />
+                                    </Border.RenderTransform>
+                                </Border>
+
+                                <StackPanel>
+                                    <Button x:Name="NavHomeButton" Style="{StaticResource NavButton}" Tag="home" Click="Nav_Click"
+                                            Foreground="{StaticResource TextPrimaryBrush}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource IconHome}" Width="17" Height="17" Stretch="Uniform"
+                                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                            <TextBlock Text="Главная" Margin="13,0,0,0" FontSize="13.5" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button x:Name="NavModsButton" Style="{StaticResource NavButton}" Tag="mods" Click="Nav_Click" Margin="0,4,0,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource IconMods}" Width="17" Height="17" Stretch="Uniform"
+                                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                                  StrokeThickness="1.4" StrokeLineJoin="Round" />
+                                            <TextBlock Text="Моды" Margin="13,0,0,0" FontSize="13.5" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button x:Name="NavModpacksButton" Style="{StaticResource NavButton}" Tag="modpacks" Click="Nav_Click" Margin="0,4,0,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource IconPack}" Width="17" Height="17" Stretch="Uniform"
+                                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                                  StrokeThickness="1.4" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                            <TextBlock Text="Сборки" Margin="13,0,0,0" FontSize="13.5" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button x:Name="NavServersButton" Style="{StaticResource NavButton}" Tag="servers" Click="Nav_Click" Margin="0,4,0,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource IconGlobe}" Width="17" Height="17" Stretch="Uniform"
+                                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                                  StrokeThickness="1.4" StrokeLineJoin="Round" />
+                                            <TextBlock Text="Сервера" Margin="13,0,0,0" FontSize="13.5" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button x:Name="NavSettingsButton" Style="{StaticResource NavButton}" Tag="settings" Click="Nav_Click" Margin="0,4,0,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource IconSettings}" Width="17" Height="17" Stretch="Uniform"
+                                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                            <TextBlock Text="Настройки" Margin="13,0,0,0" FontSize="13.5" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+
+                            <StackPanel Grid.Row="4" Margin="6,0,6,8">
+                                <Border Style="{StaticResource InsetCard}" Padding="12,11">
+                                    <StackPanel>
+                                        <TextBlock Text="FABRIC LOADER" Style="{StaticResource Overline}" />
+                                        <TextBlock Text="Minecraft 1.21.4" FontSize="13.5" FontWeight="SemiBold" Margin="0,4,0,0" />
+                                        <TextBlock Text="Java 21 · лицензия не требуется" FontSize="10" Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Button Style="{StaticResource LinkButton}" Margin="0,10,0,0" HorizontalAlignment="Center"
+                                        Click="ChangeNick_Click" Content="Сменить ник" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- ================= pages ================= -->
+                    <ContentControl x:Name="PageHost" Grid.Column="1" Margin="16,0,16,16" Focusable="False" />
+                </Grid>
+            </Grid>
+            </Grid>
+
+            <!-- ================= diagnostics overlay ================= -->
+            <Grid x:Name="DiagnosticLayer" Visibility="Collapsed" Panel.ZIndex="76" Opacity="0">
+                <Rectangle Fill="#B3000000" MouseLeftButtonDown="DiagnosticBackdrop_Click" />
+                <Border x:Name="DiagnosticCard" Style="{StaticResource Card}" Width="560" MaxHeight="580" Padding="24,22"
+                        HorizontalAlignment="Center" VerticalAlignment="Center" MouseLeftButtonDown="DiagnosticCard_Click">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0">
+                            <StackPanel>
+                                <TextBlock Text="Диагностика" FontFamily="{StaticResource DisplayFont}"
+                                           FontSize="18" FontWeight="SemiBold" />
+                                <TextBlock x:Name="DiagnosticSubtitle" Text="Анализ журналов игры"
+                                           FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" />
+                            </StackPanel>
+                            <Button Style="{StaticResource LinkButton}" Content="Закрыть" HorizontalAlignment="Right"
+                                    VerticalAlignment="Top" Click="DiagnosticClose_Click" />
+                        </Grid>
+
+                        <ScrollViewer Grid.Row="1" MaxHeight="380" VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled" Margin="0,16,0,0">
+                            <ItemsControl x:Name="DiagnosticList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#FF0A0A0F" BorderBrush="{StaticResource StrokeBrush}"
+                                                BorderThickness="1" CornerRadius="12" Padding="14,12" Margin="0,0,0,10">
+                                            <StackPanel>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="8" Height="8" Fill="{Binding SeverityBrush}"
+                                                             VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding Title}" FontSize="13.5" FontWeight="SemiBold"
+                                                               Margin="10,0,0,0" TextWrapping="Wrap" />
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding Detail}" FontSize="11.5"
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           TextWrapping="Wrap" Margin="18,6,0,0" />
+                                                <TextBlock Text="{Binding Suggestion}" FontSize="11.5"
+                                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                                           TextWrapping="Wrap" Margin="18,6,0,0" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+                            <Button Style="{StaticResource SmallGhostButton}" Content="Открыть логи"
+                                    Click="DiagnosticOpenLogs_Click" />
+                            <Button Style="{StaticResource SmallGhostButton}" Content="Повторить анализ"
+                                    Margin="8,0,0,0" Click="DiagnosticRerun_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ================= profiles overlay ================= -->
+            <Grid x:Name="ProfileLayer" Visibility="Collapsed" Panel.ZIndex="70" Opacity="0">
+                <Rectangle Fill="#B3000000" MouseLeftButtonDown="ProfileBackdrop_Click" />
+                <Border x:Name="ProfileCard" Style="{StaticResource Card}" Width="456" MaxHeight="560" Padding="24,22"
+                        HorizontalAlignment="Center" VerticalAlignment="Center" MouseLeftButtonDown="ProfileCard_Click">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0">
+                            <StackPanel>
+                                <TextBlock Text="Профили игрока" FontFamily="{StaticResource DisplayFont}"
+                                           FontSize="18" FontWeight="SemiBold" />
+                                <TextBlock Text="Несколько ников с быстрым переключением"
+                                           FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" />
+                            </StackPanel>
+                            <Button Style="{StaticResource LinkButton}" Content="Закрыть" HorizontalAlignment="Right"
+                                    VerticalAlignment="Top" Click="ProfileClose_Click" />
+                        </Grid>
+
+                        <ScrollViewer Grid.Row="1" MaxHeight="300" VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled" Margin="0,16,0,0">
+                            <ItemsControl x:Name="ProfilesList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource InsetCard}" Margin="0,0,0,8" Padding="12,10"
+                                                Cursor="Hand" Background="{Binding Background}"
+                                                BorderBrush="{Binding BorderBrush}"
+                                                MouseLeftButtonUp="ProfileRow_Click">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Width="34" Height="34" CornerRadius="17" Background="#141419"
+                                                        BorderBrush="#26FFFFFF" BorderThickness="1">
+                                                    <TextBlock Text="{Binding Letter}" FontSize="14" FontWeight="SemiBold"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="{Binding Subtitle}" FontSize="11"
+                                                               Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Style="{StaticResource SmallGhostButton}"
+                                                        Content="Удалить" VerticalAlignment="Center"
+                                                        Click="ProfileDelete_Click" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <StackPanel Grid.Row="2" Margin="0,18,0,0">
+                            <TextBlock Text="НОВЫЙ ПРОФИЛЬ" Style="{StaticResource Overline}" />
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="ProfileNameBox" Style="{StaticResource InputBox}" Tag="Название профиля" MaxLength="24" />
+                                <TextBox Grid.Column="1" x:Name="ProfileNickBox" Style="{StaticResource InputBox}"
+                                         Tag="Ник (3–16, A-Z, 0-9, _)" Margin="8,0,0,0" MaxLength="16" />
+                                <Button Grid.Column="2" Style="{StaticResource SmallGhostButton}" Content="Добавить"
+                                        Margin="8,0,0,0" VerticalAlignment="Center" Click="ProfileAdd_Click" />
+                            </Grid>
+                            <TextBlock x:Name="ProfileStatus" FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                       Margin="2,10,0,0" Text="Профиль хранит только ник — вход оффлайн." />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ================= first-run setup wizard ================= -->
+            <Grid x:Name="SetupLayer" Panel.ZIndex="87" Visibility="Collapsed" Background="#FF050507"
+                  MouseMove="SetupLayer_MouseMove" MouseLeave="SetupLayer_MouseLeave" ClipToBounds="True">
+
+                <!-- animated gradient backdrop -->
+                <Grid IsHitTestVisible="False" ClipToBounds="True">
+                    <Grid.RenderTransform>
+                        <TranslateTransform x:Name="SetupParallax" />
+                    </Grid.RenderTransform>
+                    <Ellipse Width="680" Height="680" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-200,-260,0,0">
+                        <Ellipse.Fill>
+                            <RadialGradientBrush>
+                                <GradientStop Color="#2EFFFFFF" Offset="0" />
+                                <GradientStop Color="#00FFFFFF" Offset="1" />
+                            </RadialGradientBrush>
+                        </Ellipse.Fill>
+                        <Ellipse.RenderTransform>
+                            <TranslateTransform x:Name="SetupBlob1" />
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+
+                    <Ellipse Width="760" Height="760" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-240,-300">
+                        <Ellipse.Fill>
+                            <RadialGradientBrush>
+                                <GradientStop Color="#1FFFFFFF" Offset="0" />
+                                <GradientStop Color="#00FFFFFF" Offset="1" />
+                            </RadialGradientBrush>
+                        </Ellipse.Fill>
+                        <Ellipse.RenderTransform>
+                            <TranslateTransform x:Name="SetupBlob2" />
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+
+                    <Ellipse Width="420" Height="420" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="120,60,0,0">
+                        <Ellipse.Fill>
+                            <RadialGradientBrush>
+                                <GradientStop Color="#12FFFFFF" Offset="0" />
+                                <GradientStop Color="#00FFFFFF" Offset="1" />
+                            </RadialGradientBrush>
+                        </Ellipse.Fill>
+                        <Ellipse.RenderTransform>
+                            <TranslateTransform x:Name="SetupBlob3" />
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+
+                    <Rectangle x:Name="SetupShimmer" Width="460" Height="1300" HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Opacity="0.10" IsHitTestVisible="False">
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#00FFFFFF" Offset="0" />
+                                <GradientStop Color="#8CFFFFFF" Offset="0.5" />
+                                <GradientStop Color="#00FFFFFF" Offset="1" />
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+                        <Rectangle.RenderTransform>
+                            <TransformGroup>
+                                <RotateTransform Angle="18" />
+                                <TranslateTransform x:Name="SetupShimmerTransform" X="-820" />
+                            </TransformGroup>
+                        </Rectangle.RenderTransform>
+                    </Rectangle>
+
+                    <Rectangle Opacity="0.35">
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#00000000" Offset="0" />
+                                <GradientStop Color="#66000000" Offset="1" />
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+                </Grid>
+
+                <!-- decorative rings -->
+                <Grid Width="640" Height="640" HorizontalAlignment="Right" VerticalAlignment="Center"
+                      Margin="0,0,-200,0" IsHitTestVisible="False">
+                    <Ellipse StrokeThickness="1" Opacity="0.55">
+                        <Ellipse.Stroke>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#00FFFFFF" Offset="0" />
+                                <GradientStop Color="#4DFFFFFF" Offset="0.5" />
+                                <GradientStop Color="#00FFFFFF" Offset="1" />
+                            </LinearGradientBrush>
+                        </Ellipse.Stroke>
+                        <Ellipse.RenderTransformOrigin>0.5,0.5</Ellipse.RenderTransformOrigin>
+                        <Ellipse.RenderTransform>
+                            <RotateTransform x:Name="SetupRing1" />
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+                    <Ellipse Width="470" Height="470" StrokeThickness="1" Opacity="0.4">
+                        <Ellipse.Stroke>
+                            <LinearGradientBrush StartPoint="0,1" EndPoint="1,0">
+                                <GradientStop Color="#00FFFFFF" Offset="0" />
+                                <GradientStop Color="#33FFFFFF" Offset="0.5" />
+                                <GradientStop Color="#00FFFFFF" Offset="1" />
+                            </LinearGradientBrush>
+                        </Ellipse.Stroke>
+                        <Ellipse.RenderTransformOrigin>0.5,0.5</Ellipse.RenderTransformOrigin>
+                        <Ellipse.RenderTransform>
+                            <RotateTransform x:Name="SetupRing2" />
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+                    <Ellipse Width="300" Height="300" StrokeThickness="1" Opacity="0.25">
+                        <Ellipse.Stroke>
+                            <LinearGradientBrush StartPoint="1,0" EndPoint="0,1">
+                                <GradientStop Color="#00FFFFFF" Offset="0" />
+                                <GradientStop Color="#26FFFFFF" Offset="0.5" />
+                                <GradientStop Color="#00FFFFFF" Offset="1" />
+                            </LinearGradientBrush>
+                        </Ellipse.Stroke>
+                        <Ellipse.RenderTransformOrigin>0.5,0.5</Ellipse.RenderTransformOrigin>
+                        <Ellipse.RenderTransform>
+                            <RotateTransform x:Name="SetupRing3" />
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+                </Grid>
+
+                <!-- cursor-follow glow -->
+                <Canvas IsHitTestVisible="False" ClipToBounds="True">
+                    <Ellipse x:Name="SetupCursorGlow" Width="520" Height="520" Opacity="0">
+                        <Ellipse.Fill>
+                            <RadialGradientBrush>
+                                <GradientStop Color="#26FFFFFF" Offset="0" />
+                                <GradientStop Color="#0AFFFFFF" Offset="0.55" />
+                                <GradientStop Color="#00FFFFFF" Offset="1" />
+                            </RadialGradientBrush>
+                        </Ellipse.Fill>
+                        <Ellipse.RenderTransform>
+                            <TranslateTransform x:Name="SetupCursorTransform" />
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+                </Canvas>
+
+                <!-- layout -->
+                <Grid Margin="54,32,54,28">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- top bar -->
+                    <Grid Grid.Row="0" Background="Transparent" MouseLeftButtonDown="SetupDragArea_MouseLeftButtonDown">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="34" Height="34" CornerRadius="17" Background="#14FFFFFF" BorderBrush="#2BFFFFFF" BorderThickness="1">
+                                <TextBlock Text="n" FontFamily="{StaticResource DisplayFont}" FontSize="17" FontWeight="SemiBold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="nViel Launcher" FontFamily="{StaticResource DisplayFont}" FontSize="14" FontWeight="SemiBold" />
+                                <TextBlock Text="ПЕРВЫЙ ЗАПУСК · FABRIC 1.21.4" FontSize="9.5" Foreground="{StaticResource TextMutedBrush}"
+                                           Margin="0,2,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <TextBlock x:Name="SetupStepLabel" Text="Знакомство" VerticalAlignment="Center"
+                                       FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}" />
+                            <Button Style="{StaticResource LinkButton}" Content="Закрыть" Margin="20,0,0,0"
+                                    Click="SetupClose_Click" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- body -->
+                    <Grid Grid.Row="1" Margin="0,22,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="262" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- step rail -->
+                        <StackPanel x:Name="SetupRail" VerticalAlignment="Center" Margin="4,0,46,0">
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border x:Name="SetupRailDot0" Width="9" Height="9" CornerRadius="4.5" Background="#FF2A2A33" />
+                                <TextBlock x:Name="SetupRailText0" Grid.Column="1" Text="Профиль" FontSize="12.5" Margin="12,0,0,0"
+                                           Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2" Text="01" FontSize="9.5" HorizontalAlignment="Right"
+                                           Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                            </Grid>
+                            <Border Width="1" Height="20" Background="#14FFFFFF" HorizontalAlignment="Left" Margin="4,0,0,2" />
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border x:Name="SetupRailDot1" Width="9" Height="9" CornerRadius="4.5" Background="#FF2A2A33" />
+                                <TextBlock x:Name="SetupRailText1" Grid.Column="1" Text="Память" FontSize="12.5" Margin="12,0,0,0"
+                                           Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2" Text="02" FontSize="9.5" HorizontalAlignment="Right"
+                                           Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                            </Grid>
+                            <Border Width="1" Height="20" Background="#14FFFFFF" HorizontalAlignment="Left" Margin="4,0,0,2" />
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border x:Name="SetupRailDot2" Width="9" Height="9" CornerRadius="4.5" Background="#FF2A2A33" />
+                                <TextBlock x:Name="SetupRailText2" Grid.Column="1" Text="Java" FontSize="12.5" Margin="12,0,0,0"
+                                           Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2" Text="03" FontSize="9.5" HorizontalAlignment="Right"
+                                           Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                            </Grid>
+                            <Border Width="1" Height="20" Background="#14FFFFFF" HorizontalAlignment="Left" Margin="4,0,0,2" />
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border x:Name="SetupRailDot3" Width="9" Height="9" CornerRadius="4.5" Background="#FF2A2A33" />
+                                <TextBlock x:Name="SetupRailText3" Grid.Column="1" Text="Внешний вид" FontSize="12.5" Margin="12,0,0,0"
+                                           Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2" Text="04" FontSize="9.5" HorizontalAlignment="Right"
+                                           Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                            </Grid>
+                            <Border Width="1" Height="20" Background="#14FFFFFF" HorizontalAlignment="Left" Margin="4,0,0,2" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border x:Name="SetupRailDot4" Width="9" Height="9" CornerRadius="4.5" Background="#FF2A2A33" />
+                                <TextBlock x:Name="SetupRailText4" Grid.Column="1" Text="Готово" FontSize="12.5" Margin="12,0,0,0"
+                                           Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2" Text="05" FontSize="9.5" HorizontalAlignment="Right"
+                                           Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- step content -->
+                        <Grid Grid.Column="1">
+                            <!-- 0: welcome -->
+                            <Grid x:Name="SetupStep0">
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left">
+                                    <TextBlock Text="ДОБРО ПОЖАЛОВАТЬ" Style="{StaticResource Overline}" />
+                                    <TextBlock FontFamily="{StaticResource DisplayFont}" FontSize="40" FontWeight="SemiBold"
+                                               Margin="0,10,0,0" LineHeight="46">
+                                        <TextBlock.Foreground>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#FFFFFFFF" Offset="0" />
+                                                <GradientStop Color="#FF9EA1AD" Offset="0.55" />
+                                                <GradientStop Color="#FFFFFFFF" Offset="1" />
+                                            </LinearGradientBrush>
+                                        </TextBlock.Foreground>
+                                        <Run Text="nViel" /><LineBreak /><Run Text="Launcher" />
+                                    </TextBlock>
+                                    <TextBlock Text="Тихий чёрно-белый лаунчер для Minecraft. Настроим всё за пару шагов — ник, память, Java и внешний вид."
+                                               FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"
+                                               MaxWidth="520" Margin="0,14,0,0" LineHeight="20" />
+                                    <WrapPanel Margin="0,24,0,0">
+                                        <Border Background="#0CFFFFFF" BorderBrush="#1EFFFFFF" BorderThickness="1" CornerRadius="9"
+                                                Padding="12,7" Margin="0,0,8,8">
+                                            <TextBlock Text="Fabric 1.21.4" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                                        </Border>
+                                        <Border Background="#0CFFFFFF" BorderBrush="#1EFFFFFF" BorderThickness="1" CornerRadius="9"
+                                                Padding="12,7" Margin="0,0,8,8">
+                                            <TextBlock Text="Оффлайн-вход" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                                        </Border>
+                                        <Border Background="#0CFFFFFF" BorderBrush="#1EFFFFFF" BorderThickness="1" CornerRadius="9"
+                                                Padding="12,7" Margin="0,0,8,8">
+                                            <TextBlock Text="Моды с Modrinth" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                                        </Border>
+                                        <Border Background="#0CFFFFFF" BorderBrush="#1EFFFFFF" BorderThickness="1" CornerRadius="9"
+                                                Padding="12,7" Margin="0,0,8,8">
+                                            <TextBlock Text="Авто-загрузка файлов" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                                        </Border>
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- 1: profile -->
+                            <Grid x:Name="SetupStep1" Visibility="Collapsed">
+                                <StackPanel VerticalAlignment="Center" MaxWidth="560" HorizontalAlignment="Left">
+                                    <TextBlock Text="ПРОФИЛЬ" Style="{StaticResource Overline}" />
+                                    <TextBlock Text="Как тебя звать?" FontFamily="{StaticResource DisplayFont}" FontSize="30"
+                                               FontWeight="SemiBold" Margin="0,10,0,0" />
+                                    <TextBlock Text="Этот ник увидят на серверах и в игре. Лицензия не нужна — вход оффлайн."
+                                               FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"
+                                               Margin="0,10,0,0" LineHeight="19" />
+                                    <TextBox x:Name="SetupNickBox" Style="{StaticResource BigInputBox}" Tag="Steve" MaxLength="16"
+                                             Margin="0,22,0,0" KeyDown="SetupNickBox_KeyDown" TextChanged="SetupNickBox_TextChanged" />
+                                    <TextBlock x:Name="SetupNickError" Text="3–16 символов: A–Z, 0–9 и _"
+                                               FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="3,9,0,0" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- 2: memory -->
+                            <Grid x:Name="SetupStep2" Visibility="Collapsed">
+                                <StackPanel VerticalAlignment="Center" MaxWidth="560" HorizontalAlignment="Left">
+                                    <TextBlock Text="ПАМЯТЬ" Style="{StaticResource Overline}" />
+                                    <TextBlock Text="Сколько памяти выделить?" FontFamily="{StaticResource DisplayFont}" FontSize="30"
+                                               FontWeight="SemiBold" Margin="0,10,0,0" TextWrapping="Wrap" />
+                                    <TextBlock Text="Больше памяти — стабильнее тяжёлые сборки. Для Fabric 1.21.4 обычно хватает 4096–6144 МБ."
+                                               FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"
+                                               Margin="0,10,0,0" LineHeight="19" />
+                                    <StackPanel Orientation="Horizontal" Margin="0,22,0,0">
+                                        <TextBlock x:Name="SetupRamValue" Text="4096 МБ" FontFamily="{StaticResource DisplayFont}"
+                                                   FontSize="26" FontWeight="SemiBold" />
+                                        <Border Background="#10FFFFFF" BorderBrush="#22FFFFFF" BorderThickness="1" CornerRadius="8"
+                                                Padding="9,4" Margin="14,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock x:Name="SetupRamChip" Text="рекомендуется" FontSize="10"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" />
+                                        </Border>
+                                    </StackPanel>
+                                    <Slider x:Name="SetupRamSlider" Style="{StaticResource SlimSlider}" Minimum="2048" Maximum="16384"
+                                            SmallChange="256" LargeChange="1024" Margin="0,18,0,0"
+                                            ValueChanged="SetupRamSlider_ValueChanged" />
+                                    <TextBlock x:Name="SetupRamHint" FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                               Margin="0,10,0,0" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- 3: java -->
+                            <Grid x:Name="SetupStep3" Visibility="Collapsed">
+                                <StackPanel VerticalAlignment="Center" MaxWidth="560" HorizontalAlignment="Left">
+                                    <TextBlock Text="JAVA" Style="{StaticResource Overline}" />
+                                    <TextBlock Text="Проверим Java" FontFamily="{StaticResource DisplayFont}" FontSize="30"
+                                               FontWeight="SemiBold" Margin="0,10,0,0" />
+                                    <TextBlock Text="Игре нужна Java 21. Если её нет — лаунчер сам скачает нужную версию при первом запуске."
+                                               FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"
+                                               Margin="0,10,0,0" LineHeight="19" />
+
+                                    <Border Background="#0AFFFFFF" BorderBrush="#1EFFFFFF" BorderThickness="1" CornerRadius="12"
+                                            Padding="16,14" Margin="0,22,0,0">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Ellipse x:Name="SetupJavaDot" Width="8" Height="8" Fill="#FF565660" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Margin="12,0,12,0">
+                                                <TextBlock x:Name="SetupJavaStatus" Text="Проверяем…" FontSize="13" FontWeight="Medium" />
+                                                <TextBlock x:Name="SetupJavaInfo" Text="Поиск установленной Java 21" FontSize="11"
+                                                           Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0"
+                                                           TextWrapping="Wrap" />
+                                            </StackPanel>
+                                            <Button Grid.Column="2" Style="{StaticResource SmallGhostButton}" Content="Найти снова"
+                                                    VerticalAlignment="Center" Click="SetupJavaRetry_Click" />
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- 4: appearance -->
+                            <Grid x:Name="SetupStep4" Visibility="Collapsed">
+                                <StackPanel VerticalAlignment="Center" MaxWidth="560" HorizontalAlignment="Left">
+                                    <TextBlock Text="ВНЕШНИЙ ВИД" Style="{StaticResource Overline}" />
+                                    <TextBlock Text="Настрой под себя" FontFamily="{StaticResource DisplayFont}" FontSize="30"
+                                               FontWeight="SemiBold" Margin="0,10,0,0" />
+                                    <TextBlock Text="Всё можно поменять позже в настройках."
+                                               FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,10,0,0" />
+
+                                    <TextBlock Text="Акцентный оттенок" FontSize="12.5" Margin="0,24,0,0" />
+                                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                        <Border x:Name="SetupAccent0" Width="26" Height="26" CornerRadius="13" Background="#FFFFFFFF"
+                                                BorderBrush="#33FFFFFF" BorderThickness="2" Cursor="Hand" Tag="#FFFFFFFF"
+                                                MouseLeftButtonUp="SetupAccent_Click" />
+                                        <Border x:Name="SetupAccent1" Width="26" Height="26" CornerRadius="13" Background="#FFC8CDD6"
+                                                BorderBrush="#33FFFFFF" BorderThickness="2" Cursor="Hand" Tag="#FFC8CDD6"
+                                                Margin="10,0,0,0" MouseLeftButtonUp="SetupAccent_Click" />
+                                        <Border x:Name="SetupAccent2" Width="26" Height="26" CornerRadius="13" Background="#FFBFD4E8"
+                                                BorderBrush="#33FFFFFF" BorderThickness="2" Cursor="Hand" Tag="#FFBFD4E8"
+                                                Margin="10,0,0,0" MouseLeftButtonUp="SetupAccent_Click" />
+                                        <Border x:Name="SetupAccent3" Width="26" Height="26" CornerRadius="13" Background="#FFE8D9BF"
+                                                BorderBrush="#33FFFFFF" BorderThickness="2" Cursor="Hand" Tag="#FFE8D9BF"
+                                                Margin="10,0,0,0" MouseLeftButtonUp="SetupAccent_Click" />
+                                        <Border x:Name="SetupAccent4" Width="26" Height="26" CornerRadius="13" Background="#FFBFE8D0"
+                                                BorderBrush="#33FFFFFF" BorderThickness="2" Cursor="Hand" Tag="#FFBFE8D0"
+                                                Margin="10,0,0,0" MouseLeftButtonUp="SetupAccent_Click" />
+                                    </StackPanel>
+
+                                    <CheckBox x:Name="SetupGlowToggle" Style="{StaticResource ToggleSwitch}" Margin="0,24,0,0">
+                                        <StackPanel>
+                                            <TextBlock Text="Фоновое свечение" FontSize="13" />
+                                            <TextBlock Text="Плавные световые пятна за интерфейсом" FontSize="10.5"
+                                                       Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                                        </StackPanel>
+                                    </CheckBox>
+
+                                    <CheckBox x:Name="SetupSplashToggle" Style="{StaticResource ToggleSwitch}" Margin="0,14,0,0">
+                                        <StackPanel>
+                                            <TextBlock Text="Экран загрузки при старте" FontSize="13" />
+                                            <TextBlock Text="Показывать логотип при открытии лаунчера" FontSize="10.5"
+                                                       Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                                        </StackPanel>
+                                    </CheckBox>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- 5: done -->
+                            <Grid x:Name="SetupStep5" Visibility="Collapsed">
+                                <StackPanel VerticalAlignment="Center" MaxWidth="560" HorizontalAlignment="Left">
+                                    <TextBlock Text="ГОТОВО" Style="{StaticResource Overline}" />
+                                    <TextBlock Text="Всё настроено" FontFamily="{StaticResource DisplayFont}" FontSize="32"
+                                               FontWeight="SemiBold" Margin="0,10,0,0" />
+                                    <TextBlock Text="Осталось нажать кнопку — и можно играть."
+                                               FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,10,0,0" />
+                                    <Border Background="#0AFFFFFF" BorderBrush="#1EFFFFFF" BorderThickness="1" CornerRadius="12"
+                                            Padding="18,16" Margin="0,22,0,0">
+                                        <StackPanel>
+                                            <Grid Margin="0,0,0,9">
+                                                <TextBlock Text="Профиль" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" />
+                                                <TextBlock x:Name="SetupSummaryNick" Text="Steve" HorizontalAlignment="Right" FontSize="12.5" />
+                                            </Grid>
+                                            <Grid Margin="0,0,0,9">
+                                                <TextBlock Text="Память" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" />
+                                                <TextBlock x:Name="SetupSummaryRam" Text="4096 МБ" HorizontalAlignment="Right" FontSize="12.5" />
+                                            </Grid>
+                                            <Grid Margin="0,0,0,9">
+                                                <TextBlock Text="Java" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" />
+                                                <TextBlock x:Name="SetupSummaryJava" Text="—" HorizontalAlignment="Right" FontSize="12.5" />
+                                            </Grid>
+                                            <Grid>
+                                                <TextBlock Text="Версия" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" />
+                                                <TextBlock Text="Fabric 1.21.4" HorizontalAlignment="Right" FontSize="12.5" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                    <TextBlock Text="После запуска покажем короткое обучение по разделам — его можно пропустить."
+                                               FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,14,0,0" />
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+
+                    <!-- footer -->
+                    <Grid Grid.Row="2" Margin="0,20,0,0">
+                        <TextBlock x:Name="SetupHint" Text="Можно всё изменить позже в настройках"
+                                   FontSize="11" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button x:Name="SetupBackButton" Style="{StaticResource SmallGhostButton}" Content="Назад"
+                                    Visibility="Collapsed" Padding="22,11" Click="SetupBack_Click" />
+                            <Button x:Name="SetupNextButton" Style="{StaticResource PrimaryButton}" Content="Начать"
+                                    Padding="26,12" Margin="10,0,0,0" Click="SetupNext_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Grid>
+
+            <!-- ================= splash + toasts ================= -->
+            <Grid x:Name="SplashLayer" Panel.ZIndex="90" Background="#FF060608">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Grid Width="92" Height="92" HorizontalAlignment="Center">
+                        <Ellipse Stroke="#1CFFFFFF" StrokeThickness="1.5" />
+                        <Ellipse x:Name="SplashRing" Margin="7" Stroke="#FFFFFFFF" StrokeThickness="2"
+                                 StrokeDashArray="58 200" StrokeDashCap="Round" />
+                        <Ellipse x:Name="SplashRing2" Margin="18" Stroke="#3DFFFFFF" StrokeThickness="1"
+                                 StrokeDashArray="2 8" />
+                        <TextBlock Text="n" FontFamily="{StaticResource DisplayFont}" FontSize="32" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <TextBlock Text="nViel Launcher" FontFamily="{StaticResource DisplayFont}" FontSize="17"
+                               FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,22,0,0" />
+                    <TextBlock x:Name="SplashStatus" Text="Подготовка…" FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"
+                               Margin="0,7,0,0" />
+                </StackPanel>
+            </Grid>
+
+            <StackPanel x:Name="ToastPanel" Panel.ZIndex="85" HorizontalAlignment="Right" VerticalAlignment="Top"
+                        Margin="0,58,20,0" Width="330" />
+
+            <!-- ================= onboarding tour ================= -->
+            <Grid x:Name="TourLayer" Visibility="Collapsed" Panel.ZIndex="80" Opacity="0">
+                <Canvas x:Name="TourCanvas" ClipToBounds="True">
+                    <Path x:Name="TourSpotlight" Fill="#B8060608" />
+                    <Border x:Name="TourGlow" Width="0" Height="0" CornerRadius="16"
+                            BorderBrush="#66FFFFFF" BorderThickness="1.5" Background="Transparent"
+                            IsHitTestVisible="False">
+                        <Border.Effect>
+                            <DropShadowEffect Color="White" BlurRadius="26" ShadowDepth="0" Opacity="0.22" />
+                        </Border.Effect>
+                    </Border>
+                </Canvas>
+
+                <Border x:Name="TourCard" Style="{StaticResource Card}" Width="432" Padding="26,24"
+                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Background="#FF0E0E13" BorderBrush="#26FFFFFF" BorderThickness="1"
+                        RenderTransformOrigin="0.5,0.5">
+                    <Border.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform x:Name="TourScale" ScaleX="1" ScaleY="1" />
+                            <TranslateTransform x:Name="TourTranslate" />
+                        </TransformGroup>
+                    </Border.RenderTransform>
+
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Border Style="{StaticResource IconTile}" Width="34" Height="34" CornerRadius="10">
+                                <Path Data="{StaticResource IconSparkles}" Width="15" Height="15" Stretch="Uniform"
+                                      Fill="{StaticResource TextSecondaryBrush}"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="ЗНАКОМСТВО" Style="{StaticResource Overline}" />
+                                <TextBlock x:Name="TourStepLabel" Text="Шаг 1" FontSize="10.5"
+                                           Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <TextBlock x:Name="TourTitle" Text="Добро пожаловать" FontFamily="{StaticResource DisplayFont}"
+                                   FontSize="22" FontWeight="SemiBold" Margin="0,18,0,0" TextWrapping="Wrap" />
+                        <TextBlock x:Name="TourBody" Text="" FontSize="12.5"
+                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,10,0,0"
+                                   TextWrapping="Wrap" LineHeight="19" />
+
+                        <StackPanel x:Name="TourDotsPanel" Orientation="Horizontal" Margin="0,20,0,0" />
+
+                        <Grid Margin="0,18,0,0">
+                            <Button x:Name="TourSkipButton" Style="{StaticResource LinkButton}" Content="Пропустить"
+                                    HorizontalAlignment="Left" VerticalAlignment="Center" Click="TourSkip_Click" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button x:Name="TourBackButton" Style="{StaticResource SmallGhostButton}" Content="Назад"
+                                        Click="TourBack_Click" Visibility="Collapsed" />
+                                <Button x:Name="TourNextButton" Style="{StaticResource PrimaryButton}" Content="Далее"
+                                        Margin="8,0,0,0" Padding="20,10" Click="TourNext_Click" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
