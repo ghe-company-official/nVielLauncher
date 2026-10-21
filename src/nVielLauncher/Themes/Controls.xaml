@@ -669,7 +669,34 @@
                                 <DropShadowEffect Color="White" BlurRadius="12" ShadowDepth="0" Opacity="0.5" />
                             </Border.Effect>
                         </Border>
+                        <Grid ClipToBounds="True">
+                            <Border x:Name="PART_GlowRect" Width="120" HorizontalAlignment="Left"
+                                    Background="{TemplateBinding Foreground}" CornerRadius="3"
+                                    Visibility="Collapsed" Opacity="0.85">
+                                <Border.RenderTransform>
+                                    <TranslateTransform X="-140" />
+                                </Border.RenderTransform>
+                            </Border>
+                        </Grid>
                     </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsIndeterminate" Value="True">
+                            <Setter TargetName="PART_Indicator" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="PART_GlowRect" Property="Visibility" Value="Visible" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard x:Name="IndeterminateStoryboard">
+                                    <Storyboard RepeatBehavior="Forever">
+                                        <DoubleAnimation Storyboard.TargetName="PART_GlowRect"
+                                                         Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                                         From="-140" To="700" Duration="0:0:1.6" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <StopStoryboard BeginStoryboardName="IndeterminateStoryboard" />
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

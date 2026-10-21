@@ -163,6 +163,15 @@ public partial class ModsView : UserControl, IRefreshable
         SearchStatus.Text = SearchHint;
     }
 
+    public void SearchFor(string query)
+    {
+        SearchBox.Text = query;
+        Search_Click(this, new RoutedEventArgs());
+    }
+
+    private void Conflicts_Click(object sender, RoutedEventArgs e) =>
+        (Window.GetWindow(this) as MainWindow)?.OpenModConflicts();
+
     private async void Managed_Click(object sender, RoutedEventArgs e)
     {
         ShowPane("managed");

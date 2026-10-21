@@ -50,7 +50,8 @@
                         </Grid.ColumnDefinitions>
 
                         <Button x:Name="PlayButton" Style="{StaticResource PlayButton}" Width="150" Height="150"
-                                HorizontalAlignment="Left" VerticalAlignment="Center" Click="Play_Click" ToolTip="Играть">
+                                HorizontalAlignment="Left" VerticalAlignment="Center" Click="Play_Click"
+                                ToolTip="Играть (Ctrl+Enter)" AutomationProperties.Name="Играть">
                             <Grid Width="150" Height="150">
                                 <Ellipse Fill="#FF0A0A0E" Stroke="#FF1E1E24" StrokeThickness="1" />
                                 <Ellipse x:Name="DashRing" Margin="11" Stroke="#33FFFFFF" StrokeThickness="1"
@@ -189,7 +190,8 @@
                             <TextBlock Grid.Column="2" x:Name="StatMods" Text="0" FontSize="12.5" FontWeight="Medium" VerticalAlignment="Center" />
                         </Grid>
                         <Border Height="1" Background="{StaticResource StrokeSoftBrush}" />
-                        <Grid Height="37">
+                        <Grid Height="37" Cursor="Hand" MouseLeftButtonUp="Instances_Click"
+                              ToolTip="Открыть инстансы">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
@@ -197,13 +199,14 @@
                             </Grid.ColumnDefinitions>
                             <Border Width="22" Height="22" CornerRadius="7" Background="#0FFFFFFF"
                                     BorderBrush="#16FFFFFF" BorderThickness="1" VerticalAlignment="Center">
-                                <Path Data="{StaticResource IconRam}" Width="11" Height="11" Stretch="Uniform"
+                                <Path Data="{StaticResource IconInstance}" Width="11" Height="11" Stretch="Uniform"
                                       Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
-                            <TextBlock Grid.Column="1" Text="Память" FontSize="12" Margin="9,0,0,0"
+                            <TextBlock Grid.Column="1" Text="Инстанс" FontSize="12" Margin="9,0,0,0"
                                        Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
-                            <TextBlock Grid.Column="2" x:Name="StatRam" Text="4096 МБ" FontSize="12.5" FontWeight="Medium" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="2" x:Name="StatInstance" Text="Основная" FontSize="12.5" FontWeight="Medium"
+                                       MaxWidth="112" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                         </Grid>
                         <Border Height="1" Background="{StaticResource StrokeSoftBrush}" />
                         <Grid Height="37">

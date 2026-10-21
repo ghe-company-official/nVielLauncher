@@ -28,10 +28,14 @@ public static class AppPaths
     public static string JavaDirectory => Path.Combine(AppRoot, "java");
     public static string UpdateDirectory => Path.Combine(AppRoot, "update");
     public static string ModrinthStateFile => Path.Combine(AppRoot, "modrinth-state.json");
+    public static string BackupsDirectory => Path.Combine(AppRoot, "backups");
 
     public static string DefaultGameDirectory { get; } = Portable
         ? Path.Combine(AppRoot, "game")
         : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ".nviel");
+
+    /// <summary>New instances live next to the default game folder, not inside launcher binaries.</summary>
+    public static string InstancesDirectory => Path.Combine(DefaultGameDirectory, "instances");
 
     private static string? _bundledMods;
 
@@ -103,5 +107,7 @@ public static class AppPaths
         Directory.CreateDirectory(MigrationBackupsDirectory);
         Directory.CreateDirectory(JavaDirectory);
         Directory.CreateDirectory(UpdateDirectory);
+        Directory.CreateDirectory(BackupsDirectory);
+        Directory.CreateDirectory(InstancesDirectory);
     }
 }

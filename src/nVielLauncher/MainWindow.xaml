@@ -242,14 +242,24 @@
 
                                 <StackPanel>
                                     <Button x:Name="NavHomeButton" Style="{StaticResource NavButton}" Tag="home" Click="Nav_Click"
-                                            Foreground="{StaticResource TextPrimaryBrush}">
+                                            Foreground="{StaticResource TextPrimaryBrush}" ToolTip="Главная (Ctrl+1)">
                                         <StackPanel Orientation="Horizontal">
                                             <Path Data="{StaticResource IconHome}" Width="17" Height="17" Stretch="Uniform"
                                                   Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
                                             <TextBlock Text="Главная" Margin="13,0,0,0" FontSize="13.5" />
                                         </StackPanel>
                                     </Button>
-                                    <Button x:Name="NavModsButton" Style="{StaticResource NavButton}" Tag="mods" Click="Nav_Click" Margin="0,4,0,0">
+                                    <Button x:Name="NavInstancesButton" Style="{StaticResource NavButton}" Tag="instances" Click="Nav_Click"
+                                            Margin="0,4,0,0" ToolTip="Отдельные сборки: моды, миры и конфиги (Ctrl+2)">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource IconInstance}" Width="17" Height="17" Stretch="Uniform"
+                                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                                  StrokeThickness="1.4" StrokeLineJoin="Round" />
+                                            <TextBlock Text="Инстансы" Margin="13,0,0,0" FontSize="13.5" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button x:Name="NavModsButton" Style="{StaticResource NavButton}" Tag="mods" Click="Nav_Click"
+                                            Margin="0,4,0,0" ToolTip="Установленные моды и каталог Modrinth (Ctrl+3)">
                                         <StackPanel Orientation="Horizontal">
                                             <Path Data="{StaticResource IconMods}" Width="17" Height="17" Stretch="Uniform"
                                                   Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
@@ -257,7 +267,8 @@
                                             <TextBlock Text="Моды" Margin="13,0,0,0" FontSize="13.5" />
                                         </StackPanel>
                                     </Button>
-                                    <Button x:Name="NavModpacksButton" Style="{StaticResource NavButton}" Tag="modpacks" Click="Nav_Click" Margin="0,4,0,0">
+                                    <Button x:Name="NavModpacksButton" Style="{StaticResource NavButton}" Tag="modpacks" Click="Nav_Click"
+                                            Margin="0,4,0,0" ToolTip="Сборки Modrinth (Ctrl+4)">
                                         <StackPanel Orientation="Horizontal">
                                             <Path Data="{StaticResource IconPack}" Width="17" Height="17" Stretch="Uniform"
                                                   Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
@@ -265,7 +276,8 @@
                                             <TextBlock Text="Сборки" Margin="13,0,0,0" FontSize="13.5" />
                                         </StackPanel>
                                     </Button>
-                                    <Button x:Name="NavServersButton" Style="{StaticResource NavButton}" Tag="servers" Click="Nav_Click" Margin="0,4,0,0">
+                                    <Button x:Name="NavServersButton" Style="{StaticResource NavButton}" Tag="servers" Click="Nav_Click"
+                                            Margin="0,4,0,0" ToolTip="Сервера (Ctrl+5)">
                                         <StackPanel Orientation="Horizontal">
                                             <Path Data="{StaticResource IconGlobe}" Width="17" Height="17" Stretch="Uniform"
                                                   Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
@@ -273,7 +285,8 @@
                                             <TextBlock Text="Сервера" Margin="13,0,0,0" FontSize="13.5" />
                                         </StackPanel>
                                     </Button>
-                                    <Button x:Name="NavSettingsButton" Style="{StaticResource NavButton}" Tag="settings" Click="Nav_Click" Margin="0,4,0,0">
+                                    <Button x:Name="NavSettingsButton" Style="{StaticResource NavButton}" Tag="settings" Click="Nav_Click"
+                                            Margin="0,4,0,0" ToolTip="Настройки (Ctrl+6 или Ctrl+,)">
                                         <StackPanel Orientation="Horizontal">
                                             <Path Data="{StaticResource IconSettings}" Width="17" Height="17" Stretch="Uniform"
                                                   Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />

@@ -9,7 +9,6 @@ namespace nVielLauncher.Views;
 
 public partial class HomeView : UserControl, IRefreshable
 {
-    private bool _busy;
     private bool _running;
     private bool _ringsStarted;
     private bool _javaChecked;
@@ -35,6 +34,22 @@ public partial class HomeView : UserControl, IRefreshable
             AppendLog("Добро пожаловать в nViel Launcher. Нажми «Играть» — файлы загрузятся автоматически.");
     }
 
+    private static int CountMods(string gameDirectory)
+    {
+        try
+        {
+            var modsDirectory = Path.Combine(gameDirectory, "mods");
+            if (!Directory.Exists(modsDirectory)) return 0;
+            return Directory.EnumerateFiles(modsDirectory).Count(file =>
+                file.EndsWith(".jar", StringComparison.OrdinalIgnoreCase) ||
+                file.EndsWith(".jar.disabled", StringComparison.OrdinalIgnoreCase));
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
     private void StartRings()
     {
         if (_ringsStarted) return;
@@ -57,12 +72,14 @@ public partial class HomeView : UserControl, IRefreshable
 
         NicknameText.Text = nickname;
         NickLine.Text = "Игрок: " + nickname;
-        SubHeader.Text = $"Fabric 1.21.4 · профиль {nickname}";
+        var instanceName = settings.ActiveInstance?.Name ?? "Основная";
+        SubHeader.Text = $"{LauncherService.VersionLabel} · {instanceName} · профиль {nickname}";
         AvatarLetter.Text = nickname[..1].ToUpperInvariant();
 
         ChipRam.Text = $"{settings.RamMb} МБ";
-        StatRam.Text = $"{settings.RamMb} МБ";
-        StatMods.Text = AppServices.Mods.CountBundled().ToString();
+        StatInstance.Text = instanceName;
+        StatInstance.ToolTip = settings.EffectiveGameDirectory;
+        StatMods.Text = CountMods(settings.EffectiveGameDirectory).ToString();
         ChipMods.Text = AppServices.Mods.CountBundled() + " модов";
         LogCard.Visibility = settings.ShowLogOnHome ? Visibility.Visible : Visibility.Collapsed;
 
@@ -78,7 +95,7 @@ public partial class HomeView : UserControl, IRefreshable
             StatLastLaunch.Text = "ещё не было";
         }
 
-        if (!_busy && !_running)
+        if (!_running)
         {
             Progress.Value = 0;
             PercentText.Text = "0%";
@@ -117,93 +134,13 @@ public partial class HomeView : UserControl, IRefreshable
     // ------------------------------------------------------------------ launch
 
     /// <summary>Starts the game (used by "quick join" from the Servers page).</summary>
-    public void BeginLaunch() => Play_Click(this, new RoutedEventArgs());
+    public void BeginLaunch() => (Window.GetWindow(this) as MainWindow)?.StartLaunch();
 
-    private async void Play_Click(object sender, RoutedEventArgs e)
-    {
-        if (_busy || _running || AppServices.Launcher.IsRunning) return;
+    private void Play_Click(object sender, RoutedEventArgs e) =>
+        (Window.GetWindow(this) as MainWindow)?.StartLaunch();
 
-        _busy = true;
-        SetBusyUi(true);
-        AppendLog($"=== Запуск {LauncherService.VersionLabel} ===");
-
-        var progress = new Progress<LaunchProgress>(OnProgress);
-
-        try
-        {
-            await AppServices.Launcher.LaunchAsync(progress, CancellationToken.None);
-            _running = true;
-            SetRunningUi(true);
-        }
-        catch (Exception ex)
-        {
-            AppendLog("ОШИБКА: " + ex.Message);
-            StatusText.Text = "Ошибка запуска";
-            DetailText.Text = ex.Message;
-            PillText.Text = "ОШИБКА";
-            Notify.Show("Ошибка запуска", ex.Message, "error");
-        }
-        finally
-        {
-            _busy = false;
-            SetBusyUi(false);
-        }
-
-        if (_running && AppServices.Settings.Current.CloseLauncherOnLaunch)
-        {
-            AppendLog("Лаунчер закроется через пару секунд...");
-            await Task.Delay(900);
-            Application.Current.Shutdown();
-        }
-    }
-
-    private void OnProgress(LaunchProgress progress)
-    {
-        Progress.Value = progress.Percent;
-        PercentText.Text = $"{progress.Percent:0}%";
-        StatusText.Text = progress.Status;
-
-        if (!string.IsNullOrEmpty(progress.Detail))
-            DetailText.Text = progress.Detail;
-
-        if (!string.IsNullOrEmpty(progress.Log))
-            AppendLog(progress.Log);
-    }
-
-    private void SetBusyUi(bool busy)
-    {
-        PlayButton.IsEnabled = !busy;
-        PlayIcon.Visibility = busy ? Visibility.Collapsed : Visibility.Visible;
-        PlayPercent.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
-        BusyRing.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
-
-        if (busy)
-        {
-            PillText.Text = "УСТАНОВКА";
-            if (BusyRing.RenderTransform is RotateTransform rotate)
-            {
-                rotate.BeginAnimation(RotateTransform.AngleProperty,
-                    new DoubleAnimation(0, 360, TimeSpan.FromSeconds(1.1)) { RepeatBehavior = RepeatBehavior.Forever });
-            }
-
-            var pulse = new DoubleAnimation(1, 0.25, TimeSpan.FromMilliseconds(700))
-            {
-                AutoReverse = true,
-                RepeatBehavior = RepeatBehavior.Forever
-            };
-            StatusDot.BeginAnimation(OpacityProperty, pulse);
-        }
-        else
-        {
-            StatusDot.BeginAnimation(OpacityProperty, null);
-            StatusDot.Opacity = 1;
-            if (BusyRing.RenderTransform is RotateTransform rotate)
-                rotate.BeginAnimation(RotateTransform.AngleProperty, null);
-
-            if (!_running && PillText.Text == "УСТАНОВКА")
-                PillText.Text = "ГОТОВ К ЗАПУСКУ";
-        }
-    }
+    private void Instances_Click(object sender, RoutedEventArgs e) =>
+        (Window.GetWindow(this) as MainWindow)?.NavigateTo("instances");
 
     private void SetRunningUi(bool running)
     {
@@ -233,7 +170,8 @@ public partial class HomeView : UserControl, IRefreshable
         {
             _running = true;
             SetRunningUi(true);
-            Notify.Show("Minecraft", "Игра запущена. Приятной игры!", "success");
+            if ((Window.GetWindow(this) as MainWindow)?.IsPageActive("launch") != true)
+                Notify.Show("Minecraft", "Игра запущена. Приятной игры!", "success");
         });
     }
 
@@ -253,12 +191,15 @@ public partial class HomeView : UserControl, IRefreshable
             PlayIcon.Visibility = Visibility.Visible;
             PlayPercent.Visibility = Visibility.Collapsed;
 
+            var window = Window.GetWindow(this) as MainWindow;
+            if (window?.IsPageActive("launch") == true) return;
+
             if (code == 0)
                 Notify.Show("Minecraft", "Игровой сеанс завершён.", "info");
             else if (code != -1)
             {
                 Notify.Show("Игра завершилась с ошибкой", $"Код выхода {code}. Открываю диагностику.", "error");
-                (Window.GetWindow(this) as MainWindow)?.ShowDiagnostics();
+                window?.ShowDiagnostics();
             }
         });
     }

@@ -7,6 +7,8 @@ public static class AppServices
     private static bool _initialized;
 
     public static SettingsService Settings { get; private set; } = null!;
+    public static InstanceService Instances { get; private set; } = null!;
+    public static BackupService Backups { get; private set; } = null!;
     public static HttpService Http { get; private set; } = null!;
     public static JavaService Java { get; private set; } = null!;
     public static ModsService Mods { get; private set; } = null!;
@@ -24,6 +26,8 @@ public static class AppServices
         Log.Write("nViel Launcher запущен. " + AppPaths.AppRoot);
 
         Settings = new SettingsService();
+        Instances = new InstanceService(Settings);
+        Backups = new BackupService();
         Http = new HttpService();
         Java = new JavaService(Http, Settings);
         Mods = new ModsService();

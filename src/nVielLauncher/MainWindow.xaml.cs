@@ -54,10 +54,13 @@ public partial class MainWindow : Window
             "Ты играешь под оффлайн-ником, лицензия не требуется. Сменить ник можно здесь, на главной или в настройках.",
             "profile"),
         ("Запуск игры",
-            "Нажми большую кнопку на главной — лаунчер проверит файлы, поставит моды и запустит игру. Прогресс показывается прямо на кнопке.",
+            "Нажми большую кнопку на главной — откроется экран запуска с этапами, логом и кнопкой отмены. Лаунчер сам проверит файлы и поставит моды.",
             "play"),
+        ("Инстансы",
+            "Отдельные сборки со своими модами, мирами и настройками. Переключение не трогает остальные инстансы, а общие файлы игры не скачиваются заново.",
+            "instances"),
         ("Моды",
-            "Свои .jar клади в папку mods, либо ищи готовые прямо здесь — на Modrinth. Обязательные зависимости подтянутся сами.",
+            "Свои .jar клади в папку mods, либо ищи готовые прямо здесь — на Modrinth. Конфликты, дубликаты и нехватку зависимостей покажет отдельный экран.",
             "mods"),
         ("Сборки",
             "Новый раздел: готовые сборки Modrinth (.mrpack) ставятся в один клик вместе с конфигами и ресурспаками.",
@@ -89,6 +92,7 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         _navButtons.Add(("home", NavHomeButton));
+        _navButtons.Add(("instances", NavInstancesButton));
         _navButtons.Add(("mods", NavModsButton));
         _navButtons.Add(("modpacks", NavModpacksButton));
         _navButtons.Add(("servers", NavServersButton));
@@ -99,6 +103,7 @@ public partial class MainWindow : Window
         DiagnosticList.ItemsSource = _diagnostics;
 
         Loaded += OnLoaded;
+        PreviewKeyDown += Window_KeyDown;
         Closed += (_, _) =>
         {
             _updateTimer?.Stop();
@@ -338,11 +343,15 @@ public partial class MainWindow : Window
         {
             "login" => CreateLoginPage(),
             "home" => GetPage("home", () => new HomeView()),
+            "instances" => GetPage("instances", () => new InstancesView()),
             "mods" => GetPage("mods", () => new ModsView()),
             "modpacks" => GetPage("modpacks", () => new ModpacksView()),
             "servers" => GetPage("servers", () => new ServersView()),
             "settings" => GetPage("settings", () => new SettingsView()),
             "migration" => GetPage("migration", () => new MigrationView()),
+            "conflicts" => GetPage("conflicts", () => new ModConflictView()),
+            "launch" => GetPage("launch", () => new LaunchView()),
+            "backups" => GetPage("backups", () => new BackupsView()),
             _ => null
         };
 
@@ -381,6 +390,90 @@ public partial class MainWindow : Window
             _migrationFirstRun = false;
             MaybeShowTour();
         }
+    }
+
+    public void NavigateTo(string key) => Navigate(key);
+
+    public bool IsPageActive(string key) =>
+        string.Equals(_currentPage, key, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Opens the dedicated launch screen and starts the game.</summary>
+    public void StartLaunch()
+    {
+        if (_setupActive) return;
+
+        var view = (LaunchView)GetPage("launch", () => new LaunchView());
+        Navigate("launch", animate: true);
+        SetActiveNav("home", animate: true);
+        view.BeginLaunch();
+    }
+
+    public void OpenModConflicts(string returnTo = "mods")
+    {
+        Navigate("conflicts", animate: true);
+        SetActiveNav(returnTo, animate: true);
+    }
+
+    public void OpenModsSearch(string query)
+    {
+        var view = (ModsView)GetPage("mods", () => new ModsView());
+        Navigate("mods", animate: true);
+        SetActiveNav("mods", animate: true);
+        view.SearchFor(query);
+    }
+
+    public void OpenBackups(string returnTo = "settings")
+    {
+        Navigate("backups", animate: true);
+        SetActiveNav(returnTo, animate: true);
+    }
+
+    /// <summary>Called after creating, renaming, deleting or switching an instance.</summary>
+    public void OnInstanceChanged()
+    {
+        RefreshProfile();
+        foreach (var key in new[] { "home", "instances", "mods", "modpacks", "servers", "settings", "conflicts", "backups" })
+        {
+            if (!_pages.TryGetValue(key, out var page) || ReferenceEquals(page, PageHost.Content)) continue;
+            if (page is IRefreshable refreshable) refreshable.Refresh();
+        }
+
+        (PageHost.Content as IRefreshable)?.Refresh();
+    }
+
+    private void Window_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.F5)
+        {
+            (PageHost.Content as IRefreshable)?.Refresh();
+            e.Handled = true;
+            return;
+        }
+
+        if ((Keyboard.Modifiers & ModifierKeys.Control) == 0) return;
+
+        if (e.Key is Key.Enter or Key.Return)
+        {
+            StartLaunch();
+            e.Handled = true;
+            return;
+        }
+
+        var key = e.Key switch
+        {
+            Key.D1 or Key.NumPad1 => "home",
+            Key.D2 or Key.NumPad2 => "instances",
+            Key.D3 or Key.NumPad3 => "mods",
+            Key.D4 or Key.NumPad4 => "modpacks",
+            Key.D5 or Key.NumPad5 => "servers",
+            Key.D6 or Key.NumPad6 => "settings",
+            Key.OemComma => "settings",
+            _ => null
+        };
+
+        if (key is null) return;
+        Navigate(key);
+        e.Handled = true;
     }
 
     /// <summary>
@@ -428,7 +521,16 @@ public partial class MainWindow : Window
 
     private void SetActiveNav(string key, bool animate)
     {
-        var index = key switch { "home" => 0, "mods" => 1, "modpacks" => 2, "servers" => 3, "settings" => 4, _ => -1 };
+        var index = key switch
+        {
+            "home" => 0,
+            "instances" => 1,
+            "mods" => 2,
+            "modpacks" => 3,
+            "servers" => 4,
+            "settings" => 5,
+            _ => -1
+        };
 
         var activeBrush = (Brush)FindResource("TextPrimaryBrush");
         var idleBrush = (Brush)FindResource("TextSecondaryBrush");
@@ -472,8 +574,7 @@ public partial class MainWindow : Window
         server.LastPlayedUtc = DateTime.UtcNow;
         AppServices.Settings.Save();
 
-        Navigate("home", animate: true);
-        (PageHost.Content as HomeView)?.BeginLaunch();
+        StartLaunch();
     }
 
     // ------------------------------------------------------------------ profiles
@@ -814,6 +915,7 @@ public partial class MainWindow : Window
     private FrameworkElement? ResolveTourTarget(string key) => key switch
     {
         "profile" => ProfileName,
+        "instances" => NavInstancesButton,
         "mods" => NavModsButton,
         "modpacks" => NavModpacksButton,
         "servers" => NavServersButton,

@@ -32,25 +32,38 @@ public sealed class MinecraftInstaller
         _http = http;
     }
 
+    public Task<LaunchPlan> EnsureAsync(
+        string gameDirectory,
+        IProgress<LaunchProgress> progress,
+        CancellationToken ct) =>
+        EnsureAsync(gameDirectory, gameDirectory, progress, ct);
+
+    /// <summary>
+    /// Installs shared runtime files (versions, libraries, assets, natives) into
+    /// <paramref name="runtimeDirectory"/> while pointing the game at
+    /// <paramref name="gameDirectory"/> (the active instance).
+    /// </summary>
     public async Task<LaunchPlan> EnsureAsync(
         string gameDirectory,
+        string runtimeDirectory,
         IProgress<LaunchProgress> progress,
         CancellationToken ct)
     {
         Directory.CreateDirectory(gameDirectory);
+        Directory.CreateDirectory(runtimeDirectory);
         progress.Report(new LaunchProgress(0, "Подготовка", "Minecraft 1.21.4 · Fabric"));
 
-        var baseVersion = await LoadBaseVersionAsync(gameDirectory, progress, ct);
+        var baseVersion = await LoadBaseVersionAsync(runtimeDirectory, progress, ct);
         progress.Report(new LaunchProgress(3, "Версия найдена", "Minecraft " + baseVersion.Id));
 
-        var (fabricProfile, loaderVersion) = await LoadFabricAsync(gameDirectory, progress, ct);
+        var (fabricProfile, loaderVersion) = await LoadFabricAsync(runtimeDirectory, progress, ct);
         var versionName = string.IsNullOrWhiteSpace(fabricProfile.Id)
             ? $"fabric-loader-{loaderVersion}-{MinecraftVersion}"
             : fabricProfile.Id;
 
         progress.Report(new LaunchProgress(5, "Fabric готов", $"Загрузчик {loaderVersion}"));
 
-        var versionDir = Path.Combine(gameDirectory, "versions", MinecraftVersion);
+        var versionDir = Path.Combine(runtimeDirectory, "versions", MinecraftVersion);
         var clientJar = Path.Combine(versionDir, $"{MinecraftVersion}.jar");
         var clientDownload = baseVersion.Downloads?.Client
                              ?? throw new InvalidOperationException("В манифесте нет клиента Minecraft.");
@@ -78,7 +91,7 @@ public sealed class MinecraftInstaller
                 if (nativeJar is not null && !string.IsNullOrWhiteSpace(nativeJar.Url))
                 {
                     var relative = nativeJar.Path ?? MavenPath(library.Name);
-                    var destination = Path.Combine(gameDirectory, "libraries", relative.Replace('/', Path.DirectorySeparatorChar));
+                    var destination = Path.Combine(runtimeDirectory, "libraries", relative.Replace('/', Path.DirectorySeparatorChar));
 
                     AddDownload(downloads, seenPaths, nativeJar, destination);
                     natives.Add(new NativeItem(destination, library.Extract?.Exclude ?? new List<string>()));
@@ -91,7 +104,7 @@ public sealed class MinecraftInstaller
             if (artifact is not null && !string.IsNullOrWhiteSpace(artifact.Url))
             {
                 var relative = artifact.Path ?? MavenPath(library.Name);
-                var destination = Path.Combine(gameDirectory, "libraries", relative.Replace('/', Path.DirectorySeparatorChar));
+                var destination = Path.Combine(runtimeDirectory, "libraries", relative.Replace('/', Path.DirectorySeparatorChar));
 
                 if (!classpath.Contains(destination, StringComparer.OrdinalIgnoreCase))
                     classpath.Add(destination);
@@ -102,7 +115,7 @@ public sealed class MinecraftInstaller
             {
                 // Fabric (and some other) libraries only provide a Maven repo + name, without a downloads block.
                 var relative = MavenPath(library.Name);
-                var destination = Path.Combine(gameDirectory, "libraries", relative.Replace('/', Path.DirectorySeparatorChar));
+                var destination = Path.Combine(runtimeDirectory, "libraries", relative.Replace('/', Path.DirectorySeparatorChar));
 
                 if (!classpath.Contains(destination, StringComparer.OrdinalIgnoreCase))
                     classpath.Add(destination);
@@ -126,7 +139,7 @@ public sealed class MinecraftInstaller
                 !string.IsNullOrWhiteSpace(nativeArtifact.Url))
             {
                 var relative = nativeArtifact.Path ?? MavenPath(library.Name, classifier);
-                var destination = Path.Combine(gameDirectory, "libraries", relative.Replace('/', Path.DirectorySeparatorChar));
+                var destination = Path.Combine(runtimeDirectory, "libraries", relative.Replace('/', Path.DirectorySeparatorChar));
 
                 AddDownload(downloads, seenPaths, nativeArtifact, destination);
                 natives.Add(new NativeItem(destination, library.Extract?.Exclude ?? new List<string>()));
@@ -135,7 +148,7 @@ public sealed class MinecraftInstaller
 
         await DownloadParallelAsync(downloads, 8, 12, 36, "Библиотеки", progress, ct);
 
-        var assetsDirectory = Path.Combine(gameDirectory, "assets");
+        var assetsDirectory = Path.Combine(runtimeDirectory, "assets");
         var assetIndex = baseVersion.AssetIndex
                          ?? throw new InvalidOperationException("В версии нет индекса ресурсов.");
 
@@ -156,7 +169,7 @@ public sealed class MinecraftInstaller
 
         progress.Report(new LaunchProgress(90, "Нативные библиотеки", "Распаковка"));
 
-        var nativesDirectory = Path.Combine(gameDirectory, "natives", versionName);
+        var nativesDirectory = Path.Combine(runtimeDirectory, "natives", versionName);
         ExtractNatives(natives, nativesDirectory);
         progress.Report(new LaunchProgress(95, "Нативные библиотеки", "Готово"));
 
@@ -180,6 +193,7 @@ public sealed class MinecraftInstaller
             FabricProfile = fabricProfile,
             VersionName = versionName,
             GameDirectory = gameDirectory,
+            RuntimeDirectory = runtimeDirectory,
             ClientJar = clientJar,
             Classpath = classpath.Append(clientJar).ToList(),
             NativesDirectory = nativesDirectory,

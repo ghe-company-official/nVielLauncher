@@ -85,6 +85,10 @@ public partial class SettingsView : UserControl, IRefreshable
         RamValueText.Text = $"{settings.RamMb} МБ";
 
         GameDirText.Text = settings.EffectiveGameDirectory;
+        var activeInstance = settings.ActiveInstance;
+        GameDirCaptionText.Text = activeInstance is null
+            ? "Миры, моды и конфиги активного инстанса."
+            : $"Инстанс «{activeInstance.Name}» · миры, моды и конфиги. Общие файлы игры хранятся отдельно.";
 
         CloseLauncherToggle.IsChecked = settings.CloseLauncherOnLaunch;
         FullscreenToggle.IsChecked = settings.Fullscreen;
@@ -463,8 +467,20 @@ public partial class SettingsView : UserControl, IRefreshable
 
         if (dialog.ShowDialog() != true) return;
 
-        settings.GameDirectory = dialog.FolderName;
+        var instance = settings.ActiveInstance;
+        if (instance is null || instance.IsDefault)
+        {
+            settings.GameDirectory = dialog.FolderName;
+            if (instance is not null)
+                instance.Directory = dialog.FolderName;
+        }
+        else
+        {
+            instance.Directory = dialog.FolderName;
+        }
+
         AppServices.Settings.Save();
+        (Window.GetWindow(this) as MainWindow)?.OnInstanceChanged();
 
         GameDirText.Text = settings.EffectiveGameDirectory;
         ShowToast();
@@ -472,6 +488,12 @@ public partial class SettingsView : UserControl, IRefreshable
 
     private void OpenGameDir_Click(object sender, RoutedEventArgs e)
         => ShellHelper.OpenFolder(AppServices.Settings.Current.EffectiveGameDirectory);
+
+    private void OpenInstances_Click(object sender, RoutedEventArgs e)
+        => (Window.GetWindow(this) as MainWindow)?.NavigateTo("instances");
+
+    private void OpenBackups_Click(object sender, RoutedEventArgs e)
+        => (Window.GetWindow(this) as MainWindow)?.OpenBackups("settings");
 
     private void OpenModsFolder_Click(object sender, RoutedEventArgs e)
         => ShellHelper.OpenFolder(AppServices.Mods.BundledDirectory);
@@ -594,6 +616,9 @@ public partial class SettingsView : UserControl, IRefreshable
         settings.ResolutionWidth = 1280;
         settings.ResolutionHeight = 720;
         settings.GameDirectory = AppPaths.DefaultGameDirectory;
+        settings.EnsureInstances();
+        if (settings.Instances.FirstOrDefault(i => i.IsDefault) is { } defaultInstance)
+            defaultInstance.Directory = AppPaths.DefaultGameDirectory;
 
         AppServices.Settings.Save();
         Refresh();

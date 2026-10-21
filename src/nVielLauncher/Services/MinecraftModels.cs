@@ -166,6 +166,7 @@ public sealed class LaunchPlan
     public required VersionDetails FabricProfile { get; init; }
     public required string VersionName { get; init; }
     public required string GameDirectory { get; init; }
+    public required string RuntimeDirectory { get; init; }
     public required string ClientJar { get; init; }
     public required List<string> Classpath { get; init; }
     public required string NativesDirectory { get; init; }

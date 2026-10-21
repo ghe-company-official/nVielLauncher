@@ -72,7 +72,9 @@ public sealed class LauncherService
             throw new InvalidOperationException("Ник должен быть от 3 до 16 символов: A-Z, 0-9 и _.");
 
         var gameDirectory = settings.EffectiveGameDirectory;
+        var runtimeDirectory = settings.SharedRuntimeDirectory;
         Directory.CreateDirectory(gameDirectory);
+        Directory.CreateDirectory(runtimeDirectory);
 
         progress.Report(new LaunchProgress(0, "Подготовка", "nViel Launcher · " + VersionLabel));
 
@@ -84,7 +86,7 @@ public sealed class LauncherService
         // 2. Minecraft + Fabric + assets
         var installProgress = new Progress<LaunchProgress>(p =>
             progress.Report(p with { Percent = 10 + p.Percent * 0.85 }));
-        var plan = await _installer.EnsureAsync(gameDirectory, installProgress, ct);
+        var plan = await _installer.EnsureAsync(gameDirectory, runtimeDirectory, installProgress, ct);
 
         // 3. Bundled mods
         var modsProgress = new Progress<LaunchProgress>(p =>
@@ -106,6 +108,7 @@ public sealed class LauncherService
         var arguments = BuildArguments(plan, java, settings, nickname);
         Log.Write($"Запуск: {java.JavawExe} ({arguments.Count} аргументов)");
         Log.Write($"Игровая папка: {gameDirectory}");
+        Log.Write($"Общие файлы игры: {runtimeDirectory}");
 
         var startInfo = new ProcessStartInfo
         {
@@ -133,6 +136,8 @@ public sealed class LauncherService
             progress.Report(new LaunchProgress(100, "Игра запущена", "Приятной игры!"));
 
             _settings.Current.LastLaunchUtc = DateTime.UtcNow;
+            if (_settings.Current.ActiveInstance is { } activeInstance)
+                activeInstance.LastPlayedUtc = DateTime.UtcNow;
             if (_settings.Current.QuickJoinHost is not null)
                 _settings.Current.QuickJoinHost = null;
             _settings.Save();
@@ -198,7 +203,7 @@ public sealed class LauncherService
             ["launcher_version"] = AppInfo.VersionLabel,
             ["classpath"] = classpath,
             ["classpath_separator"] = ";",
-            ["library_directory"] = Path.Combine(plan.GameDirectory, "libraries"),
+            ["library_directory"] = Path.Combine(plan.RuntimeDirectory, "libraries"),
             ["user_properties"] = "{}",
             ["clientid"] = "0",
             ["auth_xuid"] = "0",

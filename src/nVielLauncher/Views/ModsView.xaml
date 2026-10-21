@@ -116,6 +116,7 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <TextBox x:Name="SearchBox" Style="{StaticResource InputBox}" Tag="Название мода на Modrinth..."
@@ -124,9 +125,12 @@
                             Margin="8,0,0,0" VerticalAlignment="Center" Click="Managed_Click" />
                     <Button Grid.Column="2" x:Name="DependenciesButton" Style="{StaticResource SmallGhostButton}" Content="Зависимости"
                             Margin="8,0,0,0" VerticalAlignment="Center" Click="CheckDependencies_Click" />
-                    <Button Grid.Column="3" Style="{StaticResource SmallGhostButton}" Content="Найти"
+                    <Button Grid.Column="3" x:Name="ConflictsButton" Style="{StaticResource SmallGhostButton}" Content="Конфликты"
+                            Margin="8,0,0,0" VerticalAlignment="Center" Click="Conflicts_Click"
+                            ToolTip="Дубликаты, несовместимости и нехватка зависимостей" />
+                    <Button Grid.Column="4" Style="{StaticResource SmallGhostButton}" Content="Найти"
                             Margin="8,0,0,0" VerticalAlignment="Center" Click="Search_Click" />
-                    <Button Grid.Column="4" x:Name="BackButton" Style="{StaticResource SmallGhostButton}" Content="Мои моды"
+                    <Button Grid.Column="5" x:Name="BackButton" Style="{StaticResource SmallGhostButton}" Content="Мои моды"
                             Margin="8,0,0,0" VerticalAlignment="Center" Visibility="Collapsed" Click="BackToLocal_Click" />
                 </Grid>
 

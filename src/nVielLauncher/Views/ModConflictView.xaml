@@ -1,0 +1,167 @@
+<UserControl x:Class="nVielLauncher.Views.ModConflictView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FontFamily="{StaticResource TextFont}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="2,6,2,18">
+            <StackPanel>
+                <TextBlock Text="Конфликты модов" Style="{StaticResource SectionTitle}" />
+                <TextBlock x:Name="SubHeader" Text="Проверка fabric.mod.json внутри установленных jar"
+                           FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,5,0,0" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button Style="{StaticResource GhostButton}" Click="OpenFolder_Click" ToolTip="Открыть папку mods активного инстанса">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="{StaticResource IconFolder}" Width="13" Height="13" Stretch="Uniform"
+                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                              StrokeThickness="1.4" StrokeLineJoin="Round" />
+                        <TextBlock Text="Папка модов" Margin="7,0,0,0" />
+                    </StackPanel>
+                </Button>
+                <Button x:Name="DependenciesButton" Style="{StaticResource GhostButton}" Click="Dependencies_Click"
+                        Margin="8,0,0,0" ToolTip="Попробовать подтянуть обязательные зависимости из Modrinth">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="{StaticResource IconPack}" Width="13" Height="13" Stretch="Uniform"
+                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                              StrokeThickness="1.4" StrokeLineJoin="Round" />
+                        <TextBlock Text="Зависимости" Margin="7,0,0,0" />
+                    </StackPanel>
+                </Button>
+                <Button x:Name="RefreshButton" Style="{StaticResource PrimaryButton}" Click="Refresh_Click"
+                        Margin="8,0,0,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="{StaticResource IconRefresh}" Width="13" Height="13" Stretch="Uniform"
+                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                              StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                        <TextBlock Text="Проверить" Margin="7,0,0,0" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <Border Grid.Row="1" Style="{StaticResource Card}" Padding="18,15">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="ОШИБКИ" Style="{StaticResource Overline}" />
+                    <TextBlock x:Name="ErrorCount" Text="0" FontSize="26" FontWeight="SemiBold"
+                               FontFamily="{StaticResource DisplayFont}" Margin="0,3,0,0" />
+                    <TextBlock Text="мешают запуску" FontSize="9.5" Foreground="{StaticResource TextMutedBrush}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="ПРЕДУПРЕЖДЕНИЯ" Style="{StaticResource Overline}" />
+                    <TextBlock x:Name="WarningCount" Text="0" FontSize="26" FontWeight="SemiBold"
+                               FontFamily="{StaticResource DisplayFont}" Margin="0,3,0,0" />
+                    <TextBlock Text="лучше исправить" FontSize="9.5" Foreground="{StaticResource TextMutedBrush}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="ПРОВЕРЕНО" Style="{StaticResource Overline}" />
+                    <TextBlock x:Name="CheckedCount" Text="0" FontSize="26" FontWeight="SemiBold"
+                               FontFamily="{StaticResource DisplayFont}" Margin="0,3,0,0" />
+                    <TextBlock x:Name="CheckedHint" Text="jar-файлов" FontSize="9.5" Foreground="{StaticResource TextMutedBrush}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="3">
+                    <TextBlock Text="ОТКЛЮЧЕНО" Style="{StaticResource Overline}" />
+                    <TextBlock x:Name="DisabledCount" Text="0" FontSize="26" FontWeight="SemiBold"
+                               FontFamily="{StaticResource DisplayFont}" Margin="0,3,0,0" />
+                    <TextBlock Text="файлов .disabled" FontSize="9.5" Foreground="{StaticResource TextMutedBrush}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <StackPanel Grid.Row="2" Margin="2,14,2,10">
+            <ProgressBar x:Name="ScanProgress" Style="{StaticResource SlimProgress}" IsIndeterminate="True"
+                         Visibility="Collapsed" Margin="0,0,0,8" />
+            <TextBlock x:Name="ScanStatus" Text="" FontSize="10.5"
+                       Foreground="{StaticResource TextSecondaryBrush}" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+                <ItemsControl x:Name="IssueList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource Card}" Padding="15,13" Margin="0,0,0,9"
+                                    BorderBrush="{Binding Border}" Background="{Binding Background}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border Width="32" Height="32" CornerRadius="10" Background="#16FFFFFF"
+                                            BorderBrush="{Binding Border}" BorderThickness="1" VerticalAlignment="Top">
+                                        <Path Data="{StaticResource IconWarning}" Width="15" Height="15" Stretch="Uniform"
+                                              Stroke="{Binding Accent}" StrokeThickness="1.4" StrokeLineJoin="Round"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+
+                                    <StackPanel Grid.Column="1" Margin="12,0,14,0">
+                                        <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold"
+                                                   TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding Detail}" FontSize="10.5"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   TextWrapping="Wrap" Margin="0,4,0,0" />
+                                        <TextBlock Text="{Binding File}" FontSize="9.5" Foreground="{StaticResource TextMutedBrush}"
+                                                   TextWrapping="Wrap" Margin="0,4,0,0" />
+                                    </StackPanel>
+
+                                    <Button Grid.Column="2" Style="{StaticResource SmallGhostButton}"
+                                            Content="{Binding ActionLabel}" Tag="{Binding}"
+                                            Click="Action_Click" Visibility="{Binding ActionVisibility}"
+                                            VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Border x:Name="EmptyState" Style="{StaticResource Card}" Padding="28,30" Visibility="Collapsed">
+                    <StackPanel HorizontalAlignment="Center">
+                        <Border Width="52" Height="52" CornerRadius="16" Background="#10FFFFFF"
+                                BorderBrush="#22FFFFFF" BorderThickness="1" HorizontalAlignment="Center">
+                            <Path Data="{StaticResource IconCheck}" Width="24" Height="24" Stretch="Uniform"
+                                  Stroke="{StaticResource TextPrimaryBrush}" StrokeThickness="1.8"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock Text="Конфликтов не найдено" FontSize="16" FontWeight="SemiBold"
+                                   FontFamily="{StaticResource DisplayFont}" HorizontalAlignment="Center" Margin="0,14,0,0" />
+                        <TextBlock x:Name="EmptyHint" Text="Все обязательные зависимости на месте, дубликатов нет."
+                                   FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                   HorizontalAlignment="Center" Margin="0,5,0,0" TextAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Row="4" Style="{StaticResource InsetCard}" Padding="14,10" Margin="0,12,0,0">
+            <Grid>
+                <TextBlock x:Name="FootNote" Text="Проверка читает только fabric.mod.json и не меняет файлы без твоего действия."
+                           FontSize="10" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                <TextBlock x:Name="LastScanText" Text="" HorizontalAlignment="Right" VerticalAlignment="Center"
+                           FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

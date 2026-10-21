@@ -407,15 +407,17 @@
                         </Border>
 
                         <StackPanel Grid.Column="1" Margin="12,0,16,0">
-                            <TextBlock Text="Папка игры" Style="{StaticResource CardTitle}" />
+                            <TextBlock Text="Папка активного инстанса" Style="{StaticResource CardTitle}" />
                             <TextBlock x:Name="GameDirText" Text="—" FontSize="11.5" Margin="0,8,0,0"
                                        Foreground="{StaticResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
-                            <TextBlock Style="{StaticResource Caption}" Margin="0,5,0,0"
-                                       Text="Версии, ресурсы, миры и папка mods." />
+                            <TextBlock x:Name="GameDirCaptionText" Style="{StaticResource Caption}" Margin="0,5,0,0"
+                                       Text="Миры, моды и конфиги этого инстанса. Общие файлы игры хранятся отдельно." />
                         </StackPanel>
 
                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button Style="{StaticResource SmallGhostButton}" Content="Изменить" Click="BrowseGameDir_Click" />
+                            <Button x:Name="OpenInstancesButton" Style="{StaticResource SmallGhostButton}" Content="Инстансы"
+                                    Click="OpenInstances_Click" />
+                            <Button Style="{StaticResource SmallGhostButton}" Content="Изменить" Margin="8,0,0,0" Click="BrowseGameDir_Click" />
                             <Button Style="{StaticResource SmallGhostButton}" Content="Открыть" Margin="8,0,0,0" Click="OpenGameDir_Click" />
                         </StackPanel>
                     </Grid>
@@ -593,6 +595,34 @@
 
                         <Button Grid.Column="2" Style="{StaticResource SmallGhostButton}" Content="Открыть"
                                 Padding="16,9" VerticalAlignment="Center" Click="OpenMigration_Click" />
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Padding="20,18" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource IconTile}" Width="34" Height="34" CornerRadius="10" VerticalAlignment="Top">
+                            <Path Data="{StaticResource IconDisk}" Width="16" Height="16" Stretch="Uniform"
+                                  Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                                  StrokeLineJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+
+                        <StackPanel Grid.Column="1" Margin="12,0,16,0">
+                            <TextBlock Text="Резервные копии" Style="{StaticResource CardTitle}" />
+                            <TextBlock Text="Миры, конфиги, options.txt и servers.dat активного инстанса. Копию можно создать вручную или автоматически перед запуском."
+                                       FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"
+                                       Margin="0,5,0,0" />
+                            <TextBlock Text="Хранятся последние копии — старые удаляются автоматически."
+                                       Style="{StaticResource Caption}" Margin="0,5,0,0" />
+                        </StackPanel>
+
+                        <Button x:Name="OpenBackupsButton" Grid.Column="2" Style="{StaticResource SmallGhostButton}"
+                                Content="Открыть" Padding="16,9" VerticalAlignment="Center" Click="OpenBackups_Click" />
                     </Grid>
                 </Border>
 
