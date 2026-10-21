@@ -40,6 +40,9 @@ public partial class MainWindow : Window
     private readonly HashSet<string> _promptedUpdateTags = new(StringComparer.OrdinalIgnoreCase);
     private bool _updateDialogOpen;
     private bool _migrationPromptShown;
+    private bool _migrationShown;
+    private bool _migrationFirstRun;
+    private string _migrationReturnPage = "home";
     private DispatcherTimer? _updateTimer;
 
     private static readonly (string Title, string Body, string Target)[] TourSteps =
@@ -125,7 +128,11 @@ public partial class MainWindow : Window
         if (AppServices.Settings.Current.SetupCompleted)
             await MaybeShowMigrationAsync();
 
-        MaybeShowTour();
+        // The first-run tour waits until the migration page is closed, otherwise
+        // its spotlight would sit on top of the import controls.
+        if (!_migrationShown)
+            MaybeShowTour();
+
         _ = CheckForUpdatesAsync();
         StartUpdateTimer();
     }
@@ -153,23 +160,15 @@ public partial class MainWindow : Window
             .ToList();
         if (actionable.Count == 0) return;
 
-        // Only consume the one-time offer when the window is actually shown.
-        // If no supported launcher was found yet, a later launch can offer it.
+        // Only consume the one-time offer when the page is actually shown. If no
+        // supported launcher was found yet, a later launch can offer it.
         settings.LauncherMigrationOffered = true;
         AppServices.Settings.Save();
 
         Log.Write("MIGRATION: найдено лаунчеров: " + actionable.Count);
-        var window = new MigrationWindow(actionable, settings.EffectiveGameDirectory)
-        {
-            Owner = this
-        };
-        window.ShowDialog();
-
-        if (window.DataImported)
-        {
-            Log.Write("MIGRATION: данные импортированы в " + settings.EffectiveGameDirectory);
-            (PageHost.Content as IRefreshable)?.Refresh();
-        }
+        _migrationShown = true;
+        _migrationFirstRun = true;
+        OpenMigration("home", actionable, firstRun: true);
     }
 
     private void StartUpdateTimer()
@@ -343,10 +342,13 @@ public partial class MainWindow : Window
             "modpacks" => GetPage("modpacks", () => new ModpacksView()),
             "servers" => GetPage("servers", () => new ServersView()),
             "settings" => GetPage("settings", () => new SettingsView()),
+            "migration" => GetPage("migration", () => new MigrationView()),
             _ => null
         };
 
         if (view is null) return;
+
+        var wasMigration = _currentPage == "migration";
 
         (view as IRefreshable)?.Refresh();
 
@@ -371,6 +373,42 @@ public partial class MainWindow : Window
 
         _currentPage = key;
         SetActiveNav(key, animate);
+
+        // The first-run migration page is part of onboarding: once the player
+        // leaves it, the tour can safely start.
+        if (wasMigration && key != "migration" && _migrationFirstRun)
+        {
+            _migrationFirstRun = false;
+            MaybeShowTour();
+        }
+    }
+
+    /// <summary>
+    /// Opens the migration UI inside the launcher instead of a separate window.
+    /// </summary>
+    public void OpenMigration(string returnTo = "home",
+        IReadOnlyList<DetectedLauncher>? launchers = null, bool firstRun = false)
+    {
+        _migrationReturnPage = returnTo;
+        _migrationFirstRun = firstRun;
+
+        var view = (MigrationView)GetPage("migration", () => new MigrationView());
+        if (launchers is not null)
+            view.SetPreloaded(launchers);
+
+        view.Finished -= OnMigrationFinished;
+        view.Finished += OnMigrationFinished;
+
+        Navigate("migration");
+        SetActiveNav(returnTo, animate: true);
+    }
+
+    private void OnMigrationFinished(object? sender, EventArgs e)
+    {
+        if (sender is MigrationView { DataImported: true })
+            Log.Write("MIGRATION: данные импортированы в " + AppServices.Settings.Current.EffectiveGameDirectory);
+
+        Navigate(_migrationReturnPage, animate: true);
     }
 
     private UserControl CreateLoginPage()

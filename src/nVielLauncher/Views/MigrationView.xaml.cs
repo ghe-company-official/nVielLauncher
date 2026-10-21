@@ -2,41 +2,116 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
-using System.Windows.Input;
+using System.Windows.Controls;
 using Microsoft.Win32;
 using nVielLauncher.Services;
 
 namespace nVielLauncher.Views;
 
 /// <summary>
-/// First-run import prompt: copies useful data from other launchers, can create
-/// an export archive, and only opens the official uninstallers after a backup.
+/// In-launcher data migration page: finds other launchers, copies useful data,
+/// creates an export archive, and opens official uninstallers after a backup.
 /// </summary>
-public partial class MigrationWindow : Window
+public partial class MigrationView : UserControl, IRefreshable
 {
-    private readonly ObservableCollection<DetectedLauncher> _launchers;
-    private readonly string _targetDirectory;
+    private ObservableCollection<DetectedLauncher> _launchers = new();
     private CancellationTokenSource? _cts;
     private bool _busy;
+    private bool _discovering;
+    private bool _skipNextRefresh;
 
-    public MigrationWindow(IReadOnlyList<DetectedLauncher> launchers, string targetDirectory)
+    public MigrationView()
     {
         InitializeComponent();
-
-        _targetDirectory = targetDirectory;
-        _launchers = new ObservableCollection<DetectedLauncher>(launchers);
-
-        foreach (var launcher in _launchers)
-            launcher.PropertyChanged += Launcher_PropertyChanged;
-
         LauncherList.ItemsSource = _launchers;
-        EmptyPanel.Visibility = _launchers.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        UpdateSelectionState();
+        ShowEmpty("Ищу старые лаунчеры...", "Проверяю известные лаунчеры и их папки.", showRetry: false);
     }
 
     public bool DataImported { get; private set; }
 
     public bool LaunchersRemoved { get; private set; }
+
+    public event EventHandler? Finished;
+
+    /// <summary>Uses an already discovered list (first-run path) instead of scanning twice.</summary>
+    public void SetPreloaded(IReadOnlyList<DetectedLauncher> launchers)
+    {
+        ApplyLaunchers(launchers);
+        _skipNextRefresh = true;
+    }
+
+    public void Refresh()
+    {
+        if (_skipNextRefresh)
+        {
+            _skipNextRefresh = false;
+            return;
+        }
+
+        if (_busy || _discovering) return;
+        _ = DiscoverAsync();
+    }
+
+    private async Task DiscoverAsync()
+    {
+        _discovering = true;
+        LauncherList.Visibility = Visibility.Collapsed;
+        ShowEmpty("Ищу старые лаунчеры...", "Проверяю известные лаунчеры и их папки.", showRetry: false);
+        UpdateSelectionState();
+
+        try
+        {
+            var found = await Task.Run(LauncherDiscovery.Discover);
+            var actionable = found
+                .Where(l => l.DataRoots.Count > 0 || l.CanUninstall)
+                .ToList();
+            ApplyLaunchers(actionable);
+        }
+        catch (Exception ex)
+        {
+            Log.Write("MIGRATION: поиск лаунчеров не удался: " + ex);
+            ShowEmpty("Не удалось проверить лаунчеры",
+                "Подробности в журнале. Попробуй ещё раз.", showRetry: true);
+        }
+        finally
+        {
+            _discovering = false;
+            UpdateSelectionState();
+        }
+    }
+
+    private void ApplyLaunchers(IReadOnlyList<DetectedLauncher> launchers)
+    {
+        foreach (var launcher in _launchers)
+            launcher.PropertyChanged -= Launcher_PropertyChanged;
+
+        _launchers = new ObservableCollection<DetectedLauncher>(launchers);
+        foreach (var launcher in _launchers)
+            launcher.PropertyChanged += Launcher_PropertyChanged;
+
+        LauncherList.ItemsSource = _launchers;
+
+        if (_launchers.Count == 0)
+        {
+            ShowEmpty("Старые лаунчеры с данными не найдены",
+                "Если лаунчер появится позже, нажми «Проверить снова».", showRetry: true);
+        }
+        else
+        {
+            EmptyPanel.Visibility = Visibility.Collapsed;
+            LauncherList.Visibility = Visibility.Visible;
+        }
+
+        UpdateSelectionState();
+    }
+
+    private void ShowEmpty(string title, string subtitle, bool showRetry)
+    {
+        EmptyTitle.Text = title;
+        EmptySubtitle.Text = subtitle;
+        RetryButton.Visibility = showRetry ? Visibility.Visible : Visibility.Collapsed;
+        EmptyPanel.Visibility = Visibility.Visible;
+    }
 
     private void Launcher_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -50,18 +125,20 @@ public partial class MigrationWindow : Window
     private void UpdateSelectionState()
     {
         var selected = Selected;
-        var count = selected.Count;
         var hasData = selected.Any(l => l.DataRoots.Count > 0);
+        var canRemove = selected.Any(l => l.CanUninstall);
 
-        ImportButton.IsEnabled = !_busy && hasData;
-        ExportButton.IsEnabled = !_busy && hasData;
-        RemoveButton.IsEnabled = !_busy && selected.Any(l => l.CanUninstall);
+        ImportButton.IsEnabled = !_busy && !_discovering && hasData;
+        ExportButton.IsEnabled = !_busy && !_discovering && hasData;
+        RemoveButton.IsEnabled = !_busy && !_discovering && canRemove;
+        RemoveButton.Visibility = canRemove ? Visibility.Visible : Visibility.Collapsed;
+        CountBadge.Text = _launchers.Count.ToString();
 
-        if (!_busy)
+        if (!_busy && !_discovering)
         {
-            StatusText.Visibility = count == 0 ? Visibility.Collapsed : Visibility.Visible;
-            if (count > 0)
-                StatusText.Text = $"Выбрано: {count}";
+            StatusText.Visibility = selected.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+            if (selected.Count > 0)
+                StatusText.Text = $"Выбрано: {selected.Count}";
         }
     }
 
@@ -74,7 +151,8 @@ public partial class MigrationWindow : Window
         ResourcePacksCheck.IsEnabled = !busy;
         ShaderPacksCheck.IsEnabled = !busy;
         ConfigsCheck.IsEnabled = !busy;
-        CloseButton.IsEnabled = !busy;
+        BackButton.IsEnabled = !busy;
+        RetryButton.IsEnabled = !busy;
         LaterButton.Content = busy ? "Отмена" : "Позже";
         WorkProgress.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
 
@@ -120,7 +198,8 @@ public partial class MigrationWindow : Window
         {
             var progress = new Progress<string>(text => StatusText.Text = text);
             var summary = await LauncherMigrationService.ImportAsync(
-                selected, _targetDirectory, ReadOptions(), progress, _cts.Token);
+                selected, AppServices.Settings.Current.EffectiveGameDirectory,
+                ReadOptions(), progress, _cts.Token);
 
             var total = summary.Worlds + summary.Mods + summary.ResourcePacks +
                         summary.ShaderPacks + summary.ConfigFiles;
@@ -175,7 +254,7 @@ public partial class MigrationWindow : Window
             InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
         };
 
-        if (dialog.ShowDialog(this) != true) return;
+        if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
 
         _cts = new CancellationTokenSource();
         SetBusy(true, "Создаю архив...");
@@ -218,7 +297,7 @@ public partial class MigrationWindow : Window
         }
 
         var names = string.Join("\n", removable.Select(l => "• " + l.Name));
-        var answer = MessageBox.Show(this,
+        var answer = MessageBox.Show(Window.GetWindow(this),
             "Удалить выбранные лаунчеры?\n\n" + names + "\n\n" +
             "Сначала будет создана резервная копия их данных. Затем откроются штатные " +
             "деинсталляторы — подтверди удаление в каждом окне. nViel не удаляет файлы напрямую.",
@@ -274,13 +353,13 @@ public partial class MigrationWindow : Window
         }
     }
 
-    private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        if (e.LeftButton == MouseButtonState.Pressed)
-            DragMove();
-    }
+    private void Retry_Click(object sender, RoutedEventArgs e) => Refresh();
 
-    private void Close_Click(object sender, RoutedEventArgs e)
+    private void Back_Click(object sender, RoutedEventArgs e) => Finish();
+
+    private void Later_Click(object sender, RoutedEventArgs e) => Finish();
+
+    private void Finish()
     {
         if (_busy)
         {
@@ -290,30 +369,6 @@ public partial class MigrationWindow : Window
             return;
         }
 
-        Close();
-    }
-
-    private void Window_KeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Key != Key.Escape) return;
-
-        if (_busy)
-        {
-            _cts?.Cancel();
-            StatusText.Visibility = Visibility.Visible;
-            StatusText.Text = "Отмена...";
-        }
-        else
-        {
-            Close();
-        }
-    }
-
-    private void Window_Closing(object? sender, CancelEventArgs e)
-    {
-        if (!_busy) return;
-
-        e.Cancel = true;
-        _cts?.Cancel();
+        Finished?.Invoke(this, EventArgs.Empty);
     }
 }
