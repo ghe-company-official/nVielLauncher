@@ -266,6 +266,8 @@ public static class ModConflictService
         var path = Path.Combine(modsDirectory, fileName);
         if (!File.Exists(path)) return false;
 
+        ClearReadOnly(path);
+
         if (enabled)
         {
             if (!fileName.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase)) return false;
@@ -278,6 +280,20 @@ public static class ModConflictService
         if (!fileName.EndsWith(".jar", StringComparison.OrdinalIgnoreCase)) return false;
         File.Move(path, path + ".disabled", overwrite: false);
         return true;
+    }
+
+    private static void ClearReadOnly(string path)
+    {
+        try
+        {
+            var attributes = File.GetAttributes(path);
+            if ((attributes & FileAttributes.ReadOnly) != 0)
+                File.SetAttributes(path, attributes & ~FileAttributes.ReadOnly);
+        }
+        catch
+        {
+            // the caller will report a normal move failure if the file is locked
+        }
     }
 
     private static Metadata ReadMetadata(string path)

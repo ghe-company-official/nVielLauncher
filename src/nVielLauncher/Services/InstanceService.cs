@@ -103,8 +103,7 @@ public sealed class InstanceService
         // the list and the user can retry instead of silently losing the entry.
         try
         {
-            if (Directory.Exists(instance.Directory))
-                Directory.Delete(instance.Directory, recursive: true);
+            DeleteDirectory(instance.Directory);
         }
         catch (Exception ex)
         {
@@ -194,6 +193,36 @@ public sealed class InstanceService
             Directory.CreateDirectory(Path.Combine(directory, name));
     }
 
+    /// <summary>
+    /// Mods imported from other launchers often keep the read-only attribute.
+    /// Windows refuses to delete such files, so clear it before removing an instance.
+    /// </summary>
+    private static void DeleteDirectory(string directory)
+    {
+        if (!Directory.Exists(directory)) return;
+
+        foreach (var file in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
+            ClearReadOnly(file);
+        foreach (var child in Directory.EnumerateDirectories(directory, "*", SearchOption.AllDirectories))
+            ClearReadOnly(child);
+
+        Directory.Delete(directory, recursive: true);
+    }
+
+    private static void ClearReadOnly(string path)
+    {
+        try
+        {
+            var attributes = File.GetAttributes(path);
+            if ((attributes & FileAttributes.ReadOnly) != 0)
+                File.SetAttributes(path, attributes & ~FileAttributes.ReadOnly);
+        }
+        catch
+        {
+            // Let the caller decide whether the file can still be deleted.
+        }
+    }
+
     private static string CleanName(string name)
     {
         var clean = (name ?? "").Trim();
@@ -217,6 +246,7 @@ public sealed class InstanceService
             var destination = Path.Combine(targetRoot, folder, relative);
             Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
             File.Copy(files[i], destination, overwrite: false);
+            ClearReadOnly(destination);
 
             progress?.Report(new LaunchProgress(
                 files.Count == 0 ? 100 : (i + 1) * 100d / files.Count,
@@ -232,7 +262,9 @@ public sealed class InstanceService
 
         try
         {
-            File.Copy(source, Path.Combine(targetRoot, name), overwrite: false);
+            var destination = Path.Combine(targetRoot, name);
+            File.Copy(source, destination, overwrite: false);
+            ClearReadOnly(destination);
         }
         catch
         {

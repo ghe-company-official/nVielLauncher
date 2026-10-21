@@ -56,7 +56,9 @@ public partial class ReWindow : Window
 
         try
         {
-            var gameDirectory = AppServices.Settings.Current.EffectiveGameDirectory;
+            var settings = AppServices.Settings.Current;
+            var gameDirectory = settings.EffectiveGameDirectory;
+            var runtimeDirectory = settings.SharedRuntimeDirectory;
 
             var java = await Task.Run(() => AppServices.Java.DetectAsync(21, CancellationToken.None));
             if (java is null)
@@ -72,9 +74,9 @@ public partial class ReWindow : Window
                 JavaDetail.Text = $"Java {java.Major} · {java.Home}";
             }
 
-            var clientJar = Path.Combine(gameDirectory, "versions", "1.21.4", "1.21.4.jar");
-            var indexDirectory = Path.Combine(gameDirectory, "assets", "indexes");
-            var fabricCache = Path.Combine(gameDirectory, "versions", "fabric-loader", "loader.txt");
+            var clientJar = Path.Combine(runtimeDirectory, "versions", "1.21.4", "1.21.4.jar");
+            var indexDirectory = Path.Combine(runtimeDirectory, "assets", "indexes");
+            var fabricCache = Path.Combine(runtimeDirectory, "versions", "fabric-loader", "loader.txt");
 
             var hasClient = File.Exists(clientJar) && new FileInfo(clientJar).Length > 0;
             var hasAssets = Directory.Exists(indexDirectory) &&
@@ -88,7 +90,7 @@ public partial class ReWindow : Window
                 GameBadge.Text = "OK";
                 GameDetail.Text = "клиент, ресурсы и Fabric на месте";
             }
-            else if (!Directory.Exists(gameDirectory))
+            else if (!Directory.Exists(runtimeDirectory))
             {
                 SetDot(GameDot, IdleBrush);
                 GameBadge.Text = "—";
@@ -299,7 +301,10 @@ public partial class ReWindow : Window
         await RunQuickAsync("Fabric", async ct =>
         {
             AppendLog("Проверяем клиент, библиотеки, ресурсы и Fabric...");
-            await AppServices.Installer.EnsureAsync(AppServices.Settings.Current.EffectiveGameDirectory,
+            var settings = AppServices.Settings.Current;
+            await AppServices.Installer.EnsureAsync(
+                settings.EffectiveGameDirectory,
+                settings.SharedRuntimeDirectory,
                 UiProgress(0, 100, "Minecraft"), ct);
             AppendLog("Файлы Minecraft и Fabric проверены.", RepairLogKind.Success);
         });

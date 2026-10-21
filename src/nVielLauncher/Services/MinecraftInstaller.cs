@@ -32,12 +32,6 @@ public sealed class MinecraftInstaller
         _http = http;
     }
 
-    public Task<LaunchPlan> EnsureAsync(
-        string gameDirectory,
-        IProgress<LaunchProgress> progress,
-        CancellationToken ct) =>
-        EnsureAsync(gameDirectory, gameDirectory, progress, ct);
-
     /// <summary>
     /// Installs shared runtime files (versions, libraries, assets, natives) into
     /// <paramref name="runtimeDirectory"/> while pointing the game at

@@ -98,6 +98,32 @@ public sealed class ModConflictTests
     }
 
     [Fact]
+    public void CanDisableReadOnlyMod()
+    {
+        var root = TempDirectory();
+        var mods = Path.Combine(root, "mods");
+        Directory.CreateDirectory(mods);
+        var jar = Path.Combine(mods, "readonly.jar");
+        CreateJar(mods, "readonly.jar", """
+            {"id":"readonly","name":"Read Only","version":"1.0.0"}
+            """);
+        File.SetAttributes(jar, File.GetAttributes(jar) | FileAttributes.ReadOnly);
+
+        try
+        {
+            Assert.True(ModConflictService.SetEnabled(mods, "readonly.jar", enabled: false));
+            Assert.False(File.Exists(jar));
+            Assert.True(File.Exists(jar + ".disabled"));
+        }
+        finally
+        {
+            foreach (var file in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories))
+                File.SetAttributes(file, FileAttributes.Normal);
+            try { Directory.Delete(root, true); } catch { }
+        }
+    }
+
+    [Fact]
     public void WarnsWhenModTargetsAnotherMinecraftVersion()
     {
         var root = TempDirectory();
@@ -130,6 +156,36 @@ public sealed class ModConflictTests
 
 public sealed class BackupServiceTests
 {
+    [Fact]
+    public async Task RestoreOverwritesReadOnlyFiles()
+    {
+        var game = Path.Combine(Path.GetTempPath(), "nviel-backup-ro-" + Guid.NewGuid().ToString("N"));
+        var backups = Path.Combine(Path.GetTempPath(), "nviel-backup-root-ro-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(Path.Combine(game, "config"));
+        var target = Path.Combine(game, "config", "readonly.json");
+        await File.WriteAllTextAsync(target, """{"value":"original"}""");
+
+        try
+        {
+            var service = new BackupService(backups);
+            var info = await service.CreateAsync(game, "instance-ro", "manual", 5, null, CancellationToken.None);
+            Assert.NotNull(info);
+
+            await File.WriteAllTextAsync(target, """{"value":"changed"}""");
+            File.SetAttributes(target, File.GetAttributes(target) | FileAttributes.ReadOnly);
+            await service.RestoreAsync(info!, game, null, CancellationToken.None);
+
+            Assert.Equal("""{"value":"original"}""", await File.ReadAllTextAsync(target));
+        }
+        finally
+        {
+            foreach (var file in Directory.EnumerateFiles(game, "*", SearchOption.AllDirectories))
+                File.SetAttributes(file, FileAttributes.Normal);
+            try { Directory.Delete(game, true); } catch { }
+            try { Directory.Delete(backups, true); } catch { }
+        }
+    }
+
     [Fact]
     public async Task CreatesRestoresAndDeletesWorldBackup()
     {

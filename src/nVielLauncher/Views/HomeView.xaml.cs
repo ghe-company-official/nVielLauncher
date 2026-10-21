@@ -34,6 +34,19 @@ public partial class HomeView : UserControl, IRefreshable
             AppendLog("Добро пожаловать в nViel Launcher. Нажми «Играть» — файлы загрузятся автоматически.");
     }
 
+    private static string Plural(int count, string one, string few, string many)
+    {
+        var mod100 = Math.Abs(count) % 100;
+        var mod10 = mod100 % 10;
+        if (mod100 is >= 11 and <= 14) return many;
+        return mod10 switch
+        {
+            1 => one,
+            2 or 3 or 4 => few,
+            _ => many
+        };
+    }
+
     private static int CountMods(string gameDirectory)
     {
         try
@@ -79,8 +92,9 @@ public partial class HomeView : UserControl, IRefreshable
         ChipRam.Text = $"{settings.RamMb} МБ";
         StatInstance.Text = instanceName;
         StatInstance.ToolTip = settings.EffectiveGameDirectory;
-        StatMods.Text = CountMods(settings.EffectiveGameDirectory).ToString();
-        ChipMods.Text = AppServices.Mods.CountBundled() + " модов";
+        var mods = CountMods(settings.EffectiveGameDirectory);
+        StatMods.Text = mods.ToString();
+        ChipMods.Text = mods + " " + Plural(mods, "мод", "мода", "модов");
         LogCard.Visibility = settings.ShowLogOnHome ? Visibility.Visible : Visibility.Collapsed;
 
         if (settings.LastLaunchUtc is { } lastUtc)
@@ -266,7 +280,11 @@ public partial class HomeView : UserControl, IRefreshable
     }
 
     private void OpenModsFolder_Click(object sender, RoutedEventArgs e)
-        => ShellHelper.OpenFolder(AppServices.Mods.BundledDirectory);
+    {
+        var directory = Path.Combine(AppServices.Settings.Current.EffectiveGameDirectory, "mods");
+        Directory.CreateDirectory(directory);
+        ShellHelper.OpenFolder(directory);
+    }
 
     private void OpenLogsFolder_Click(object sender, RoutedEventArgs e)
         => ShellHelper.OpenFolder(AppPaths.LogsDirectory);

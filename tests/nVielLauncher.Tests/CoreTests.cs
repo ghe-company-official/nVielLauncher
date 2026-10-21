@@ -41,10 +41,10 @@ public sealed class VersionUtilTests
     }
 
     [Fact]
-    public void ProductVersionIs102Global()
+    public void ProductVersionIs1021Global()
     {
-        Assert.Equal("1.0.2", AppInfo.VersionLabel);
-        Assert.Equal("1.0.2 Global", AppInfo.DisplayVersion);
+        Assert.Equal("1.0.2.1", AppInfo.VersionLabel);
+        Assert.Equal("1.0.2.1 Global", AppInfo.DisplayVersion);
     }
 }
 

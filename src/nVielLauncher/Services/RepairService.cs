@@ -36,6 +36,7 @@ public static class RepairService
         CancellationToken ct)
     {
         var report = new RepairReport();
+        var runtimeDirectory = AppServices.Settings.Current.SharedRuntimeDirectory;
 
         void Write(string message, RepairLogKind kind = RepairLogKind.Info) =>
             log.Report(new RepairLogEntry(message, kind));
@@ -111,10 +112,10 @@ public static class RepairService
         try
         {
             Write("Проверяем клиент, библиотеки, Fabric и ресурсы по SHA-1. Это может занять пару минут...");
-            await AppServices.Installer.EnsureAsync(gameDirectory,
+            await AppServices.Installer.EnsureAsync(gameDirectory, runtimeDirectory,
                 Map(progress, 13, 80, "Minecraft"), ct);
 
-            var versionJson = Path.Combine(gameDirectory, "versions", MinecraftInstaller.MinecraftVersion,
+            var versionJson = Path.Combine(runtimeDirectory, "versions", MinecraftInstaller.MinecraftVersion,
                 MinecraftInstaller.MinecraftVersion + ".json");
 
             if (!File.Exists(versionJson))

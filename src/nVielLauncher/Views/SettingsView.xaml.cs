@@ -496,7 +496,11 @@ public partial class SettingsView : UserControl, IRefreshable
         => (Window.GetWindow(this) as MainWindow)?.OpenBackups("settings");
 
     private void OpenModsFolder_Click(object sender, RoutedEventArgs e)
-        => ShellHelper.OpenFolder(AppServices.Mods.BundledDirectory);
+    {
+        var directory = Path.Combine(AppServices.Settings.Current.EffectiveGameDirectory, "mods");
+        Directory.CreateDirectory(directory);
+        ShellHelper.OpenFolder(directory);
+    }
 
     private void OpenLogs_Click(object sender, RoutedEventArgs e) => ShellHelper.OpenFolder(AppPaths.LogsDirectory);
 

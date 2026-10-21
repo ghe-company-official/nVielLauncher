@@ -147,6 +147,7 @@ public sealed class BackupService
                     continue;
 
                 Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+                ClearReadOnly(destination);
                 entry.ExtractToFile(destination, overwrite: true);
 
                 progress?.Report(new LaunchProgress(
@@ -214,6 +215,21 @@ public sealed class BackupService
         }
 
         return result;
+    }
+
+    private static void ClearReadOnly(string path)
+    {
+        try
+        {
+            if (!File.Exists(path)) return;
+            var attributes = File.GetAttributes(path);
+            if ((attributes & FileAttributes.ReadOnly) != 0)
+                File.SetAttributes(path, attributes & ~FileAttributes.ReadOnly);
+        }
+        catch
+        {
+            // ExtractToFile will report the real error.
+        }
     }
 
     private static string Sanitize(string value)
