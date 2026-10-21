@@ -118,6 +118,45 @@ public sealed class LauncherMigrationTests : IDisposable
         Assert.Contains(zip.Entries, e => e.FullName.EndsWith("/mods/example.jar"));
     }
 
+    [Fact]
+    public void FindsLexplosionDataInDefaultAndCustomGameRoots()
+    {
+        var appData = Path.Combine(_root, "appdata");
+        var custom = Path.Combine(_root, "custom-lexplosion");
+        var defaultRoot = Path.Combine(appData, ".lexplosion");
+        var settingsDir = Path.Combine(appData, "lexplosion-data");
+
+        Directory.CreateDirectory(Path.Combine(custom, "instances", "Pack A", "saves", "World"));
+        Directory.CreateDirectory(Path.Combine(defaultRoot, "instances", "Pack B", "mods"));
+        Directory.CreateDirectory(settingsDir);
+
+        var settingsPath = Path.Combine(settingsDir, "settings.json");
+        File.WriteAllText(settingsPath,
+            "{\"GamePath\":\"" + custom.Replace("\\", "/") + "\"}");
+
+        var configured = LauncherDiscovery.ReadLexplosionGamePath(settingsPath);
+        Assert.NotNull(configured);
+        Assert.Equal(custom, configured!.Replace('/', Path.DirectorySeparatorChar));
+
+        var roots = LauncherDiscovery.ResolveLexplosionGameRoots(appData);
+        Assert.Contains(custom, roots, StringComparer.OrdinalIgnoreCase);
+        Assert.Contains(defaultRoot, roots, StringComparer.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void IgnoresBrokenLexplosionSettings()
+    {
+        var settingsDir = Path.Combine(_root, "broken-appdata", "lexplosion-data");
+        Directory.CreateDirectory(settingsDir);
+        var settingsPath = Path.Combine(settingsDir, "settings.json");
+
+        File.WriteAllText(settingsPath, "{ not valid json");
+        Assert.Null(LauncherDiscovery.ReadLexplosionGamePath(settingsPath));
+
+        File.Delete(settingsPath);
+        Assert.Null(LauncherDiscovery.ReadLexplosionGamePath(settingsPath));
+    }
+
     public void Dispose()
     {
         try { Directory.Delete(_root, recursive: true); } catch { }

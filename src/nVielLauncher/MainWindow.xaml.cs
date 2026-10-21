@@ -136,8 +136,6 @@ public partial class MainWindow : Window
         if (settings.LauncherMigrationOffered || _migrationPromptShown) return;
 
         _migrationPromptShown = true;
-        settings.LauncherMigrationOffered = true;
-        AppServices.Settings.Save();
 
         IReadOnlyList<DetectedLauncher> found;
         try
@@ -154,6 +152,11 @@ public partial class MainWindow : Window
             .Where(l => l.DataRoots.Count > 0 || l.CanUninstall)
             .ToList();
         if (actionable.Count == 0) return;
+
+        // Only consume the one-time offer when the window is actually shown.
+        // If no supported launcher was found yet, a later launch can offer it.
+        settings.LauncherMigrationOffered = true;
+        AppServices.Settings.Save();
 
         Log.Write("MIGRATION: найдено лаунчеров: " + actionable.Count);
         var window = new MigrationWindow(actionable, settings.EffectiveGameDirectory)

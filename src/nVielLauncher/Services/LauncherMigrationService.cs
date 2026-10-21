@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Security.Cryptography;
+using System.Text.Json;
 using Microsoft.Win32;
 
 namespace nVielLauncher.Services;
@@ -207,18 +208,31 @@ public static class LauncherDiscovery
                 legacyExe, roots, "legacy launcher", "legacylauncher");
         }
 
-        var lexplosionData = Path.Combine(AppData, "lexplosion-data");
+        // LExplosion keeps settings in lexplosion-data, but game data lives in
+        // %APPDATA%\.lexplosion by default. GamePath in settings.json can point
+        // to a custom root, and portable builds may keep a legacy instances
+        // folder beside the settings. Check all of them.
+        var lexplosionConfig = Path.Combine(AppData, "lexplosion-data");
+        var lexplosionGameRoots = ResolveLexplosionGameRoots(AppData);
         var lexplosionExe = FirstFile(
             Path.Combine(LocalAppData, "Programs", "Lexplosion", "Lexplosion.exe"),
             Path.Combine(LocalAppData, "Programs", "LExplosion", "LExplosion.exe"),
+            Path.Combine(LocalAppData, "Lexplosion", "Lexplosion.exe"),
             Path.Combine(ProgramFiles, "Lexplosion", "Lexplosion.exe"),
             Path.Combine(ProgramFiles, "LExplosion", "LExplosion.exe"),
-            lexplosionData);
-        if (lexplosionExe is not null || Directory.Exists(lexplosionData))
+            Path.Combine(UserProfile, "Downloads", "Lexplosion.exe"),
+            Path.Combine(UserProfile, "Downloads", "LExplosion.exe"),
+            lexplosionConfig);
+        if (lexplosionExe is not null || lexplosionGameRoots.Count > 0)
         {
+            var roots = lexplosionGameRoots
+                .SelectMany(root => InstanceRoots(Path.Combine(root, "instances")))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
             Add("lexplosion", "LExplosion (NightWorld)",
-                "Сборки NightWorld · папка lexplosion-data",
-                lexplosionExe, InstanceRoots(Path.Combine(lexplosionData, "instances")),
+                "Сборки NightWorld · папка .lexplosion",
+                lexplosionExe, roots,
                 "lexplosion", "nightworld");
         }
 
@@ -382,6 +396,65 @@ public static class LauncherDiscovery
     private static string? FirstFile(params string[] candidates)
         => candidates.FirstOrDefault(p => !string.IsNullOrWhiteSpace(p) &&
                                            (File.Exists(p) || Directory.Exists(p)));
+
+    /// <summary>
+    /// Returns existing LExplosion game roots. Current builds default to
+    /// %APPDATA%\.lexplosion and store the selected root in settings.json;
+    /// older/portable builds can use a different folder.
+    /// </summary>
+    internal static IReadOnlyList<string> ResolveLexplosionGameRoots(string appData)
+    {
+        var roots = new List<string>();
+
+        Add(Path.Combine(appData, ".lexplosion"));
+        Add(Path.Combine(appData, "lexplosion"));
+        Add(Path.Combine(appData, "lexplosion-data"));
+
+        var settings = Path.Combine(appData, "lexplosion-data", "settings.json");
+        Add(ReadLexplosionGamePath(settings));
+
+        return roots;
+
+        void Add(string? path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return;
+
+            try
+            {
+                var normalized = Environment.ExpandEnvironmentVariables(path.Trim().Trim('"'))
+                    .Replace('/', Path.DirectorySeparatorChar);
+                var full = Path.IsPathRooted(normalized)
+                    ? Path.GetFullPath(normalized)
+                    : Path.GetFullPath(normalized, appData);
+
+                if (!Directory.Exists(full)) return;
+                if (roots.Any(existing => SamePath(existing, full))) return;
+                roots.Add(full);
+            }
+            catch
+            {
+                // invalid path in a third-party settings file: ignore
+            }
+        }
+    }
+
+    internal static string? ReadLexplosionGamePath(string settingsFile)
+    {
+        try
+        {
+            if (!File.Exists(settingsFile)) return null;
+
+            using var stream = File.OpenRead(settingsFile);
+            using var document = JsonDocument.Parse(stream);
+            if (document.RootElement.ValueKind != JsonValueKind.Object) return null;
+            if (!document.RootElement.TryGetProperty("GamePath", out var gamePath)) return null;
+            return gamePath.ValueKind == JsonValueKind.String ? gamePath.GetString() : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
 
     private static bool SamePath(string left, string right)
         => string.Equals(Path.GetFullPath(left).TrimEnd('\\'), Path.GetFullPath(right).TrimEnd('\\'),
