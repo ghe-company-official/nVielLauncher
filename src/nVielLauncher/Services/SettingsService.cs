@@ -99,6 +99,10 @@ public sealed class SettingsService
 
         if (Current.RamMb <= 0) Current.RamMb = DefaultRamMb;
         if (string.IsNullOrWhiteSpace(Current.GameDirectory)) Current.GameDirectory = AppPaths.DefaultGameDirectory;
+        Current.Servers ??= new List<ServerEntry>();
+        Current.Profiles ??= new List<PlayerProfile>();
+        Current.Nickname ??= "";
+        if (string.IsNullOrWhiteSpace(Current.AccentColor)) Current.AccentColor = "#FFFFFFFF";
     }
 
     public void Save()
@@ -120,5 +124,37 @@ public sealed class SettingsService
         {
             Log.Write("Не удалось сохранить настройки: " + ex.Message);
         }
+    }
+
+    public void ExportTo(string path)
+    {
+        var json = JsonSerializer.Serialize(Current, JsonOptions);
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
+        File.WriteAllText(path, json);
+    }
+
+    /// <summary>Replaces settings with a validated export and saves atomically.</summary>
+    public void ImportFrom(string path)
+    {
+        var json = File.ReadAllText(path);
+        var loaded = JsonSerializer.Deserialize<LauncherSettings>(json, JsonOptions)
+                     ?? throw new InvalidOperationException("Файл настроек пуст.");
+
+        if (string.IsNullOrWhiteSpace(loaded.GameDirectory))
+            loaded.GameDirectory = AppPaths.DefaultGameDirectory;
+        loaded.Servers ??= new List<ServerEntry>();
+        loaded.Profiles ??= new List<PlayerProfile>();
+        loaded.Nickname ??= "";
+        if (string.IsNullOrWhiteSpace(loaded.AccentColor))
+            loaded.AccentColor = "#FFFFFFFF";
+        if (loaded.RamMb <= 0)
+            loaded.RamMb = DefaultRamMb;
+        if (loaded.ResolutionWidth < 854)
+            loaded.ResolutionWidth = 1280;
+        if (loaded.ResolutionHeight < 480)
+            loaded.ResolutionHeight = 720;
+
+        Current = loaded;
+        Save();
     }
 }

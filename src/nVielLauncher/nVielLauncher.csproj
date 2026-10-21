@@ -11,7 +11,9 @@
     <RootNamespace>nVielLauncher</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
-    <Version>1.0.1.1</Version>
+    <Version>1.0.2</Version>
+    <FileVersion>1.0.2.0</FileVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <Product>nViel Launcher</Product>
     <Company>nViel</Company>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
@@ -36,6 +38,8 @@
   <ItemGroup>
     <!-- Core mods compiled into the launcher itself (not visible to the user) -->
     <EmbeddedResource Include="embedded\**\*.jar" LogicalName="embedded.%(Filename)%(Extension)" />
+    <!-- accidentally dropped single-letter jar must not become a core mod; keep the file untouched -->
+    <EmbeddedResource Remove="embedded\?.jar" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,8 +47,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- DPAPI: encrypted GitHub token for the private update repository -->
-    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+    <InternalsVisibleTo Include="nVielLauncher.Tests" />
   </ItemGroup>
 
 </Project>

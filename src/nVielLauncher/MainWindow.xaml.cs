@@ -37,7 +37,9 @@ public partial class MainWindow : Window
     private readonly ObservableCollection<DiagnosticRow> _diagnostics = new();
     private string? _currentPage;
     private bool _started;
-    private bool _updatePrompted;
+    private readonly HashSet<string> _promptedUpdateTags = new(StringComparer.OrdinalIgnoreCase);
+    private bool _updateDialogOpen;
+    private DispatcherTimer? _updateTimer;
 
     private static readonly (string Title, string Body, string Target)[] TourSteps =
     {
@@ -93,7 +95,11 @@ public partial class MainWindow : Window
         DiagnosticList.ItemsSource = _diagnostics;
 
         Loaded += OnLoaded;
-        Closed += (_, _) => Log.Write("Лаунчер закрыт.");
+        Closed += (_, _) =>
+        {
+            _updateTimer?.Stop();
+            Log.Write("Лаунчер закрыт.");
+        };
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -116,18 +122,39 @@ public partial class MainWindow : Window
 
         await RunSplashAsync();
         _ = CheckForUpdatesAsync();
+        StartUpdateTimer();
     }
 
-    private async Task CheckForUpdatesAsync()
+    private void StartUpdateTimer()
     {
-        if (_updatePrompted) return;
+        if (_updateTimer is not null) return;
+
+        _updateTimer = new DispatcherTimer { Interval = TimeSpan.FromHours(6) };
+        _updateTimer.Tick += async (_, _) =>
+        {
+            try
+            {
+                await CheckForUpdatesAsync(force: true);
+            }
+            catch (Exception ex)
+            {
+                Log.Write("UPDATE: периодическая проверка не удалась: " + ex.Message);
+            }
+        };
+        _updateTimer.Start();
+    }
+
+    private async Task CheckForUpdatesAsync(bool force = false)
+    {
+        if (_updateDialogOpen) return;
 
         try
         {
-            var result = await AppServices.Updates.CheckAsync(CancellationToken.None);
+            var result = await AppServices.Updates.CheckAsync(CancellationToken.None, force);
             if (result.Status != UpdateStatus.Available || result.Update is not { } update) return;
+            if (!_promptedUpdateTags.Add(update.Tag)) return;
 
-            _updatePrompted = true;
+            _updateDialogOpen = true;
             Log.Write("UPDATE: доступно " + update.Tag + ", открываю окно.");
 
             if (WindowState == WindowState.Minimized)
@@ -136,10 +163,18 @@ public partial class MainWindow : Window
             Activate();
 
             var prompt = new UpdatePromptWindow(update) { Owner = this };
-            prompt.ShowDialog();
+            try
+            {
+                prompt.ShowDialog();
+            }
+            finally
+            {
+                _updateDialogOpen = false;
+            }
         }
         catch (Exception ex)
         {
+            _updateDialogOpen = false;
             Log.Write("UPDATE: окно обновления не открылось: " + ex);
         }
     }

@@ -40,6 +40,7 @@ public partial class App : Application
 
         var reMode = e.Args.Any(a => string.Equals(a, "--re", StringComparison.OrdinalIgnoreCase));
         var mode = reMode ? "re" : "main";
+        var healthMarker = UpdateHealth.GetMarkerPath(e.Args);
 
         // One window per mode: the normal launcher and nVielRE may run side by side,
         // but repeated launches wake the existing window instead of duplicating it.
@@ -56,6 +57,18 @@ public partial class App : Application
         MainWindow = window;
 
         SingleInstance.StartListening(() => Dispatcher.BeginInvoke(() => ActivateWindow(window)));
+
+        if (healthMarker is not null)
+        {
+            window.ContentRendered += (_, _) =>
+            {
+                if (UpdateHealth.TryMarkHealthy(healthMarker))
+                    Log.Write("UPDATE: новая версия подтвердила запуск.");
+                else
+                    Log.Write("UPDATE: не удалось записать маркер здоровья.");
+            };
+        }
+
         window.Show();
     }
 

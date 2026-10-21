@@ -22,6 +22,10 @@ public static class SelfInstaller
             if (args is not null && args.Any(a => string.Equals(a, "--no-install", StringComparison.OrdinalIgnoreCase)))
                 return false;
 
+            // Portable builds must never copy themselves into %APPDATA%.
+            if (AppPaths.IsPortable)
+                return false;
+
             var source = Environment.ProcessPath;
             if (string.IsNullOrWhiteSpace(source)) return false;
             source = Path.GetFullPath(source);

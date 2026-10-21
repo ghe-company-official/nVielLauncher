@@ -387,6 +387,8 @@
                                     </StackPanel>
 
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button Style="{StaticResource LinkButton}" Content="Отчёт" Margin="0,0,12,0"
+                                                Click="BuildReport_Click" />
                                         <Button Style="{StaticResource LinkButton}" Content="Очистить" Margin="0,0,12,0"
                                                 Click="ClearConsole_Click" />
                                         <Button Style="{StaticResource LinkButton}" Content="Скопировать"

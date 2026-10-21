@@ -5,17 +5,31 @@ namespace nVielLauncher.Services;
 /// <summary>All launcher paths live here. Nothing outside this class hardcodes folders.</summary>
 public static class AppPaths
 {
-    public static string AppRoot { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "nViel Launcher");
+    public const string PortableFlagName = "portable.flag";
+
+    private static readonly bool Portable = DetectPortable();
+
+    public static bool IsPortable => Portable;
+
+    public static string ExecutableDirectory => AppContext.BaseDirectory;
+
+    public static string PortableFlagFile => Path.Combine(ExecutableDirectory, PortableFlagName);
+
+    public static string AppRoot { get; } = Portable
+        ? Path.Combine(ExecutableDirectory, "data")
+        : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "nViel Launcher");
 
     public static string SettingsFile => Path.Combine(AppRoot, "settings.json");
     public static string LogsDirectory => Path.Combine(AppRoot, "logs");
+    public static string ReportsDirectory => Path.Combine(AppRoot, "reports");
     public static string JavaDirectory => Path.Combine(AppRoot, "java");
+    public static string UpdateDirectory => Path.Combine(AppRoot, "update");
     public static string ModrinthStateFile => Path.Combine(AppRoot, "modrinth-state.json");
-    public static string ExecutableDirectory => AppContext.BaseDirectory;
 
-    public static string DefaultGameDirectory { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ".nviel");
+    public static string DefaultGameDirectory { get; } = Portable
+        ? Path.Combine(AppRoot, "game")
+        : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ".nviel");
 
     private static string? _bundledMods;
 
@@ -24,6 +38,25 @@ public static class AppPaths
     /// (so running from bin/Debug still picks up the repo's mods folder).
     /// </summary>
     public static string BundledModsDirectory => _bundledMods ??= ResolveModsDirectory();
+
+    private static bool DetectPortable()
+    {
+        if (string.Equals(Environment.GetEnvironmentVariable("NVIEL_PORTABLE"), "1", StringComparison.Ordinal))
+            return true;
+
+        try
+        {
+            if (File.Exists(Path.Combine(AppContext.BaseDirectory, PortableFlagName)))
+                return true;
+        }
+        catch
+        {
+            // unreadable folder: use the normal per-user location
+        }
+
+        return Environment.GetCommandLineArgs()
+            .Any(a => string.Equals(a, "--portable", StringComparison.OrdinalIgnoreCase));
+    }
 
     private static string ResolveModsDirectory()
     {
@@ -64,6 +97,8 @@ public static class AppPaths
     {
         Directory.CreateDirectory(AppRoot);
         Directory.CreateDirectory(LogsDirectory);
+        Directory.CreateDirectory(ReportsDirectory);
         Directory.CreateDirectory(JavaDirectory);
+        Directory.CreateDirectory(UpdateDirectory);
     }
 }

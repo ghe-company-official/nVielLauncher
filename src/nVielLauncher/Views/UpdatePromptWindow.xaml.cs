@@ -18,7 +18,11 @@ public partial class UpdatePromptWindow : Window
     {
         InitializeComponent();
         _update = update;
-        VersionText.Text = "nViel Launcher " + update.Version;
+        VersionText.Text = AppInfo.ProductName + " " + update.Version + " " + AppInfo.Edition;
+        NotesText.Text = update.Notes;
+        NotesPanel.Visibility = string.IsNullOrWhiteSpace(update.Notes)
+            ? Visibility.Collapsed
+            : Visibility.Visible;
     }
 
     private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -105,6 +109,7 @@ public partial class UpdatePromptWindow : Window
             UpdateProgress.Value = 100;
             StatusText.Text = "Установка и перезапуск...";
             await Task.Delay(400);
+            _cts.Token.ThrowIfCancellationRequested();
 
             // ApplyAndRestart shuts the application down; allow the window to close.
             _busy = false;

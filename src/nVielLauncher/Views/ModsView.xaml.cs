@@ -169,6 +169,59 @@ public partial class ModsView : UserControl, IRefreshable
         await LoadManagedAsync();
     }
 
+    private async void CheckDependencies_Click(object sender, RoutedEventArgs e)
+    {
+        ShowPane("managed");
+        await LoadManagedAsync();
+
+        DependenciesButton.IsEnabled = false;
+        DependenciesButton.Content = "Проверка...";
+        SearchStatus.Text = "Проверяем обязательные зависимости установленных модов...";
+
+        try
+        {
+            var modsDirectory = Path.Combine(AppServices.Settings.Current.EffectiveGameDirectory, "mods");
+            var missing = await AppServices.Modrinth.FindMissingDependenciesAsync(modsDirectory, CancellationToken.None);
+
+            if (missing.Count == 0)
+            {
+                SearchStatus.Text = "Все обязательные зависимости на месте.";
+                Notify.Show("Зависимости в порядке", "Нечего исправлять.", "success");
+                return;
+            }
+
+            var summary = string.Join(", ", missing.Select(m => m.ProjectId).Take(6)) +
+                          (missing.Count > 6 ? "…" : "");
+            var answer = MessageBox.Show(
+                $"Найдено зависимостей: {missing.Count}.\n{summary}\n\nУстановить их сейчас?",
+                "Зависимости модов", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (answer != MessageBoxResult.Yes) return;
+
+            DependenciesButton.Content = "Установка...";
+            var progress = new Progress<LaunchProgress>(p =>
+                SearchStatus.Text = string.IsNullOrWhiteSpace(p.Detail) ? p.Status : p.Status + ": " + p.Detail);
+
+            var changed = await AppServices.Modrinth.EnsureDependenciesAsync(
+                modsDirectory, progress, CancellationToken.None);
+
+            SearchStatus.Text = $"Зависимости обработаны: {changed}.";
+            Notify.Show("Зависимости обновлены", $"Изменено: {changed}", "success");
+            Refresh();
+            await LoadManagedAsync();
+        }
+        catch (Exception ex)
+        {
+            SearchStatus.Text = "Не удалось проверить зависимости: " + ex.Message;
+            Notify.Show("Ошибка зависимостей", ex.Message, "error");
+        }
+        finally
+        {
+            DependenciesButton.IsEnabled = true;
+            DependenciesButton.Content = "Зависимости";
+        }
+    }
+
     private async Task LoadManagedAsync()
     {
         var modsDirectory = Path.Combine(AppServices.Settings.Current.EffectiveGameDirectory, "mods");
@@ -204,9 +257,22 @@ public partial class ModsView : UserControl, IRefreshable
 
         try
         {
-            if (AppServices.Modrinth.SetEnabled(row.ProjectId, modsDirectory, !row.Enabled))
+            var enable = !row.Enabled;
+            if (AppServices.Modrinth.SetEnabled(row.ProjectId, modsDirectory, enable))
             {
-                Notify.Show(row.Enabled ? "Мод выключен" : "Мод включён", row.Title, "success");
+                Notify.Show(enable ? "Мод включён" : "Мод выключен", row.Title, "success");
+
+                if (enable)
+                {
+                    SearchStatus.Text = "Проверяем зависимости включённого мода...";
+                    var progress = new Progress<LaunchProgress>(p =>
+                        SearchStatus.Text = string.IsNullOrWhiteSpace(p.Detail) ? p.Status : p.Status + ": " + p.Detail);
+                    var changed = await AppServices.Modrinth.EnsureDependenciesAsync(
+                        modsDirectory, progress, CancellationToken.None);
+
+                    if (changed > 0)
+                        Notify.Show("Зависимости добавлены", $"Изменено: {changed}", "success");
+                }
             }
             else
             {

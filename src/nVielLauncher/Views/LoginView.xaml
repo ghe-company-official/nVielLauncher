@@ -53,7 +53,7 @@
                 </Border>
             </StackPanel>
 
-            <TextBlock Text="v1.0.0" Style="{StaticResource Caption}" Margin="2,36,0,0" />
+            <TextBlock x:Name="VersionText" Text="v1.0.2 Global" Style="{StaticResource Caption}" Margin="2,36,0,0" />
         </StackPanel>
 
         <!-- login card -->

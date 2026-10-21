@@ -555,15 +555,40 @@
 
                         <StackPanel Grid.Column="1" Margin="16,0,16,0" VerticalAlignment="Center">
                             <TextBlock Text="О лаунчере" Style="{StaticResource CardTitle}" />
-                            <TextBlock x:Name="AboutVersionText" Text="nViel Launcher 1.0.1 · Fabric 1.21.4" FontSize="11.5"
+                            <TextBlock x:Name="AboutVersionText" Text="nViel Launcher 1.0.2 Global · Fabric 1.21.4" FontSize="11.5"
                                        Foreground="{StaticResource TextSecondaryBrush}" Margin="0,6,0,0" />
-                            <TextBlock Text="Minecraft 1.21.4 · Java 21 · оффлайн-профиль"
+                            <TextBlock x:Name="StorageModeText" Text="Локальные настройки"
                                        Style="{StaticResource Caption}" Margin="0,4,0,0" />
                         </StackPanel>
 
                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                             <Button Style="{StaticResource SmallGhostButton}" Content="Сбросить" Click="Reset_Click" />
                         </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Padding="20,16" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel VerticalAlignment="Center" Margin="0,0,18,0">
+                            <TextBlock Text="Данные и перенос настроек" Style="{StaticResource CardTitle}" />
+                            <TextBlock x:Name="StorageDetailText"
+                                       Text="Настройки можно перенести на другой компьютер одним JSON-файлом."
+                                       Style="{StaticResource Caption}" Margin="0,4,0,0" TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <WrapPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Style="{StaticResource SmallGhostButton}" Content="Экспорт"
+                                    Margin="0,0,8,0" Click="ExportSettings_Click" />
+                            <Button Style="{StaticResource SmallGhostButton}" Content="Импорт"
+                                    Margin="0,0,8,0" Click="ImportSettings_Click" />
+                            <Button Style="{StaticResource SmallGhostButton}" Content="Portable"
+                                    Click="Portable_Click" />
+                        </WrapPanel>
                     </Grid>
                 </Border>
 

@@ -40,6 +40,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <Grid Grid.Row="0">
@@ -81,18 +82,27 @@
                        Margin="0,22,0,0" />
 
             <TextBlock Grid.Row="2"
-                       Text="Файл будет скачан, проверен и лаунчер перезапустится."
+                       Text="Файл будет скачан, проверен по цифровой подписи и лаунчер перезапустится."
                        FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"
                        Margin="0,8,0,0" />
 
-            <ProgressBar Grid.Row="3" x:Name="UpdateProgress" Style="{StaticResource SlimProgress}"
+            <Border Grid.Row="3" x:Name="NotesPanel" Background="#0AFFFFFF" BorderBrush="#18FFFFFF"
+                    BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,16,0,0"
+                    MaxHeight="132">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <TextBlock x:Name="NotesText" FontSize="11" LineHeight="17"
+                               Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" />
+                </ScrollViewer>
+            </Border>
+
+            <ProgressBar Grid.Row="4" x:Name="UpdateProgress" Style="{StaticResource SlimProgress}"
                          Value="0" Margin="0,18,0,0" Visibility="Collapsed" />
 
-            <TextBlock Grid.Row="4" x:Name="StatusText" FontSize="10.5"
+            <TextBlock Grid.Row="5" x:Name="StatusText" FontSize="10.5"
                        Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"
                        Margin="0,9,0,0" Visibility="Collapsed" />
 
-            <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,22,0,0">
+            <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,22,0,0">
                 <Button x:Name="LaterButton" Style="{StaticResource SmallGhostButton}"
                         AutomationProperties.AutomationId="UpdateLaterButton"
                         Content="Позже" Padding="18,9" Click="Later_Click" />

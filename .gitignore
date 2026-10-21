@@ -33,3 +33,10 @@ mods/**/*.jar
 Thumbs.db
 desktop.ini
 *.log
+
+# Portable data / local signing material
+portable.flag
+data/
+.nviel-signing/
+*.sig
+TestResults/

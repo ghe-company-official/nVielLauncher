@@ -52,7 +52,7 @@ public sealed class HttpService : IDisposable
         return JsonSerializer.Deserialize<T>(text, JsonOptions);
     }
 
-    /// <summary>Downloads a file with retries, SHA-1 validation and progress reporting.</summary>
+    /// <summary>Downloads a file with retries, optional SHA-1/SHA-256 validation and progress reporting.</summary>
     public async Task DownloadAsync(
         string url,
         string destination,
@@ -61,7 +61,8 @@ public sealed class HttpService : IDisposable
         IProgress<double>? progress,
         CancellationToken ct,
         bool verifySha1OnExisting = true,
-        int maxAttempts = 3)
+        int maxAttempts = 3,
+        string? sha256 = null)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
 
@@ -70,7 +71,12 @@ public sealed class HttpService : IDisposable
             var info = new FileInfo(destination);
             if (expectedSize <= 0 || info.Length == expectedSize)
             {
-                if (!verifySha1OnExisting || string.IsNullOrEmpty(sha1) || await HashMatchesAsync(destination, sha1, ct))
+                var sha1Ok = !verifySha1OnExisting || string.IsNullOrEmpty(sha1) ||
+                             await HashMatchesAsync(destination, sha1, HashAlgorithmName.SHA1, ct);
+                var sha256Ok = string.IsNullOrEmpty(sha256) ||
+                               await HashMatchesAsync(destination, sha256, HashAlgorithmName.SHA256, ct);
+
+                if (sha1Ok && sha256Ok)
                 {
                     progress?.Report(1d);
                     return;
@@ -114,8 +120,11 @@ public sealed class HttpService : IDisposable
                     }
                 }
 
-                if (!string.IsNullOrEmpty(sha1) && !await HashMatchesAsync(temp, sha1, ct))
+                if (!string.IsNullOrEmpty(sha1) && !await HashMatchesAsync(temp, sha1, HashAlgorithmName.SHA1, ct))
                     throw new IOException("SHA-1 не совпадает: " + Path.GetFileName(destination));
+
+                if (!string.IsNullOrEmpty(sha256) && !await HashMatchesAsync(temp, sha256, HashAlgorithmName.SHA256, ct))
+                    throw new IOException("SHA-256 не совпадает: " + Path.GetFileName(destination));
 
                 File.Move(temp, destination, overwrite: true);
                 progress?.Report(1d);
@@ -138,13 +147,19 @@ public sealed class HttpService : IDisposable
         throw new IOException($"Не удалось скачать {Path.GetFileName(destination)}: {last?.Message}", last);
     }
 
-    private static async Task<bool> HashMatchesAsync(string path, string sha1, CancellationToken ct)
+    private static async Task<bool> HashMatchesAsync(
+        string path,
+        string expected,
+        HashAlgorithmName algorithm,
+        CancellationToken ct)
     {
         try
         {
             await using var stream = File.OpenRead(path);
-            var hash = await SHA1.HashDataAsync(stream, ct);
-            return Convert.ToHexString(hash).Equals(sha1, StringComparison.OrdinalIgnoreCase);
+            var hash = algorithm == HashAlgorithmName.SHA256
+                ? await SHA256.HashDataAsync(stream, ct)
+                : await SHA1.HashDataAsync(stream, ct);
+            return Convert.ToHexString(hash).Equals(expected, StringComparison.OrdinalIgnoreCase);
         }
         catch
         {

@@ -13,8 +13,8 @@ public sealed record JavaInfo(string JavaExe, string JavawExe, int Major, string
 
 public sealed class JavaService
 {
-    private const string AdoptiumUrl =
-        "https://api.adoptium.net/v3/binary/latest/{0}/ga/windows/x64/jre/hotspot/normal/eclipse";
+    private const string AdoptiumAssetsUrl =
+        "https://api.adoptium.net/v3/assets/latest/{0}/hotspot?architecture=x64&image_type=jre&os=windows&vendor=eclipse";
 
     private readonly HttpService _http;
     private readonly SettingsService _settings;
@@ -90,9 +90,24 @@ public sealed class JavaService
         Directory.CreateDirectory(AppPaths.JavaDirectory);
         var zip = Path.Combine(AppPaths.JavaDirectory, $"temurin-{major}.zip");
         var target = Path.Combine(AppPaths.JavaDirectory, $"temurin-{major}");
-        var url = string.Format(AdoptiumUrl, major);
 
-        progress.Report(new LaunchProgress(0, "Скачивание Java " + major, "Temurin JRE · ~50 МБ"));
+        progress.Report(new LaunchProgress(0, "Скачивание Java " + major, "Получаем данные Temurin JRE"));
+
+        var package = await GetAdoptiumPackageAsync(major, ct);
+        if (package is null)
+            throw new IOException($"Не удалось найти Temurin JRE {major} для Windows x64.");
+
+        if (!Uri.TryCreate(package.Link, UriKind.Absolute, out var uri) ||
+            !uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+            throw new IOException("Adoptium вернул небезопасную ссылку на Java.");
+
+        if (string.IsNullOrWhiteSpace(package.Checksum) ||
+            package.Checksum.Length != 64 ||
+            !package.Checksum.All(Uri.IsHexDigit))
+            throw new IOException("Adoptium не вернул корректный SHA-256 для Java.");
+
+        progress.Report(new LaunchProgress(2, "Скачивание Java " + major,
+            "Temurin JRE · SHA-256 проверяется"));
 
         var downloadProgress = new Progress<double>(p =>
         {
@@ -105,12 +120,14 @@ public sealed class JavaService
 
         try
         {
-            await _http.DownloadAsync(url, zip, 0, null, downloadProgress, ct, verifySha1OnExisting: false);
+            await _http.DownloadAsync(package.Link, zip, package.Size, null, downloadProgress, ct,
+                verifySha1OnExisting: false, sha256: package.Checksum);
         }
         catch (Exception ex)
         {
+            TryDelete(zip);
             throw new IOException(
-                $"Не удалось скачать Java {major}. Установи JDK {major} вручную и укажи путь в настройках. ({ex.Message})", ex);
+                $"Не удалось скачать или проверить Java {major}. Установи JDK {major} вручную и укажи путь в настройках. ({ex.Message})", ex);
         }
 
         progress.Report(new LaunchProgress(84, "Распаковка Java", "Это может занять минуту"));
@@ -144,6 +161,32 @@ public sealed class JavaService
 
         progress.Report(new LaunchProgress(100, "Java готова", $"Java {info.Major} · {info.Home}"));
         return info;
+    }
+
+    private async Task<AdoptiumPackage?> GetAdoptiumPackageAsync(int major, CancellationToken ct)
+    {
+        var url = string.Format(AdoptiumAssetsUrl, major);
+        var assets = await _http.GetJsonAsync<List<AdoptiumAsset>>(url, ct);
+        return assets?
+            .Select(a => a.Binary?.Package)
+            .FirstOrDefault(p => p is not null && !string.IsNullOrWhiteSpace(p.Link));
+    }
+
+    private sealed class AdoptiumAsset
+    {
+        public AdoptiumBinary? Binary { get; set; }
+    }
+
+    private sealed class AdoptiumBinary
+    {
+        public AdoptiumPackage? Package { get; set; }
+    }
+
+    private sealed class AdoptiumPackage
+    {
+        public string Link { get; set; } = "";
+        public string Checksum { get; set; } = "";
+        public long Size { get; set; }
     }
 
     public static JavaInfo? Probe(string javaExe)

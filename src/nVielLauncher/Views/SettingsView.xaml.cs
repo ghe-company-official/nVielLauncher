@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using Microsoft.Win32;
 using nVielLauncher.Services;
 
 namespace nVielLauncher.Views;
@@ -55,7 +56,7 @@ public partial class SettingsView : UserControl, IRefreshable
         StartAmbientAnimations();
         StartMonitor();
 
-        AboutVersionText.Text = $"nViel Launcher {AppInfo.VersionLabel} · Fabric 1.21.4";
+        AboutVersionText.Text = $"{AppInfo.DisplayName} · Fabric 1.21.4";
 
         Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
         {
@@ -108,6 +109,13 @@ public partial class SettingsView : UserControl, IRefreshable
             JavaPathText.Text = settings.JavaPath;
             SetJavaStatus(true, "настроена");
         }
+
+        StorageModeText.Text = AppPaths.IsPortable
+            ? "Portable · данные рядом с exe"
+            : "Локальные настройки · %LOCALAPPDATA%";
+        StorageDetailText.Text = AppPaths.IsPortable
+            ? "Данные хранятся в папке data рядом с exe. Настройки можно перенести между компьютерами одним JSON-файлом."
+            : "Настройки можно перенести на другой компьютер одним JSON-файлом или включить portable-режим.";
 
         _loading = false;
 
@@ -469,6 +477,100 @@ public partial class SettingsView : UserControl, IRefreshable
         => ShellHelper.OpenFolder(AppServices.Mods.BundledDirectory);
 
     private void OpenLogs_Click(object sender, RoutedEventArgs e) => ShellHelper.OpenFolder(AppPaths.LogsDirectory);
+
+    private void ExportSettings_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new SaveFileDialog
+        {
+            Title = "Экспорт настроек nViel Launcher",
+            FileName = $"nViel-settings-{DateTime.Now:yyyyMMdd}.json",
+            Filter = "JSON (*.json)|*.json",
+            AddExtension = true,
+            DefaultExt = ".json"
+        };
+
+        if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
+
+        try
+        {
+            AppServices.Settings.Save();
+            AppServices.Settings.ExportTo(dialog.FileName);
+            ShowToast("Настройки экспортированы");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(Window.GetWindow(this), "Не удалось экспортировать настройки:\n" + ex.Message,
+                "nViel Launcher", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void ImportSettings_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Импорт настроек nViel Launcher",
+            Filter = "JSON (*.json)|*.json|Все файлы (*.*)|*.*",
+            CheckFileExists = true
+        };
+
+        if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
+
+        var answer = MessageBox.Show(Window.GetWindow(this),
+            "Импортировать настройки? Текущие настройки будут заменены.\n" +
+            "Ник, профили, серверы, RAM и параметры окна будут взяты из файла.",
+            "nViel Launcher", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+        if (answer != MessageBoxResult.Yes) return;
+
+        try
+        {
+            AppServices.Settings.ImportFrom(dialog.FileName);
+            Refresh();
+            (Window.GetWindow(this) as MainWindow)?.ApplyAppearance();
+            ShowToast("Настройки импортированы");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(Window.GetWindow(this), "Не удалось импортировать настройки:\n" + ex.Message,
+                "nViel Launcher", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void Portable_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.Equals(Environment.GetEnvironmentVariable("NVIEL_PORTABLE"), "1", StringComparison.Ordinal))
+        {
+            MessageBox.Show(Window.GetWindow(this),
+                "Portable-режим задан переменной окружения NVIEL_PORTABLE и здесь не переключается.",
+                "nViel Launcher", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        try
+        {
+            if (File.Exists(AppPaths.PortableFlagFile))
+            {
+                File.Delete(AppPaths.PortableFlagFile);
+                MessageBox.Show(Window.GetWindow(this),
+                    "Portable-режим выключен. Перезапусти лаунчер, чтобы вернуться к локальным настройкам.",
+                    "nViel Launcher", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                File.WriteAllText(AppPaths.PortableFlagFile, "portable" + Environment.NewLine);
+                MessageBox.Show(Window.GetWindow(this),
+                    "Portable-режим включён. После перезапуска данные будут храниться в папке data рядом с exe.\n\n" +
+                    "Текущие настройки можно перенести через «Экспорт» и «Импорт».",
+                    "nViel Launcher", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(Window.GetWindow(this),
+                "Не удалось изменить portable-режим. Папка лаунчера должна быть доступна для записи.\n" + ex.Message,
+                "nViel Launcher", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
 
     private void ReplayTour_Click(object sender, RoutedEventArgs e)
         => (Window.GetWindow(this) as MainWindow)?.StartTour();

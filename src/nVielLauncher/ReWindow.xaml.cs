@@ -37,11 +37,11 @@ public partial class ReWindow : Window
         AnimateWindowIn();
         StartAmbientAnimations();
 
-        BuildText.Text = $"nVielRE 2.0 · core {AppInfo.VersionLabel} · Fabric 1.21.4";
-        LauncherDetail.Text = "nViel Launcher " + AppInfo.VersionLabel;
+        BuildText.Text = $"nVielRE 2.0 · core {AppInfo.DisplayVersion} · Fabric 1.21.4";
+        LauncherDetail.Text = "nViel Launcher " + AppInfo.DisplayVersion;
 
         AppendLog("nVielRE 2.0 · recovery edition", RepairLogKind.Success);
-        AppendLog($"Ядро лаунчера {AppInfo.VersionLabel} · {Environment.OSVersion.VersionString}");
+        AppendLog($"Ядро лаунчера {AppInfo.DisplayVersion} · {Environment.OSVersion.VersionString}");
         AppendLog("Проверяем окружение...");
 
         _ = PreflightAsync();
@@ -137,7 +137,7 @@ public partial class ReWindow : Window
             SetDot(LauncherDot, launcherOk ? OkBrush : ErrorBrush);
             LauncherBadge.Text = launcherOk ? "OK" : "ERR";
             LauncherDetail.Text = launcherOk
-                ? $"настройки в порядке · {AppInfo.VersionLabel}"
+                ? $"настройки в порядке · {AppInfo.DisplayVersion}"
                 : "файл настроек повреждён";
 
             var ram = SystemMonitor.TotalPhysicalMemoryMb / 1024.0;
@@ -442,6 +442,52 @@ public partial class ReWindow : Window
         catch (Exception ex)
         {
             AppendLog("Не удалось скопировать консоль: " + ex.Message, RepairLogKind.Error);
+        }
+    }
+
+    private async void BuildReport_Click(object sender, RoutedEventArgs e)
+    {
+        var answer = MessageBox.Show(
+            "Собрать архив диагностики?\n\n" +
+            "Внутри: логи лаунчера и игры, последние crash-reports, версия, Java и обезличенные настройки. " +
+            "Имена профилей, серверов и пути пользователя маскируются.",
+            "Отчёт nVielRE", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+        if (answer != MessageBoxResult.Yes) return;
+
+        try
+        {
+            AppendLog("Собираем архив диагностики...");
+            var bundle = await DiagnosticsBundleService.CreateAsync(
+                AppServices.Settings.Current.EffectiveGameDirectory,
+                CancellationToken.None);
+
+            AppendLog($"Отчёт готов: {bundle.Path} ({bundle.Size / 1024d:0.0} КБ).", RepairLogKind.Success);
+
+            if (!string.IsNullOrWhiteSpace(DiagnosticsBundleService.UploadEndpoint))
+            {
+                var upload = MessageBox.Show(
+                    "Архив создан. Отправить его на сервер поддержки?\n\n" +
+                    "Отправка добровольная: без согласия архив останется только на этом компьютере.",
+                    "Отправка отчёта", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                if (upload == MessageBoxResult.Yes)
+                {
+                    AppendLog("Отправляем отчёт на сервер поддержки...");
+                    var result = await DiagnosticsBundleService.UploadAsync(bundle.Path, CancellationToken.None);
+                    AppendLog("Отчёт отправлен: " + result, RepairLogKind.Success);
+                }
+            }
+
+            ShellHelper.OpenFolder(Path.GetDirectoryName(bundle.Path)!);
+        }
+        catch (OperationCanceledException)
+        {
+            AppendLog("Сбор отчёта отменён.", RepairLogKind.Warning);
+        }
+        catch (Exception ex)
+        {
+            AppendLog("Не удалось собрать отчёт: " + ex.Message, RepairLogKind.Error);
         }
     }
 

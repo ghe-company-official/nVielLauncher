@@ -95,6 +95,7 @@ public sealed class InstalledModInfo
     public string VersionId { get; set; } = "";
     public string Title { get; set; } = "";
     public string VersionNumber { get; set; } = "";
+    public List<string> RequiredProjects { get; set; } = new();
 }
 
 public sealed class InstalledModpack
@@ -164,6 +165,9 @@ public sealed class ModrinthService
             .ToList();
     }
 
+    public Task<ModrinthVersion?> GetVersionAsync(string versionId, CancellationToken ct) =>
+        _http.GetJsonAsync<ModrinthVersion>($"{ApiBase}/version/{versionId}", ct);
+
     // ------------------------------------------------------------------ mod install
 
     /// <summary>Ensures a mod and all its required dependencies are installed into the game's mods folder.</summary>
@@ -206,6 +210,8 @@ public sealed class ModrinthService
         HashSet<string>? visited = null)
     {
         visited ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (!string.IsNullOrWhiteSpace(version.ProjectId))
+            visited.Add(version.ProjectId);
 
         var file = version.Files.FirstOrDefault(f => f.Primary) ?? version.Files.FirstOrDefault();
         if (file is null) return false;
@@ -260,7 +266,14 @@ public sealed class ModrinthService
                     FileName = file.Filename,
                     VersionId = version.Id,
                     Title = version.Name,
-                    VersionNumber = version.VersionNumber
+                    VersionNumber = version.VersionNumber,
+                    RequiredProjects = version.Dependencies
+                        .Where(d => string.Equals(d.DependencyType, "required", StringComparison.OrdinalIgnoreCase))
+                        .Select(d => d.ProjectId)
+                        .Where(id => !string.IsNullOrWhiteSpace(id))
+                        .Select(id => id!)
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToList()
                 };
                 SaveState();
             }
@@ -270,21 +283,52 @@ public sealed class ModrinthService
         foreach (var dependency in version.Dependencies)
         {
             if (!string.Equals(dependency.DependencyType, "required", StringComparison.OrdinalIgnoreCase)) continue;
-            if (string.IsNullOrWhiteSpace(dependency.ProjectId)) continue;
-            if (visited.Contains(dependency.ProjectId)) continue;
+            if (string.IsNullOrWhiteSpace(dependency.ProjectId) &&
+                string.IsNullOrWhiteSpace(dependency.VersionId)) continue;
+            if (!string.IsNullOrWhiteSpace(dependency.ProjectId) &&
+                visited.Contains(dependency.ProjectId)) continue;
 
             try
             {
-                progress?.Report(new LaunchProgress(0, "Зависимость", "Загружаем " + dependency.ProjectId));
-                await EnsureProjectAsync(dependency.ProjectId, modsDirectory, progress, ct, visited);
+                progress?.Report(new LaunchProgress(0, "Зависимость",
+                    "Загружаем " + (dependency.ProjectId ?? dependency.VersionId)));
+
+                var exact = string.IsNullOrWhiteSpace(dependency.VersionId)
+                    ? null
+                    : await GetVersionAsync(dependency.VersionId, ct);
+
+                if (exact is not null)
+                {
+                    if (!string.IsNullOrWhiteSpace(exact.ProjectId) && visited.Contains(exact.ProjectId))
+                        continue;
+
+                    if (!string.IsNullOrWhiteSpace(version.ProjectId) &&
+                        !string.IsNullOrWhiteSpace(exact.ProjectId))
+                    {
+                        lock (_gate)
+                        {
+                            if (_state.Mods.TryGetValue(version.ProjectId, out var current) &&
+                                !current.RequiredProjects.Contains(exact.ProjectId, StringComparer.OrdinalIgnoreCase))
+                            {
+                                current.RequiredProjects.Add(exact.ProjectId);
+                                SaveState();
+                            }
+                        }
+                    }
+
+                    await InstallVersionAsync(exact, modsDirectory, progress, ct, visited);
+                }
+                else if (!string.IsNullOrWhiteSpace(dependency.ProjectId))
+                    await EnsureProjectAsync(dependency.ProjectId, modsDirectory, progress, ct, visited);
             }
             catch (OperationCanceledException)
             {
                 throw;
             }
-            catch
+            catch (Exception ex)
             {
                 // a single missing dependency must not abort the whole install
+                Log.Write("Зависимость не установлена: " + ex.Message);
             }
         }
 
@@ -332,8 +376,7 @@ public sealed class ModrinthService
                 .Select(kv =>
                 {
                     var enabledPath = Path.Combine(modsDirectory, kv.Value.FileName);
-                    var disabledPath = enabledPath + ".disabled";
-                    var enabled = File.Exists(enabledPath) || !File.Exists(disabledPath);
+                    var enabled = File.Exists(enabledPath);
 
                     return new ManagedMod(
                         kv.Key,
@@ -440,6 +483,177 @@ public sealed class ModrinthService
         }
 
         return best;
+    }
+
+    // ------------------------------------------------------------------ dependencies
+
+    public sealed record ModDependencyIssue(
+        string ProjectId,
+        string RequiredBy,
+        bool InstalledButDisabled);
+
+    /// <summary>
+    /// Checks every managed mod's required dependencies. When fetchUnknown is true,
+    /// legacy state entries without RequiredProjects are resolved through Modrinth.
+    /// </summary>
+    public async Task<IReadOnlyList<ModDependencyIssue>> FindMissingDependenciesAsync(
+        string modsDirectory,
+        CancellationToken ct,
+        bool fetchUnknown = true)
+    {
+        Dictionary<string, InstalledModInfo> snapshot;
+        lock (_gate)
+        {
+            snapshot = _state.Mods.ToDictionary(kv => kv.Key, kv => kv.Value,
+                StringComparer.OrdinalIgnoreCase);
+        }
+
+        var issues = new Dictionary<string, ModDependencyIssue>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var (projectId, info) in snapshot)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var enabledPath = Path.Combine(modsDirectory, info.FileName);
+            // A disabled mod does not need its dependencies at runtime.
+            if (!File.Exists(enabledPath)) continue;
+
+            var required = info.RequiredProjects
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (required.Count == 0 && fetchUnknown && !string.IsNullOrWhiteSpace(info.VersionId))
+            {
+                try
+                {
+                    var version = await GetVersionAsync(info.VersionId, ct);
+                    if (version is not null)
+                    {
+                        required = new List<string>();
+                        foreach (var dependency in version.Dependencies)
+                        {
+                            if (!string.Equals(dependency.DependencyType, "required", StringComparison.OrdinalIgnoreCase))
+                                continue;
+
+                            var dependencyId = dependency.ProjectId;
+                            if (string.IsNullOrWhiteSpace(dependencyId) &&
+                                !string.IsNullOrWhiteSpace(dependency.VersionId))
+                            {
+                                var dependencyVersion = await GetVersionAsync(dependency.VersionId, ct);
+                                dependencyId = dependencyVersion?.ProjectId;
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(dependencyId) &&
+                                !required.Contains(dependencyId, StringComparer.OrdinalIgnoreCase))
+                                required.Add(dependencyId);
+                        }
+
+                        if (required.Count > 0)
+                        {
+                            lock (_gate)
+                            {
+                                if (_state.Mods.TryGetValue(projectId, out var current))
+                                {
+                                    current.RequiredProjects = required.ToList();
+                                    SaveState();
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch
+                {
+                    // offline: the existing dependency list (if any) is still useful
+                }
+            }
+
+            foreach (var dependencyId in required)
+            {
+                var installed = snapshot.TryGetValue(dependencyId, out var dependency);
+                var installedPath = installed
+                    ? Path.Combine(modsDirectory, dependency!.FileName)
+                    : "";
+                var present = installed &&
+                              (File.Exists(installedPath) || File.Exists(installedPath + ".disabled"));
+                var disabled = present && !File.Exists(installedPath);
+
+                if (present && !disabled) continue;
+
+                issues[dependencyId] = new ModDependencyIssue(
+                    dependencyId,
+                    string.IsNullOrWhiteSpace(info.Title) ? projectId : info.Title,
+                    disabled);
+            }
+        }
+
+        return issues.Values.ToList();
+    }
+
+    /// <summary>Installs missing required dependencies and re-enables disabled ones.</summary>
+    public async Task<int> EnsureDependenciesAsync(
+        string modsDirectory,
+        IProgress<LaunchProgress>? progress,
+        CancellationToken ct)
+    {
+        var missing = await FindMissingDependenciesAsync(modsDirectory, ct);
+        var changed = 0;
+
+        foreach (var issue in missing)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            try
+            {
+                if (issue.InstalledButDisabled)
+                {
+                    if (SetEnabled(issue.ProjectId, modsDirectory, true)) changed++;
+                    continue;
+                }
+
+                progress?.Report(new LaunchProgress(0, "Зависимости модов",
+                    "Устанавливаем " + issue.ProjectId));
+
+                if (await EnsureProjectAsync(issue.ProjectId, modsDirectory, progress, ct))
+                    changed++;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Log.Write("Не удалось восстановить зависимость мода: " + ex.Message);
+            }
+        }
+
+        return changed;
+    }
+
+    /// <summary>Launch-time safety net; never throws and never blocks a launch on network errors.</summary>
+    public async Task EnsureRequiredDependenciesAsync(
+        string gameDirectory,
+        IProgress<LaunchProgress>? progress,
+        CancellationToken ct)
+    {
+        try
+        {
+            var modsDirectory = Path.Combine(gameDirectory, "mods");
+            Directory.CreateDirectory(modsDirectory);
+            await EnsureDependenciesAsync(modsDirectory, progress, ct);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Log.Write("Проверка зависимостей модов пропущена: " + ex.Message);
+        }
     }
 
     // ------------------------------------------------------------------ modpacks
@@ -618,7 +832,12 @@ public sealed class ModrinthService
                 var state = JsonSerializer.Deserialize<ModrinthState>(json, Json);
                 if (state is not null)
                 {
-                    state.Mods = new Dictionary<string, InstalledModInfo>(state.Mods, StringComparer.OrdinalIgnoreCase);
+                    state.Mods = new Dictionary<string, InstalledModInfo>(
+                        state.Mods ?? new Dictionary<string, InstalledModInfo>(),
+                        StringComparer.OrdinalIgnoreCase);
+                    state.Modpacks ??= new List<InstalledModpack>();
+                    foreach (var info in state.Mods.Values)
+                        info.RequiredProjects ??= new List<string>();
                     return state;
                 }
             }

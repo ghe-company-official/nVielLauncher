@@ -95,6 +95,11 @@ public sealed class LauncherService
         // framework mods required by the built-in set (downloaded silently, never surfaced in the UI)
         await _modrinth.EnsureSupportModsAsync(gameDirectory, ct);
 
+        // required dependencies of user-installed mods; offline failures must not block a launch
+        var dependenciesProgress = new Progress<LaunchProgress>(p =>
+            progress.Report(p with { Percent = 96 + p.Percent * 0.015 }));
+        await _modrinth.EnsureRequiredDependenciesAsync(gameDirectory, dependenciesProgress, ct);
+
         // 4. Build and start
         progress.Report(new LaunchProgress(98, "Запуск Minecraft", $"Java {java.Major} · {settings.RamMb} МБ RAM"));
 

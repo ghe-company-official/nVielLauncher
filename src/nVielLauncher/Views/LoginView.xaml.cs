@@ -14,6 +14,7 @@ public partial class LoginView : UserControl
     public LoginView()
     {
         InitializeComponent();
+        VersionText.Text = "v" + AppInfo.VersionLabel + " " + AppInfo.Edition;
         Loaded += OnLoaded;
     }
 
