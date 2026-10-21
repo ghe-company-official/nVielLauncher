@@ -27,6 +27,7 @@ public sealed class LauncherSettings
     public string? ActiveProfileId { get; set; }
     public bool HasSeenTour { get; set; }
     public bool SetupCompleted { get; set; }
+    public bool LauncherMigrationOffered { get; set; }
     public DateTime? LastLaunchUtc { get; set; }
 
     public string EffectiveGameDirectory =>

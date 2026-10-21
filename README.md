@@ -133,6 +133,22 @@ dotnet run --project tools\ReleaseSigner -- generate `
 файл обновление не примет. Authenticode-сертификат опционален: задайте
 `NVIEL_SIGN_CERT_PATH` (и `NVIEL_SIGN_CERT_PASSWORD`) при наличии `signtool.exe`.
 
+## Перенос из старых лаунчеров
+
+- при первом запуске nViel ищет установленные лаунчеры и предлагает перенести данные;
+- поддержаны официальный Minecraft Launcher, TLauncher, Legacy Launcher,
+  LExplosion (NightWorld), Modrinth App, Prism/MultiMC/PolyMC, ATLauncher,
+  GDLauncher, CurseForge, XMCL, HMCL, Lunar/Badlion/Feather и SKLauncher;
+- копируются только миры, моды, ресурспаки, шейдеры, конфиги, `options.txt`
+  и `servers.dat`; аккаунты, токены и файлы лаунчеров не переносятся;
+- общая папка `.minecraft` импортируется один раз, даже если её используют
+  официальный лаунчер и TLauncher;
+- **Экспорт данных** сохраняет выбранные данные в ZIP;
+- **Удалить старые** сначала создаёт резервную копию в
+  `%LOCALAPPDATA%\nViel Launcher\migration\backups`, затем открывает штатные
+  деинсталляторы. nViel не удаляет папки лаунчеров напрямую;
+- перенос можно открыть позже в **Настройки → Перенос из старых лаунчеров**.
+
 ## Portable и перенос настроек
 
 - `nVielLauncher.exe --portable` или файл `portable.flag` рядом с exe;
@@ -158,7 +174,8 @@ dotnet test nVielLauncher.sln -c Release
 ```
 
 Тесты проверяют версии, ECDSA-подпись, отсутствие update/token-полей в настройках,
-health-marker и реальную проверку `dist\nVielLauncher.exe`, если сборка есть локально.
+health-marker, импорт/экспорт данных старых лаунчеров и реальную проверку
+`dist\nVielLauncher.exe`, если сборка есть локально.
 GitHub Actions workflow `.github/workflows/ci.yml` собирает solution и запускает тесты
 на `windows-latest` без секретов.
 

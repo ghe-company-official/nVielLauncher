@@ -23,6 +23,8 @@ public static class AppPaths
     public static string SettingsFile => Path.Combine(AppRoot, "settings.json");
     public static string LogsDirectory => Path.Combine(AppRoot, "logs");
     public static string ReportsDirectory => Path.Combine(AppRoot, "reports");
+    public static string MigrationDirectory => Path.Combine(AppRoot, "migration");
+    public static string MigrationBackupsDirectory => Path.Combine(MigrationDirectory, "backups");
     public static string JavaDirectory => Path.Combine(AppRoot, "java");
     public static string UpdateDirectory => Path.Combine(AppRoot, "update");
     public static string ModrinthStateFile => Path.Combine(AppRoot, "modrinth-state.json");
@@ -98,6 +100,7 @@ public static class AppPaths
         Directory.CreateDirectory(AppRoot);
         Directory.CreateDirectory(LogsDirectory);
         Directory.CreateDirectory(ReportsDirectory);
+        Directory.CreateDirectory(MigrationBackupsDirectory);
         Directory.CreateDirectory(JavaDirectory);
         Directory.CreateDirectory(UpdateDirectory);
     }

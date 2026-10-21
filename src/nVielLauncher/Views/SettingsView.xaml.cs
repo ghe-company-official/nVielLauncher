@@ -478,6 +478,50 @@ public partial class SettingsView : UserControl, IRefreshable
 
     private void OpenLogs_Click(object sender, RoutedEventArgs e) => ShellHelper.OpenFolder(AppPaths.LogsDirectory);
 
+    private async void OpenMigration_Click(object sender, RoutedEventArgs e)
+    {
+        var owner = Window.GetWindow(this);
+        if (owner is null) return;
+
+        IReadOnlyList<DetectedLauncher> found;
+        try
+        {
+            found = await Task.Run(LauncherDiscovery.Discover);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(owner, "Не удалось проверить установленные лаунчеры:\n" + ex.Message,
+                "nViel Launcher", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        var actionable = found
+            .Where(l => l.DataRoots.Count > 0 || l.CanUninstall)
+            .ToList();
+
+        if (actionable.Count == 0)
+        {
+            MessageBox.Show(owner,
+                "Старые лаунчеры с данными не найдены.\n\n" +
+                "Если лаунчер установлен в нестандартную папку, его данные можно перенести вручную " +
+                "через папку игры.",
+                "nViel Launcher", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var window = new MigrationWindow(actionable, AppServices.Settings.Current.EffectiveGameDirectory)
+        {
+            Owner = owner
+        };
+        window.ShowDialog();
+
+        if (window.DataImported)
+        {
+            Refresh();
+            ShowToast("Данные импортированы");
+        }
+    }
+
     private void ExportSettings_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new SaveFileDialog

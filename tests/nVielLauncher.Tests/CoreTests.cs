@@ -48,6 +48,82 @@ public sealed class VersionUtilTests
     }
 }
 
+public sealed class LauncherMigrationTests : IDisposable
+{
+    private readonly string _root = Path.Combine(Path.GetTempPath(), "nviel-migration-" + Guid.NewGuid().ToString("N"));
+
+    [Fact]
+    public async Task ImportsUserDataAndDoesNotOverwriteOnSecondRun()
+    {
+        var source = Path.Combine(_root, "source");
+        var target = Path.Combine(_root, "target");
+        Directory.CreateDirectory(Path.Combine(source, "saves", "World1"));
+        Directory.CreateDirectory(Path.Combine(source, "mods"));
+        Directory.CreateDirectory(Path.Combine(source, "resourcepacks"));
+        Directory.CreateDirectory(Path.Combine(source, "config"));
+
+        File.WriteAllText(Path.Combine(source, "saves", "World1", "level.dat"), "world");
+        File.WriteAllText(Path.Combine(source, "mods", "example.jar"), "mod");
+        File.WriteAllText(Path.Combine(source, "resourcepacks", "pack.zip"), "pack");
+        File.WriteAllText(Path.Combine(source, "config", "settings.json"), "{}");
+        File.WriteAllText(Path.Combine(source, "options.txt"), "fov: 90");
+
+        var launcher = new DetectedLauncher
+        {
+            Id = "test",
+            Name = "Test Launcher",
+            DataRoots = new[] { source }
+        };
+
+        var first = await LauncherMigrationService.ImportAsync(
+            new[] { launcher }, target, new MigrationOptions());
+
+        Assert.Equal(1, first.Worlds);
+        Assert.Equal(1, first.Mods);
+        Assert.Equal(1, first.ResourcePacks);
+        Assert.Equal(2, first.ConfigFiles);
+        Assert.True(File.Exists(Path.Combine(target, "saves", "World1", "level.dat")));
+        Assert.True(File.Exists(Path.Combine(target, "mods", "example.jar")));
+        Assert.Equal("fov: 90", File.ReadAllText(Path.Combine(target, "options.txt")));
+
+        var second = await LauncherMigrationService.ImportAsync(
+            new[] { launcher }, target, new MigrationOptions());
+
+        Assert.Equal(0, second.Worlds);
+        Assert.True(second.Skipped >= 3);
+    }
+
+    [Fact]
+    public async Task ExportsAnArchiveWithWorldsAndMods()
+    {
+        var source = Path.Combine(_root, "source");
+        var archive = Path.Combine(_root, "export.zip");
+        Directory.CreateDirectory(Path.Combine(source, "saves", "World1"));
+        Directory.CreateDirectory(Path.Combine(source, "mods"));
+        File.WriteAllText(Path.Combine(source, "saves", "World1", "level.dat"), "world");
+        File.WriteAllText(Path.Combine(source, "mods", "example.jar"), "mod");
+
+        var launcher = new DetectedLauncher
+        {
+            Id = "test",
+            Name = "Test Launcher",
+            DataRoots = new[] { source }
+        };
+
+        var result = await LauncherMigrationService.ExportAsync(new[] { launcher }, archive);
+
+        Assert.Equal(Path.GetFullPath(archive), result);
+        using var zip = System.IO.Compression.ZipFile.OpenRead(archive);
+        Assert.Contains(zip.Entries, e => e.FullName.EndsWith("/saves/World1/level.dat"));
+        Assert.Contains(zip.Entries, e => e.FullName.EndsWith("/mods/example.jar"));
+    }
+
+    public void Dispose()
+    {
+        try { Directory.Delete(_root, recursive: true); } catch { }
+    }
+}
+
 public sealed class UpdateSignatureTests
 {
     [Fact]

@@ -39,6 +39,7 @@ public partial class MainWindow : Window
     private bool _started;
     private readonly HashSet<string> _promptedUpdateTags = new(StringComparer.OrdinalIgnoreCase);
     private bool _updateDialogOpen;
+    private bool _migrationPromptShown;
     private DispatcherTimer? _updateTimer;
 
     private static readonly (string Title, string Body, string Target)[] TourSteps =
@@ -121,8 +122,51 @@ public partial class MainWindow : Window
             ShowMain();
 
         await RunSplashAsync();
+        if (AppServices.Settings.Current.SetupCompleted)
+            await MaybeShowMigrationAsync();
+
+        MaybeShowTour();
         _ = CheckForUpdatesAsync();
         StartUpdateTimer();
+    }
+
+    private async Task MaybeShowMigrationAsync()
+    {
+        var settings = AppServices.Settings.Current;
+        if (settings.LauncherMigrationOffered || _migrationPromptShown) return;
+
+        _migrationPromptShown = true;
+        settings.LauncherMigrationOffered = true;
+        AppServices.Settings.Save();
+
+        IReadOnlyList<DetectedLauncher> found;
+        try
+        {
+            found = await Task.Run(LauncherDiscovery.Discover);
+        }
+        catch (Exception ex)
+        {
+            Log.Write("MIGRATION: поиск лаунчеров не удался: " + ex);
+            return;
+        }
+
+        var actionable = found
+            .Where(l => l.DataRoots.Count > 0 || l.CanUninstall)
+            .ToList();
+        if (actionable.Count == 0) return;
+
+        Log.Write("MIGRATION: найдено лаунчеров: " + actionable.Count);
+        var window = new MigrationWindow(actionable, settings.EffectiveGameDirectory)
+        {
+            Owner = this
+        };
+        window.ShowDialog();
+
+        if (window.DataImported)
+        {
+            Log.Write("MIGRATION: данные импортированы в " + settings.EffectiveGameDirectory);
+            (PageHost.Content as IRefreshable)?.Refresh();
+        }
     }
 
     private void StartUpdateTimer()
@@ -226,8 +270,6 @@ public partial class MainWindow : Window
         {
             SplashLayer.Visibility = Visibility.Collapsed;
         }
-
-        MaybeShowTour();
     }
 
     private void AnimateWindowIn()
@@ -1211,7 +1253,7 @@ public partial class MainWindow : Window
             SetupSummaryJava.Text = "скачается автоматически";
     }
 
-    private void SetupFinish()
+    private async void SetupFinish()
     {
         var settings = AppServices.Settings.Current;
         var nickname = (SetupNickBox.Text ?? "").Trim();
@@ -1246,6 +1288,7 @@ public partial class MainWindow : Window
         HideSetup();
 
         ShowMain();
+        await MaybeShowMigrationAsync();
         MaybeShowTour();
     }
 
