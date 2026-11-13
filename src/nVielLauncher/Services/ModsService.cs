@@ -108,6 +108,11 @@ public sealed class ModsService
     private static bool IsClientMod(string fileName) =>
         fileName.StartsWith("nviel", StringComparison.OrdinalIgnoreCase);
 
+    private static string StripDisabledSuffix(string fileName) =>
+        fileName.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase)
+            ? fileName[..^".disabled".Length]
+            : fileName;
+
     /// <summary>Removes older nViel jars so Fabric does not load two client mod versions.</summary>
     private static void CleanupStaleClientMods(
         string modsFolder,
@@ -117,14 +122,27 @@ public sealed class ModsService
         try
         {
             var keep = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var resource in embeddedResources)
-            {
-                var name = resource[EmbeddedPrefix.Length..];
-                if (IsClientMod(name)) keep.Add(name);
-            }
+            var managed = string.IsNullOrWhiteSpace(clientModFileName)
+                ? null
+                : StripDisabledSuffix(clientModFileName);
 
-            if (!string.IsNullOrWhiteSpace(clientModFileName))
-                keep.Add(clientModFileName);
+            if (managed is not null &&
+                (File.Exists(Path.Combine(modsFolder, managed)) ||
+                 File.Exists(Path.Combine(modsFolder, managed + ".disabled"))))
+            {
+                // The manifest-managed build wins; any embedded or renamed nViel jar is stale.
+                keep.Add(managed);
+            }
+            else
+            {
+                foreach (var resource in embeddedResources)
+                {
+                    var name = resource[EmbeddedPrefix.Length..];
+                    if (IsClientMod(name)) keep.Add(name);
+                }
+
+                if (managed is not null) keep.Add(managed);
+            }
 
             foreach (var file in Directory.EnumerateFiles(modsFolder, "*.jar*", SearchOption.TopDirectoryOnly))
             {

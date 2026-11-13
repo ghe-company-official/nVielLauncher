@@ -150,6 +150,7 @@ public sealed class ClientModServiceTests : IDisposable
         Assert.Equal("old-default", File.ReadAllText(Path.Combine(defaultMods, "nviel-0.9.0.jar")));
         Assert.Equal("old-second", File.ReadAllText(Path.Combine(secondMods, "nviel-0.9.0.jar")));
         Assert.False(File.Exists(Path.Combine(defaultMods, "nviel-1.0.0.jar")));
+        Assert.Equal("nviel-0.9.0.jar", settings.Current.ClientModFileName);
         Assert.Null(settings.Current.PendingModRollback);
         Assert.False(settings.Current.ModRollbackSuggested);
     }
@@ -175,6 +176,23 @@ public sealed class ClientModServiceTests : IDisposable
         service.HandleGameExit(0);
         Assert.False(settings.Current.ModRollbackSuggested);
         Assert.Null(settings.Current.PendingModRollback);
+    }
+
+    [Fact]
+    public async Task CoreModSyncKeepsDisabledManagedJarAndRemovesStaleVersions()
+    {
+        var game = Path.Combine(_root, "game");
+        var mods = Path.Combine(game, "mods");
+        Directory.CreateDirectory(mods);
+        File.WriteAllText(Path.Combine(mods, "nviel-1.0.0.jar.disabled"), "managed-disabled");
+        File.WriteAllText(Path.Combine(mods, "nviel-0.9.0.jar"), "stale");
+
+        await new ModsService().EnsureCoreModsAsync(
+            game, CancellationToken.None, new string('a', 64), "nviel-1.0.0.jar");
+
+        Assert.True(File.Exists(Path.Combine(mods, "nviel-1.0.0.jar.disabled")));
+        Assert.False(File.Exists(Path.Combine(mods, "nviel-0.9.0.jar")));
+        Assert.False(File.Exists(Path.Combine(mods, "nviel-1.0.0.jar")));
     }
 
     private SettingsService CreateTwoInstanceSettings()

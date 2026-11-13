@@ -251,6 +251,11 @@ public sealed class ClientModService
         var settings = _settings.Current;
         settings.ClientModVersion = rollback.PreviousVersion;
         settings.ClientModSha256 = await ComputeInstalledHashAsync(ct);
+
+        // Keep the manifest/embedded sync pointing at the jar that now exists, otherwise
+        // the next launch would see the new file name missing and reinstall the new build.
+        settings.ClientModFileName = GetInstalledFileName();
+
         settings.PendingModRollback = null;
         settings.ModRollbackSuggested = false;
         _settings.Save();
@@ -313,6 +318,24 @@ public sealed class ClientModService
             var mods = Path.Combine(_instances.GetDirectory(defaultInstance), "mods");
             var jar = FindClientJars(mods).FirstOrDefault();
             return jar is null ? null : await UpdateService.ComputeSha256Async(jar, ct);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>File name of the client jar that is currently present in the default instance.</summary>
+    public string? GetInstalledFileName()
+    {
+        try
+        {
+            var defaultInstance = _instances.All.FirstOrDefault(i => i.IsDefault);
+            if (defaultInstance is null) return null;
+
+            var mods = Path.Combine(_instances.GetDirectory(defaultInstance), "mods");
+            var jar = FindClientJars(mods).FirstOrDefault();
+            return jar is null ? null : Path.GetFileName(jar);
         }
         catch
         {
