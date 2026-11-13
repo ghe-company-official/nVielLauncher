@@ -111,15 +111,15 @@ GET https://updates.example.com/nviel/latest?channel=stable
 
 ```json
 {
-  "version": "1.0.2",
-  "tag": "v1.0.2",
-  "name": "nViel Launcher 1.0.2 Global",
+  "version": "1.2.1",
+  "tag": "v1.2.1",
+  "name": "nViel Launcher 1.2.1 Global",
   "notes": "Что нового...",
   "download_url": "https://updates.example.com/nviel/nVielLauncher.exe",
   "signature_url": "https://updates.example.com/nviel/nVielLauncher.exe.sig",
-  "size": 84226825,
+  "size": 84483337,
   "sha256": "…",
-  "release_url": "https://github.com/…/releases/tag/v1.0.2"
+  "release_url": "https://github.com/…/releases/tag/v1.2.1"
 }
 ```
 
