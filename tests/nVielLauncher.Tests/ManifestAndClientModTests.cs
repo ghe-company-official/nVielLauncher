@@ -92,6 +92,19 @@ public sealed class ClientModServiceTests : IDisposable
 
         Assert.False(service.NeedsUpdate(same));
         Assert.True(service.NeedsUpdate(newer));
+
+        // A second instance with an older jar must trigger a full sync too.
+        var secondMods = Path.Combine(_root, "second", "mods");
+        Directory.CreateDirectory(secondMods);
+        File.WriteAllText(Path.Combine(secondMods, "nviel-0.9.0.jar"), "old-second");
+        settings.Current.Instances.Add(new GameInstance
+        {
+            Id = "second",
+            Name = "Вторая",
+            Directory = Path.Combine(_root, "second")
+        });
+
+        Assert.True(service.NeedsUpdate(same));
     }
 
     [Fact]

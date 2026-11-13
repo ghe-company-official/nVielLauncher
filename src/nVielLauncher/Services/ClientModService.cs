@@ -39,14 +39,78 @@ public sealed class ClientModService
         _backupRoot = backupRoot;
     }
 
-    /// <summary>True when the manifest build differs from the jar installed locally.</summary>
+    /// <summary>True when the manifest build differs from the jar installed in any instance.</summary>
     public bool NeedsUpdate(ClientModInfo mod)
     {
         if (string.IsNullOrWhiteSpace(mod.Sha256)) return false;
 
-        var local = GetInstalledSha256();
-        return string.IsNullOrWhiteSpace(local) ||
-               !local.Equals(mod.Sha256, StringComparison.OrdinalIgnoreCase);
+        var instances = _instances.All;
+        if (instances.Count == 0)
+        {
+            var fallback = GetInstalledSha256();
+            return string.IsNullOrWhiteSpace(fallback) ||
+                   !fallback.Equals(mod.Sha256, StringComparison.OrdinalIgnoreCase);
+        }
+
+        var embeddedHash = GetEmbeddedSha256();
+
+        foreach (var instance in instances)
+        {
+            var mods = Path.Combine(_instances.GetDirectory(instance), "mods");
+            var jars = FindClientJars(mods).ToList();
+
+            // No jar yet: the embedded build is installed on the next game launch, so a
+            // matching embedded copy means this instance is already fine.
+            if (jars.Count == 0)
+            {
+                if (!string.IsNullOrWhiteSpace(embeddedHash) &&
+                    embeddedHash.Equals(mod.Sha256, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                return true;
+            }
+
+            // A duplicated nViel jar in any instance needs a clean sync.
+            if (jars.Count != 1) return true;
+
+            var hash = ComputeFileSha256(jars[0]);
+            if (string.IsNullOrWhiteSpace(hash) ||
+                !hash.Equals(mod.Sha256, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static string? GetEmbeddedSha256()
+    {
+        var embedded = FindEmbeddedJar();
+        if (embedded is null) return null;
+
+        try
+        {
+            using var stream = embedded.Value.Assembly.GetManifestResourceStream(embedded.Value.Resource);
+            return stream is null
+                ? null
+                : Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static string? ComputeFileSha256(string path)
+    {
+        try
+        {
+            using var stream = File.OpenRead(path);
+            return Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     /// <summary>
