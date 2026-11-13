@@ -13,6 +13,17 @@ public sealed class GameInstance
     public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
     public DateTime? LastPlayedUtc { get; set; }
     public DateTime? LastBackupUtc { get; set; }
+
+    /// <summary>Individual overrides for this instance. Empty values fall back to global settings.</summary>
+    public string? Nickname { get; set; }
+    public int RamMb { get; set; }
+    public string? JavaPath { get; set; }
+    public bool? ShowResolution { get; set; }
+    public bool? Fullscreen { get; set; }
+    public int ResolutionWidth { get; set; }
+    public int ResolutionHeight { get; set; }
+
+    public List<ServerEntry> Servers { get; set; } = new();
 }
 
 public sealed class LauncherSettings
@@ -46,6 +57,17 @@ public sealed class LauncherSettings
     public bool SetupCompleted { get; set; }
     public bool LauncherMigrationOffered { get; set; }
     public DateTime? LastLaunchUtc { get; set; }
+
+    /// <summary>Version and hash of the client mod that is currently installed in every instance.</summary>
+    public string? ClientModVersion { get; set; }
+    public string? ClientModSha256 { get; set; }
+    public string? ClientModFileName { get; set; }
+
+    /// <summary>Set right before replacing the client mod; cleared after a successful launch.</summary>
+    public ModRollbackInfo? PendingModRollback { get; set; }
+
+    /// <summary>True when the game crashed after a client mod update and nVielRE should offer a rollback.</summary>
+    public bool ModRollbackSuggested { get; set; }
 
     [JsonIgnore]
     public GameInstance? ActiveInstance =>
@@ -106,10 +128,23 @@ public sealed class LauncherSettings
             }
 
             instance.Directory = NormalizePath(instance.Directory);
+            if (instance.RamMb < 0) instance.RamMb = 0;
+            if (instance.ResolutionWidth < 0) instance.ResolutionWidth = 0;
+            if (instance.ResolutionHeight < 0) instance.ResolutionHeight = 0;
         }
 
         if (!Instances.Any(i => i.IsDefault))
             Instances[0].IsDefault = true;
+
+        // Legacy one-way migration: the old global server list moves into the default
+        // instance the first time its own list is empty. After that each instance owns
+        // its servers and the global list stays empty.
+        var defaultInstance = Instances.FirstOrDefault(i => i.IsDefault)!;
+        if (defaultInstance.Servers.Count == 0 && Servers.Count > 0)
+        {
+            defaultInstance.Servers = Servers;
+            Servers = new List<ServerEntry>();
+        }
 
         if (string.IsNullOrWhiteSpace(ActiveInstanceId) ||
             Instances.All(i => !string.Equals(i.Id, ActiveInstanceId, StringComparison.OrdinalIgnoreCase)))
@@ -119,6 +154,38 @@ public sealed class LauncherSettings
 
         if (BackupRetention < 1) BackupRetention = 5;
         if (AutoBackupIntervalHours < 1) AutoBackupIntervalHours = 12;
+    }
+
+    /// <summary>Nickname of this instance or the global nickname as fallback.</summary>
+    public string NicknameFor(GameInstance? instance) =>
+        string.IsNullOrWhiteSpace(instance?.Nickname) ? (Nickname ?? "").Trim() : instance.Nickname!.Trim();
+
+    /// <summary>RAM assigned to this instance; 0 means "use the global value".</summary>
+    public int RamMbFor(GameInstance? instance) =>
+        instance is { RamMb: > 0 } ? instance.RamMb : RamMb;
+
+    /// <summary>Java executable of this instance or the global one as fallback.</summary>
+    public string? JavaPathFor(GameInstance? instance) =>
+        string.IsNullOrWhiteSpace(instance?.JavaPath) ? JavaPath : instance.JavaPath;
+
+    public bool FullscreenFor(GameInstance? instance) => instance?.Fullscreen ?? Fullscreen;
+
+    public bool ShowResolutionFor(GameInstance? instance) => instance?.ShowResolution ?? ShowResolution;
+
+    public int ResolutionWidthFor(GameInstance? instance)
+    {
+        var width = instance is { ShowResolution: true, ResolutionWidth: > 0 }
+            ? instance.ResolutionWidth
+            : ResolutionWidth;
+        return Math.Clamp(width, 854, 3840);
+    }
+
+    public int ResolutionHeightFor(GameInstance? instance)
+    {
+        var height = instance is { ShowResolution: true, ResolutionHeight: > 0 }
+            ? instance.ResolutionHeight
+            : ResolutionHeight;
+        return Math.Clamp(height, 480, 2160);
     }
 
     private static string NormalizePath(string path)
@@ -144,6 +211,22 @@ public sealed class ServerEntry
     public string Address => Host + ":" + (Port > 0 ? Port : 25565);
 }
 
+/// <summary>
+/// Backup of the client mod jars taken before an update. Enough information to put the
+/// previous build back into every instance if the game starts crashing.
+/// </summary>
+public sealed class ModRollbackInfo
+{
+    public string BackupDirectory { get; set; } = "";
+    public string? PreviousVersion { get; set; }
+    public string NewVersion { get; set; } = "";
+    public string? NewSha256 { get; set; }
+    public DateTime InstalledUtc { get; set; } = DateTime.UtcNow;
+
+    [JsonIgnore]
+    public bool IsUsable => !string.IsNullOrWhiteSpace(BackupDirectory) && Directory.Exists(BackupDirectory);
+}
+
 public sealed class PlayerProfile
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
@@ -157,6 +240,7 @@ public sealed class SettingsService
 
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
     private readonly object _gate = new();
+    private readonly bool _persist = true;
 
     public LauncherSettings Current { get; private set; } = new();
 
@@ -182,6 +266,19 @@ public sealed class SettingsService
     public SettingsService()
     {
         Load();
+    }
+
+    /// <summary>Test constructor: keeps everything in memory and never touches %APPDATA%.</summary>
+    internal SettingsService(LauncherSettings current)
+    {
+        _persist = false;
+        Current = current;
+        Current.Servers ??= new List<ServerEntry>();
+        Current.Profiles ??= new List<PlayerProfile>();
+        Current.Nickname ??= "";
+        if (Current.RamMb <= 0) Current.RamMb = DefaultRamMb;
+        if (string.IsNullOrWhiteSpace(Current.GameDirectory)) Current.GameDirectory = AppPaths.DefaultGameDirectory;
+        Current.EnsureInstances();
     }
 
     private void Load()
@@ -211,6 +308,13 @@ public sealed class SettingsService
 
     public void Save()
     {
+        if (!_persist)
+        {
+            Current.EnsureInstances();
+            Changed?.Invoke();
+            return;
+        }
+
         try
         {
             lock (_gate)

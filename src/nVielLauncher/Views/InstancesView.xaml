@@ -69,6 +69,24 @@
                                     <TextBlock Text="Папка" Margin="7,0,0,0" />
                                 </StackPanel>
                             </Button>
+                            <Button Style="{StaticResource GhostButton}" Margin="0,8,0,0" Click="SettingsActive_Click"
+                                    ToolTip="Память, ник, Java и окно только для этого инстанса">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource IconSliders}" Width="13" Height="13" Stretch="Uniform"
+                                          Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                          StrokeThickness="1.4" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                    <TextBlock Text="Настройки" Margin="7,0,0,0" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource GhostButton}" Margin="0,8,0,0" Click="CloneActive_Click"
+                                    ToolTip="Точная копия этого инстанса: моды, миры и настройки">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource IconCopy}" Width="13" Height="13" Stretch="Uniform"
+                                          Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                          StrokeThickness="1.4" StrokeLineJoin="Round" />
+                                    <TextBlock Text="Клонировать" Margin="7,0,0,0" />
+                                </StackPanel>
+                            </Button>
                             <Button Style="{StaticResource GhostButton}" Margin="0,8,0,0" Click="Rename_Click"
                                     ToolTip="Переименовать активный инстанс">
                                 <StackPanel Orientation="Horizontal">
@@ -158,6 +176,9 @@
                                         <Button Style="{StaticResource SmallGhostButton}" Content="Выбрать"
                                                 Tag="{Binding Id}" Click="Activate_Click"
                                                 Visibility="{Binding ActivateVisibility}" />
+                                        <Button Style="{StaticResource SmallGhostButton}" Content="Копия"
+                                                Tag="{Binding Id}" Click="CloneRow_Click"
+                                                ToolTip="Создать точную копию этого инстанса" Margin="7,0,0,0" />
                                         <Button Style="{StaticResource SmallGhostButton}" Content="Удалить"
                                                 Tag="{Binding Id}" Click="DeleteRow_Click"
                                                 Visibility="{Binding DeleteVisibility}" Margin="7,0,0,0" />
@@ -182,6 +203,93 @@
                 </Border>
             </StackPanel>
         </ScrollViewer>
+
+        <!-- per-instance settings -->
+        <Grid x:Name="SettingsLayer" Visibility="Collapsed" Background="#CC050507" Panel.ZIndex="55">
+            <Border Style="{StaticResource Card}" Width="470" Padding="22,20"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ScrollViewer MaxHeight="540" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock x:Name="SettingsTitle" Text="Настройки инстанса" FontSize="19"
+                                           FontWeight="SemiBold" FontFamily="{StaticResource DisplayFont}" />
+                                <TextBlock Text="Пустые поля работают как в общих настройках."
+                                           FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,0" />
+                            </StackPanel>
+                            <Button Style="{StaticResource GhostButton}" Content="Сбросить" Click="ResetInstanceSettings_Click"
+                                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                                    ToolTip="Убрать все индивидуальные настройки этого инстанса" />
+                        </Grid>
+
+                        <TextBlock Text="НИК В ОФФЛАЙНЕ" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="0,18,0,6" />
+                        <TextBox x:Name="InstanceNickBox" Style="{StaticResource InputBox}" MaxLength="16" />
+                        <TextBlock x:Name="NickHint" Text="" FontSize="10.5"
+                                   Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,0" />
+
+                        <CheckBox x:Name="RamOverrideCheck" Style="{StaticResource ToggleSwitch}" Margin="0,18,0,0"
+                                  Checked="RamOverride_ValueChanged" Unchecked="RamOverride_ValueChanged">
+                            <StackPanel>
+                                <TextBlock Text="Свой объём памяти" FontSize="13" />
+                                <TextBlock x:Name="RamHint" Text="" FontSize="10.5"
+                                           Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </CheckBox>
+                        <Grid x:Name="RamPanel" Visibility="Collapsed" Margin="0,12,0,0">
+                            <TextBlock x:Name="RamValueText" Text="4096 МБ" FontSize="12.5" FontWeight="SemiBold"
+                                       HorizontalAlignment="Right" VerticalAlignment="Top" />
+                        </Grid>
+                        <Slider x:Name="InstanceRamSlider" Style="{StaticResource SlimSlider}" Minimum="2048" Maximum="16384"
+                                TickFrequency="512" IsSnapToTickEnabled="True" Margin="0,12,0,0"
+                                ValueChanged="InstanceRamSlider_ValueChanged" />
+
+                        <TextBlock Text="ПУТЬ К JAVA.EXE (ПОЛНОСТЬЮ)" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="0,18,0,6" />
+                        <TextBox x:Name="InstanceJavaBox" Style="{StaticResource InputBox}" />
+                        <TextBlock Text="Например: C:\Program Files\Eclipse Adoptium\jdk-21\bin\javaw.exe. Пусто — общая Java."
+                                   FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"
+                                   Margin="0,6,0,0" />
+
+                        <CheckBox x:Name="ScreenOverrideCheck" Style="{StaticResource ToggleSwitch}" Margin="0,18,0,0"
+                                  Checked="ScreenOverride_ValueChanged" Unchecked="ScreenOverride_ValueChanged">
+                            <StackPanel>
+                                <TextBlock Text="Свои настройки окна игры" FontSize="13" />
+                                <TextBlock Text="Снимите галочку, чтобы окно запускалось как в общих настройках."
+                                           FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </CheckBox>
+
+                        <StackPanel x:Name="ScreenPanel" Visibility="Collapsed">
+                            <CheckBox x:Name="InstanceFullscreenCheck" Style="{StaticResource ToggleSwitch}" Margin="0,12,0,0">
+                                <TextBlock Text="Полноэкранный режим" FontSize="13" />
+                            </CheckBox>
+                            <CheckBox x:Name="InstanceResolutionCheck" Style="{StaticResource ToggleSwitch}" Margin="0,12,0,0"
+                                      Checked="InstanceResolution_ValueChanged" Unchecked="InstanceResolution_ValueChanged">
+                                <TextBlock Text="Задать размер окна" FontSize="13" />
+                            </CheckBox>
+                            <StackPanel x:Name="ResolutionPanel" Orientation="Horizontal" Margin="0,10,0,0">
+                                <TextBox x:Name="InstanceWidthBox" Style="{StaticResource InputBox}" Width="92" />
+                                <TextBlock Text="×" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
+                                           Margin="8,0" VerticalAlignment="Center" />
+                                <TextBox x:Name="InstanceHeightBox" Style="{StaticResource InputBox}" Width="92" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <TextBlock x:Name="SettingsError" Text="" FontSize="10.5" Foreground="#FFFF9A9A"
+                                   TextWrapping="Wrap" Margin="0,4,0,0" Visibility="Collapsed" />
+                        <TextBlock x:Name="SettingsBusy" Text="" FontSize="10.5" Foreground="{StaticResource TextSecondaryBrush}"
+                                   Margin="0,12,0,0" Visibility="Collapsed" />
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+                            <Button Style="{StaticResource GhostButton}" Content="Отмена" Click="CloseSettings_Click" />
+                            <Button x:Name="SettingsConfirmButton" Style="{StaticResource PrimaryButton}" Content="Сохранить"
+                                    Click="SettingsConfirm_Click" Margin="9,0,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
 
         <!-- in-page editor -->
         <Grid x:Name="EditorLayer" Visibility="Collapsed" Background="#CC050507" Panel.ZIndex="50">

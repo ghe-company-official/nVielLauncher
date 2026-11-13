@@ -202,18 +202,28 @@ public partial class MainWindow : Window
         try
         {
             var result = await AppServices.Updates.CheckAsync(CancellationToken.None, force);
-            if (result.Status != UpdateStatus.Available || result.Update is not { } update) return;
-            if (!_promptedUpdateTags.Add(update.Tag)) return;
+
+            UpdateInfo? update = result.Status == UpdateStatus.Available ? result.Update : null;
+            var mod = result.ClientMod is { } candidate && AppServices.ClientMods.NeedsUpdate(candidate)
+                ? candidate
+                : null;
+
+            if (update is null && mod is null) return;
+
+            var key = (update?.Tag ?? "mod") + "|" + (mod?.Version ?? "");
+            if (!_promptedUpdateTags.Add(key)) return;
 
             _updateDialogOpen = true;
-            Log.Write("UPDATE: доступно " + update.Tag + ", открываю окно.");
+            Log.Write(update is not null
+                ? "UPDATE: доступно " + update.Tag + ", открываю окно."
+                : "UPDATE: доступен клиентский мод " + mod!.Version + ", открываю окно.");
 
             if (WindowState == WindowState.Minimized)
                 WindowState = WindowState.Normal;
 
             Activate();
 
-            var prompt = new UpdatePromptWindow(update) { Owner = this };
+            var prompt = new UpdatePromptWindow(update, mod) { Owner = this };
             try
             {
                 prompt.ShowDialog();

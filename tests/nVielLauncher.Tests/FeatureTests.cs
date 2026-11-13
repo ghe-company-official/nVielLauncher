@@ -47,6 +47,190 @@ public sealed class InstanceSettingsTests
     }
 }
 
+public sealed class InstanceLegacyServersTests
+{
+    [Fact]
+    public void LegacyGlobalServersMoveIntoDefaultInstanceOnce()
+    {
+        var settings = new LauncherSettings
+        {
+            GameDirectory = Path.Combine(Path.GetTempPath(), "nviel-servers-test")
+        };
+        settings.Servers.Add(new ServerEntry { Name = "Hypixel", Host = "hypixel.net" });
+        settings.Servers.Add(new ServerEntry { Name = "Local", Host = "localhost", Port = 25566 });
+
+        settings.EnsureInstances();
+        var defaultInstance = Assert.Single(settings.Instances);
+
+        Assert.Equal(2, defaultInstance.Servers.Count);
+        Assert.Equal("hypixel.net", defaultInstance.Servers[0].Host);
+        Assert.Empty(settings.Servers);
+
+        // one-way migration: re-running must not duplicate or resurrect entries
+        settings.EnsureInstances();
+        Assert.Equal(2, defaultInstance.Servers.Count);
+        Assert.Empty(settings.Servers);
+    }
+
+    [Fact]
+    public void OverrideHelpersFallBackToGlobalValues()
+    {
+        var settings = new LauncherSettings
+        {
+            GameDirectory = Path.Combine(Path.GetTempPath(), "nviel-override-test"),
+            Nickname = "GlobalNick",
+            RamMb = 4096,
+            JavaPath = @"C:\java\global.exe",
+            Fullscreen = true,
+            ShowResolution = false,
+            ResolutionWidth = 1280,
+            ResolutionHeight = 720
+        };
+        settings.EnsureInstances();
+        var instance = settings.ActiveInstance!;
+
+        // nothing set: everything inherits
+        Assert.Equal("GlobalNick", settings.NicknameFor(instance));
+        Assert.Equal(4096, settings.RamMbFor(instance));
+        Assert.Equal(@"C:\java\global.exe", settings.JavaPathFor(instance));
+        Assert.True(settings.FullscreenFor(instance));
+        Assert.False(settings.ShowResolutionFor(instance));
+        Assert.Equal(1280, settings.ResolutionWidthFor(instance));
+        Assert.Equal(720, settings.ResolutionHeightFor(instance));
+
+        // set overrides
+        instance.Nickname = "InstanceNick";
+        instance.RamMb = 6144;
+        instance.JavaPath = @"C:\java\instance.exe";
+        instance.Fullscreen = false;
+        instance.ShowResolution = true;
+        instance.ResolutionWidth = 1920;
+        instance.ResolutionHeight = 1080;
+
+        Assert.Equal("InstanceNick", settings.NicknameFor(instance));
+        Assert.Equal(6144, settings.RamMbFor(instance));
+        Assert.Equal(@"C:\java\instance.exe", settings.JavaPathFor(instance));
+        Assert.False(settings.FullscreenFor(instance));
+        Assert.True(settings.ShowResolutionFor(instance));
+        Assert.Equal(1920, settings.ResolutionWidthFor(instance));
+        Assert.Equal(1080, settings.ResolutionHeightFor(instance));
+
+        // null/zero again: back to global
+        instance.Nickname = null;
+        instance.RamMb = 0;
+        instance.JavaPath = null;
+        instance.Fullscreen = null;
+        instance.ShowResolution = null;
+
+        Assert.Equal("GlobalNick", settings.NicknameFor(instance));
+        Assert.Equal(4096, settings.RamMbFor(instance));
+        Assert.Equal(@"C:\java\global.exe", settings.JavaPathFor(instance));
+        Assert.True(settings.FullscreenFor(instance));
+        Assert.False(settings.ShowResolutionFor(instance));
+    }
+}
+
+public sealed class InstanceCloneTests : IDisposable
+{
+    private readonly string _root = Path.Combine(Path.GetTempPath(), "nviel-clone-" + Guid.NewGuid().ToString("N"));
+
+    public InstanceCloneTests()
+    {
+        Directory.CreateDirectory(_root);
+        AppPaths.InstancesOverride = Path.Combine(_root, "instances");
+    }
+
+    public void Dispose()
+    {
+        AppPaths.InstancesOverride = null;
+        try { Directory.Delete(_root, recursive: true); }
+        catch { /* temp cleanup is best effort */ }
+    }
+
+    [Fact]
+    public void CloneCopiesContentSettingsServersAndActivates()
+    {
+        var gameDirectory = Path.Combine(_root, "game");
+        var settings = new LauncherSettings
+        {
+            GameDirectory = gameDirectory,
+            Nickname = "GlobalNick",
+            RamMb = 2048
+        };
+        settings.EnsureInstances();
+
+        var sourceDirectory = Path.Combine(_root, "source-instance");
+        Directory.CreateDirectory(Path.Combine(sourceDirectory, "mods"));
+        Directory.CreateDirectory(Path.Combine(sourceDirectory, "saves", "world1"));
+        File.WriteAllText(Path.Combine(sourceDirectory, "mods", "a.jar"), "mod a");
+        File.WriteAllText(Path.Combine(sourceDirectory, "saves", "world1", "level.dat"), "w");
+        File.WriteAllText(Path.Combine(sourceDirectory, "options.txt"), "lang:ru");
+
+        var master = new GameInstance
+        {
+            Id = "master",
+            Name = "Мастер",
+            Directory = sourceDirectory,
+            RamMb = 4096,
+            Fullscreen = false,
+            ShowResolution = true,
+            ResolutionWidth = 1920,
+            ResolutionHeight = 1080
+        };
+        master.Servers.Add(new ServerEntry { Name = "Hypixel", Host = "hypixel.net" });
+        settings.Instances.Add(master);
+        settings.ActiveInstanceId = master.Id;
+
+        var service = new InstanceService(settings);
+        var clone = service.Clone("master", null, CancellationToken.None);
+
+        Assert.False(clone.IsDefault);
+        Assert.Equal("Мастер (копия)", clone.Name);
+        Assert.NotEqual(sourceDirectory, clone.Directory);
+        Assert.Equal(clone.Id, settings.ActiveInstanceId);
+
+        // content
+        Assert.True(File.Exists(Path.Combine(clone.Directory, "mods", "a.jar")));
+        Assert.True(File.Exists(Path.Combine(clone.Directory, "saves", "world1", "level.dat")));
+        Assert.True(File.Exists(Path.Combine(clone.Directory, "options.txt")));
+
+        // per-instance settings and servers are copied, not shared
+        Assert.Equal(4096, clone.RamMb);
+        Assert.False(clone.Fullscreen);
+        Assert.True(clone.ShowResolution);
+        Assert.Equal(1920, clone.ResolutionWidth);
+        Assert.Equal(1080, clone.ResolutionHeight);
+        var server = Assert.Single(clone.Servers);
+        Assert.Equal("hypixel.net", server.Host);
+        Assert.Single(master.Servers); // source untouched
+
+        // source stays intact after cleanup-on-failure helpers ran
+        Assert.True(File.Exists(Path.Combine(sourceDirectory, "mods", "a.jar")));
+    }
+
+    [Fact]
+    public void CloneNamesStayUnique()
+    {
+        var gameDirectory = Path.Combine(_root, "game-unique");
+        var settings = new LauncherSettings { GameDirectory = gameDirectory };
+        settings.EnsureInstances();
+
+        var sourceDirectory = Path.Combine(_root, "unique-source");
+        Directory.CreateDirectory(sourceDirectory);
+        var master = new GameInstance { Id = "master", Name = "Опасные эксперименты", Directory = sourceDirectory };
+        settings.Instances.Add(master);
+        settings.ActiveInstanceId = master.Id;
+
+        var service = new InstanceService(settings);
+        var first = service.Clone("master", null, CancellationToken.None);
+        var second = service.Clone("master", null, CancellationToken.None);
+
+        Assert.NotEqual(first.Name, second.Name);
+        Assert.Equal("Опасные эксперименты (копия)", first.Name);
+        Assert.Equal("Опасные эксперименты (копия 2)", second.Name);
+    }
+}
+
 public sealed class VersionPredicateTests
 {
     [Theory]

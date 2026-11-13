@@ -27,6 +27,9 @@ public static class AppPaths
     public static string MigrationBackupsDirectory => Path.Combine(MigrationDirectory, "backups");
     public static string JavaDirectory => Path.Combine(AppRoot, "java");
     public static string UpdateDirectory => Path.Combine(AppRoot, "update");
+    public static string ClientModsCacheDirectory => Path.Combine(UpdateDirectory, "mods");
+    public static string PreviousLauncherDirectory => Path.Combine(UpdateDirectory, "previous");
+    public static string ModUpdatesBackupDirectory => Path.Combine(BackupsDirectory, "mod-updates");
     public static string ModrinthStateFile => Path.Combine(AppRoot, "modrinth-state.json");
     public static string BackupsDirectory => Path.Combine(AppRoot, "backups");
 
@@ -35,7 +38,10 @@ public static class AppPaths
         : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ".nviel");
 
     /// <summary>New instances live next to the default game folder, not inside launcher binaries.</summary>
-    public static string InstancesDirectory => Path.Combine(DefaultGameDirectory, "instances");
+    public static string InstancesDirectory => InstancesOverride ?? Path.Combine(DefaultGameDirectory, "instances");
+
+    /// <summary>Test hook: redirects the instances root. Null means the normal location.</summary>
+    internal static string? InstancesOverride { get; set; }
 
     private static string? _bundledMods;
 

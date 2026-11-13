@@ -66,7 +66,9 @@ public sealed class LauncherService
         if (IsRunning) throw new InvalidOperationException("Игра уже запущена.");
 
         var settings = _settings.Current;
-        var nickname = settings.Nickname.Trim();
+        var active = settings.ActiveInstance;
+        var nickname = settings.NicknameFor(active);
+        var ramMb = settings.RamMbFor(active);
 
         if (!IsValidNickname(nickname))
             throw new InvalidOperationException("Ник должен быть от 3 до 16 символов: A-Z, 0-9 и _.");
@@ -81,7 +83,7 @@ public sealed class LauncherService
         // 1. Java 21
         var javaProgress = new Progress<LaunchProgress>(p =>
             progress.Report(p with { Percent = 2 + p.Percent * 0.08 }));
-        var java = await _java.EnsureJavaAsync(21, javaProgress, ct);
+        var java = await _java.EnsureJavaAsync(21, javaProgress, ct, settings.JavaPathFor(active));
 
         // 2. Minecraft + Fabric + assets
         var installProgress = new Progress<LaunchProgress>(p =>
@@ -92,7 +94,8 @@ public sealed class LauncherService
         var modsProgress = new Progress<LaunchProgress>(p =>
             progress.Report(p with { Percent = 95 + p.Percent * 0.03 }));
         await _mods.SyncAsync(gameDirectory, modsProgress, ct);
-        await _mods.EnsureCoreModsAsync(gameDirectory, ct);
+        await _mods.EnsureCoreModsAsync(gameDirectory, ct,
+            _settings.Current.ClientModSha256, _settings.Current.ClientModFileName);
 
         // framework mods required by the built-in set (downloaded silently, never surfaced in the UI)
         await _modrinth.EnsureSupportModsAsync(gameDirectory, ct);
@@ -103,9 +106,9 @@ public sealed class LauncherService
         await _modrinth.EnsureRequiredDependenciesAsync(gameDirectory, dependenciesProgress, ct);
 
         // 4. Build and start
-        progress.Report(new LaunchProgress(98, "Запуск Minecraft", $"Java {java.Major} · {settings.RamMb} МБ RAM"));
+        progress.Report(new LaunchProgress(98, "Запуск Minecraft", $"Java {java.Major} · {ramMb} МБ RAM"));
 
-        var arguments = BuildArguments(plan, java, settings, nickname);
+        var arguments = BuildArguments(plan, java, settings, active, nickname);
         Log.Write($"Запуск: {java.JavawExe} ({arguments.Count} аргументов)");
         Log.Write($"Игровая папка: {gameDirectory}");
         Log.Write($"Общие файлы игры: {runtimeDirectory}");
@@ -153,6 +156,8 @@ public sealed class LauncherService
                 try { code = process.ExitCode; } catch { }
 
                 Log.Write($"Minecraft завершился. Код: {code}.");
+                try { AppServices.ClientMods.HandleGameExit(code); }
+                catch (Exception ex) { Log.Write("MOD UPDATE: не удалось обработать завершение игры: " + ex.Message); }
                 GameExited?.Invoke(code);
             });
         }
@@ -181,7 +186,7 @@ public sealed class LauncherService
     // ------------------------------------------------------------------ arguments
 
     private static List<string> BuildArguments(
-        LaunchPlan plan, JavaInfo java, LauncherSettings settings, string nickname)
+        LaunchPlan plan, JavaInfo java, LauncherSettings settings, GameInstance? instance, string nickname)
     {
         var classpath = string.Join(';', plan.Classpath);
         var offlineUuid = OfflineUuid(nickname);
@@ -215,10 +220,11 @@ public sealed class LauncherService
             ["quickPlayRealms"] = ""
         };
 
+        var ramMb = settings.RamMbFor(instance);
         var jvm = new List<string>
         {
-            $"-Xmx{settings.RamMb}M",
-            $"-Xms{Math.Min(settings.RamMb, 1024)}M",
+            $"-Xmx{ramMb}M",
+            $"-Xms{Math.Min(ramMb, 1024)}M",
             "-XX:+UseG1GC",
             "-XX:+UnlockExperimentalVMOptions",
             "-XX:G1NewSizePercent=20",
@@ -245,15 +251,15 @@ public sealed class LauncherService
         game.AddRange(EvaluateArguments(plan.BaseVersion.Arguments?.Game, replacements));
         game.AddRange(EvaluateArguments(plan.FabricProfile.Arguments?.Game, replacements));
 
-        if (settings.ShowResolution)
+        if (settings.ShowResolutionFor(instance))
         {
             game.Add("--width");
-            game.Add(Math.Clamp(settings.ResolutionWidth, 854, 3840).ToString());
+            game.Add(settings.ResolutionWidthFor(instance).ToString());
             game.Add("--height");
-            game.Add(Math.Clamp(settings.ResolutionHeight, 480, 2160).ToString());
+            game.Add(settings.ResolutionHeightFor(instance).ToString());
         }
 
-        if (settings.Fullscreen)
+        if (settings.FullscreenFor(instance))
             game.Add("--fullscreen");
 
         if (!string.IsNullOrWhiteSpace(settings.QuickJoinHost))

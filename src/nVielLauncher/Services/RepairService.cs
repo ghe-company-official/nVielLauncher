@@ -139,7 +139,9 @@ public static class RepairService
         try
         {
             Write("Восстанавливаем обязательные моды...");
-            await AppServices.Mods.EnsureCoreModsAsync(gameDirectory, ct);
+            await AppServices.Mods.EnsureCoreModsAsync(gameDirectory, ct,
+                AppServices.Settings.Current.ClientModSha256,
+                AppServices.Settings.Current.ClientModFileName);
             await AppServices.Mods.SyncAsync(gameDirectory, null, ct);
 
             var status = AppServices.Mods.GetCoreModStatus(gameDirectory);

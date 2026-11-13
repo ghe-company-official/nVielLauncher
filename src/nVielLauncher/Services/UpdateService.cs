@@ -30,9 +30,26 @@ public sealed record UpdateInfo(
     string ReleaseUrl,
     string ApiUrl = "",
     string? SignatureUrl = null,
-    string? SignatureApiUrl = null);
+    string? SignatureApiUrl = null,
+    ClientModInfo? ClientMod = null,
+    int MinJava = 21,
+    string FabricVersion = "1.21.4");
 
-public sealed record UpdateCheckResult(UpdateStatus Status, string Message, UpdateInfo? Update = null);
+/// <summary>Client mod build described by the release manifest (manifest.json).</summary>
+public sealed record ClientModInfo(
+    string Version,
+    string FileName,
+    string DownloadUrl,
+    long Size,
+    string? Sha256,
+    string Notes = "",
+    string ApiUrl = "");
+
+public sealed record UpdateCheckResult(
+    UpdateStatus Status,
+    string Message,
+    UpdateInfo? Update = null,
+    ClientModInfo? ClientMod = null);
 
 /// <summary>
 /// Checks the private GitHub Releases repository (or an optional zero-touch relay),
@@ -172,10 +189,31 @@ public sealed class UpdateService : IDisposable
         if (parsedVersion is null)
             return new UpdateCheckResult(UpdateStatus.Error, "Не удалось прочитать версию релиза.");
 
+        var token = string.IsNullOrWhiteSpace(AppInfo.UpdateProxyUrl)
+            ? (await GetSourceAsync(ct)).Token
+            : "";
+
+        // manifest.json (signed with the same key as the launcher) is the single source of
+        // truth: launcher version, client mod version, hashes and minimum Java/Fabric.
+        var manifest = await TryGetManifestAsync(release, token, ct);
+        var manifestLauncher = manifest?.Launcher;
+        if (manifestLauncher is not null &&
+            VersionUtil.TryParse(manifestLauncher.Version) is { } manifestVersion)
+        {
+            parsedVersion = VersionUtil.Normalize(manifestVersion);
+        }
         var remoteVersion = VersionUtil.Normalize(parsedVersion);
         var current = VersionUtil.Normalize(AppInfo.Version);
+        var clientMod = BuildClientModInfo(release, manifest);
+
         if (remoteVersion <= current)
-            return new UpdateCheckResult(UpdateStatus.UpToDate, "Установлена актуальная версия.", null);
+        {
+            return new UpdateCheckResult(
+                UpdateStatus.UpToDate,
+                "Установлена актуальная версия.",
+                null,
+                clientMod);
+        }
 
         var asset = release.Assets?
             .FirstOrDefault(a => string.Equals(a.Name, "nVielLauncher.exe", StringComparison.OrdinalIgnoreCase))
@@ -207,17 +245,126 @@ public sealed class UpdateService : IDisposable
             string.IsNullOrWhiteSpace(release.Name)
                 ? AppInfo.ProductName + " " + displayVersion + " " + AppInfo.Edition
                 : release.Name,
-            release.Body ?? "",
+            !string.IsNullOrWhiteSpace(manifest?.Notes) ? manifest!.Notes! : release.Body ?? "",
             asset.DownloadUrl,
-            asset.Size,
-            ParseSha256(asset.Digest),
+            manifestLauncher is { Size: > 0 } ? manifestLauncher.Size : asset.Size,
+            manifestLauncher?.Sha256 is { Length: 64 } ? manifestLauncher.Sha256 : ParseSha256(asset.Digest),
             release.HtmlUrl,
             asset.ApiUrl,
             signatureAsset.DownloadUrl,
-            signatureAsset.ApiUrl);
+            signatureAsset.ApiUrl,
+            clientMod,
+            manifest?.MinJava is > 0 ? manifest.MinJava : 21,
+            string.IsNullOrWhiteSpace(manifest?.Fabric) ? "1.21.4" : manifest!.Fabric!);
 
         return new UpdateCheckResult(UpdateStatus.Available,
-            $"Доступно обновление {info.Version}.", info);
+            $"Доступно обновление {info.Version}.", info, clientMod);
+    }
+
+    private static ClientModInfo? BuildClientModInfo(GitHubRelease release, ReleaseManifest? manifest)
+    {
+        if (manifest?.ClientMod is not { } mod ||
+            string.IsNullOrWhiteSpace(mod.Asset) ||
+            string.IsNullOrWhiteSpace(mod.Sha256))
+            return null;
+
+        var asset = release.Assets?.FirstOrDefault(a =>
+            string.Equals(a.Name, mod.Asset, StringComparison.OrdinalIgnoreCase));
+        if (asset is null ||
+            (string.IsNullOrWhiteSpace(asset.ApiUrl) && string.IsNullOrWhiteSpace(asset.DownloadUrl)))
+            return null;
+
+        return new ClientModInfo(
+            string.IsNullOrWhiteSpace(mod.Version) ? mod.Asset : mod.Version,
+            string.IsNullOrWhiteSpace(mod.FileName) ? mod.Asset : mod.FileName,
+            asset.DownloadUrl,
+            mod.Size > 0 ? mod.Size : asset.Size,
+            mod.Sha256,
+            mod.Notes ?? "",
+            asset.ApiUrl);
+    }
+
+    private async Task<ReleaseManifest?> TryGetManifestAsync(
+        GitHubRelease release,
+        string token,
+        CancellationToken ct)
+    {
+        var manifestAsset = release.Assets?.FirstOrDefault(a =>
+            string.Equals(a.Name, "manifest.json", StringComparison.OrdinalIgnoreCase));
+        var signatureAsset = release.Assets?.FirstOrDefault(a =>
+            string.Equals(a.Name, "manifest.json.sig", StringComparison.OrdinalIgnoreCase));
+
+        if (manifestAsset is null || signatureAsset is null)
+            return null;
+
+        try
+        {
+            var manifestUrl = !string.IsNullOrWhiteSpace(manifestAsset.ApiUrl)
+                ? manifestAsset.ApiUrl
+                : manifestAsset.DownloadUrl;
+            var signatureUrl = !string.IsNullOrWhiteSpace(signatureAsset.ApiUrl)
+                ? signatureAsset.ApiUrl
+                : signatureAsset.DownloadUrl;
+
+            if (string.IsNullOrWhiteSpace(manifestUrl) || string.IsNullOrWhiteSpace(signatureUrl))
+                return null;
+
+            var manifestText = await DownloadTextAsync(manifestUrl, token, 128 * 1024, ct);
+            var signatureText = await DownloadTextAsync(signatureUrl, token, MaxSignatureTextBytes, ct);
+
+            byte[] manifestBytes;
+            byte[] signatureBytes;
+            try
+            {
+                manifestBytes = Encoding.UTF8.GetBytes(manifestText);
+                signatureBytes = Convert.FromBase64String(signatureText.Trim());
+            }
+            catch (FormatException)
+            {
+                Log.Write("UPDATE: подпись manifest.json повреждена.");
+                return null;
+            }
+
+            if (!UpdateSignature.VerifyBytes(manifestBytes, signatureBytes, AppInfo.UpdatePublicKeyBase64))
+            {
+                Log.Write("UPDATE: подпись manifest.json недействительна — манифест отклонён.");
+                return null;
+            }
+
+            var manifest = ParseManifest(manifestText);
+            if (manifest is null)
+                Log.Write("UPDATE: manifest.json не удалось разобрать.");
+            return manifest;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Log.Write("UPDATE: не удалось получить manifest.json: " + ex.Message);
+            return null;
+        }
+    }
+
+    internal static ReleaseManifest? ParseManifest(string json)
+    {
+        try
+        {
+            var manifest = JsonSerializer.Deserialize<ReleaseManifest>(json, HttpService.JsonOptions);
+            if (manifest is null || manifest.Schema is < 1 or > 1) return null;
+
+            if (manifest.Launcher is { } launcher &&
+                (string.IsNullOrWhiteSpace(launcher.Version) ||
+                 (launcher.Sha256 is { Length: > 0 and not 64 })))
+                return null;
+
+            return manifest;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     /// <summary>
@@ -324,7 +471,7 @@ public sealed class UpdateService : IDisposable
         if (string.IsNullOrWhiteSpace(url))
             throw new InvalidOperationException("В релизе не указана ссылка на файл обновления.");
 
-        await DownloadAssetAsync(url, destination, info, token, progress, ct);
+        await DownloadAssetAsync(url, destination, info.Size, token, progress, ct);
 
         progress?.Report(1d);
         stage?.Report("3 / 4 · Подпись, размер, PE-заголовок, версия и SHA-256");
@@ -342,6 +489,75 @@ public sealed class UpdateService : IDisposable
 
         stage?.Report("4 / 4 · Установка и перезапуск");
         return destination;
+    }
+
+    /// <summary>
+    /// Downloads the client mod jar into the resumable update cache and verifies its
+    /// SHA-256. An already cached file with a matching hash is reused without network.
+    /// </summary>
+    public async Task<string> DownloadClientModAsync(
+        ClientModInfo mod,
+        IProgress<double>? progress,
+        IProgress<string>? stage,
+        CancellationToken ct)
+    {
+        Directory.CreateDirectory(AppPaths.ClientModsCacheDirectory);
+
+        var destination = Path.Combine(AppPaths.ClientModsCacheDirectory, SafeFilePart(mod.FileName));
+        CleanupOldDownloads(destination);
+
+        if (File.Exists(destination) &&
+            (mod.Size <= 0 || new FileInfo(destination).Length == mod.Size) &&
+            await Sha256MatchesAsync(destination, mod.Sha256, ct))
+        {
+            progress?.Report(1d);
+            stage?.Report("Мод уже скачан · проверяем хэш");
+            return destination;
+        }
+
+        TryDelete(destination);
+        stage?.Report("Скачивание клиентского мода");
+
+        var url = !string.IsNullOrWhiteSpace(mod.ApiUrl) ? mod.ApiUrl : mod.DownloadUrl;
+        if (string.IsNullOrWhiteSpace(url))
+            throw new InvalidOperationException("В манифесте не указана ссылка на клиентский мод.");
+
+        var token = string.IsNullOrWhiteSpace(AppInfo.UpdateProxyUrl)
+            ? (await GetSourceAsync(ct)).Token
+            : "";
+
+        await DownloadAssetAsync(url, destination, mod.Size, token, progress, ct);
+
+        stage?.Report("Проверка SHA-256 клиентского мода");
+        if (!await Sha256MatchesAsync(destination, mod.Sha256, ct))
+        {
+            TryDelete(destination);
+            TryDelete(destination + ".part");
+            throw new InvalidOperationException("Контрольная сумма клиентского мода не совпадает.");
+        }
+
+        progress?.Report(1d);
+        return destination;
+    }
+
+    internal static async Task<bool> Sha256MatchesAsync(
+        string path,
+        string? expected,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(expected)) return false;
+
+        await using var stream = File.OpenRead(path);
+        var hash = await SHA256.HashDataAsync(stream, ct);
+        var actual = Convert.ToHexString(hash);
+        return actual.Equals(expected, StringComparison.OrdinalIgnoreCase);
+    }
+
+    internal static async Task<string> ComputeSha256Async(string path, CancellationToken ct)
+    {
+        await using var stream = File.OpenRead(path);
+        var hash = await SHA256.HashDataAsync(stream, ct);
+        return Convert.ToHexString(hash).ToLowerInvariant();
     }
 
     private async Task<string> DownloadSignatureAsync(UpdateInfo info, string token, CancellationToken ct)
@@ -438,20 +654,20 @@ public sealed class UpdateService : IDisposable
     private async Task DownloadAssetAsync(
         string url,
         string destination,
-        UpdateInfo info,
+        long expectedSize,
         string token,
         IProgress<double>? progress,
         CancellationToken ct)
     {
         var temp = destination + ".part";
         var existing = File.Exists(temp) ? new FileInfo(temp).Length : 0;
-        if (existing > info.Size && info.Size > 0)
+        if (existing > expectedSize && expectedSize > 0)
         {
             TryDelete(temp);
             existing = 0;
         }
 
-        if (info.Size > 0 && existing == info.Size)
+        if (expectedSize > 0 && existing == expectedSize)
         {
             File.Move(temp, destination, overwrite: true);
             progress?.Report(1d);
@@ -531,7 +747,7 @@ public sealed class UpdateService : IDisposable
 
                 var contentLength = response.Content.Headers.ContentLength ?? 0;
                 var total = response.Content.Headers.ContentRange?.Length
-                            ?? (contentLength > 0 ? existing + contentLength : info.Size);
+                            ?? (contentLength > 0 ? existing + contentLength : expectedSize);
 
                 await using (var source = await response.Content.ReadAsStreamAsync(ct))
                 await using (var target = new FileStream(temp,
@@ -552,7 +768,7 @@ public sealed class UpdateService : IDisposable
                     }
                 }
 
-                if (info.Size > 0 && new FileInfo(temp).Length != info.Size)
+                if (expectedSize > 0 && new FileInfo(temp).Length != expectedSize)
                     throw new IOException("Размер скачанного файла не совпадает с релизом.");
 
                 File.Move(temp, destination, overwrite: true);
@@ -594,6 +810,8 @@ public sealed class UpdateService : IDisposable
 
         var marker = Path.Combine(AppPaths.UpdateDirectory, "health-" + Guid.NewGuid().ToString("N") + ".ok");
         var log = Path.Combine(AppPaths.LogsDirectory, "update.log");
+        var previousDirectory = AppPaths.PreviousLauncherDirectory;
+        var previousVersion = AppInfo.DisplayVersion;
         // A portable session started only with --portable must pass that flag to the new build,
         // otherwise it would use the normal %LOCALAPPDATA% data root and never write the marker.
         var portableArgument = AppPaths.IsPortable ? " --portable" : "";
@@ -606,6 +824,8 @@ $dst = '{PowerShellQuote(target)}'
 $backup = $dst + '.old'
 $marker = '{PowerShellQuote(marker)}'
 $log = '{PowerShellQuote(log)}'
+$prevDir = '{PowerShellQuote(previousDirectory)}'
+$prevVersion = '{PowerShellQuote(previousVersion)}'
 
 function Write-UpdateLog([string]$message) {{
     Add-Content -LiteralPath $log -Value ((Get-Date -Format o) + ' ' + $message)
@@ -655,6 +875,13 @@ try {{
     }}
 
     if ($healthy) {{
+        # Keep the build that was just replaced so nVielRE can bring it back if the
+        # new launcher or the new client mod starts crashing.
+        New-Item -ItemType Directory -Force -Path $prevDir | Out-Null
+        if (Test-Path -LiteralPath $backup) {{
+            Copy-Item -LiteralPath $backup -Destination (Join-Path $prevDir 'nVielLauncher.exe') -Force
+            Set-Content -LiteralPath (Join-Path $prevDir 'version.txt') -Value $prevVersion -Encoding UTF8
+        }}
         Remove-Item -LiteralPath $backup -Force
         Remove-Item -LiteralPath $marker -Force
         Remove-Item -LiteralPath $src -Force
@@ -701,6 +928,111 @@ try {{
         });
 
         Log.Write($"UPDATE: установка {downloadedPath} → {target}; health={marker}");
+        Application.Current?.Shutdown();
+    }
+
+    /// <summary>Path of the launcher build that was replaced by the last successful update.</summary>
+    public static string PreviousLauncherPath =>
+        Path.Combine(AppPaths.PreviousLauncherDirectory, "nVielLauncher.exe");
+
+    public static bool HasPreviousLauncher => File.Exists(PreviousLauncherPath);
+
+    public static string? GetPreviousLauncherVersion()
+    {
+        try
+        {
+            var file = Path.Combine(AppPaths.PreviousLauncherDirectory, "version.txt");
+            return File.Exists(file) ? File.ReadAllText(file).Trim() : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Restores the launcher executable that was kept before the last update. The current
+    /// process exits first; a detached script swaps the file and starts the old build.
+    /// </summary>
+    public void RestorePreviousLauncher()
+    {
+        var source = PreviousLauncherPath;
+        if (!File.Exists(source))
+            throw new InvalidOperationException("Предыдущая версия лаунчера не найдена.");
+
+        var target = AppInfo.ExecutablePath;
+        var targetName = Path.GetFileName(target);
+        if (targetName.Equals("dotnet.exe", StringComparison.OrdinalIgnoreCase) ||
+            targetName.Equals("testhost.exe", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Откат лаунчера недоступен в режиме разработки.");
+        }
+
+        Directory.CreateDirectory(AppPaths.UpdateDirectory);
+        Directory.CreateDirectory(AppPaths.LogsDirectory);
+
+        var log = Path.Combine(AppPaths.LogsDirectory, "update.log");
+        var portableArgument = AppPaths.IsPortable ? " --portable" : "";
+
+        var script = $@"
+$ErrorActionPreference = 'SilentlyContinue'
+$oldPid = {Environment.ProcessId}
+$src = '{PowerShellQuote(source)}'
+$dst = '{PowerShellQuote(target)}'
+$log = '{PowerShellQuote(log)}'
+
+function Write-UpdateLog([string]$message) {{
+    Add-Content -LiteralPath $log -Value ((Get-Date -Format o) + ' ' + $message)
+}}
+
+Write-UpdateLog 'Waiting for launcher before restoring the previous build...'
+for ($i = 0; $i -lt 240; $i++) {{
+    if (-not (Get-Process -Id $oldPid -ErrorAction SilentlyContinue)) {{ break }}
+    Start-Sleep -Milliseconds 250
+}}
+Start-Sleep -Milliseconds 500
+
+$copied = $false
+for ($i = 0; $i -lt 80; $i++) {{
+    try {{
+        Copy-Item -LiteralPath $src -Destination $dst -Force -ErrorAction Stop
+        $copied = $true
+        break
+    }} catch {{
+        Start-Sleep -Milliseconds 250
+    }}
+}}
+
+if (-not $copied) {{
+    Write-UpdateLog 'Could not restore the previous launcher.'
+    try {{
+        Add-Type -AssemblyName PresentationFramework
+        [System.Windows.MessageBox]::Show('Не удалось вернуть предыдущую версию лаунчера.', 'nViel Launcher', 'OK', 'Warning') | Out-Null
+    }} catch {{ }}
+    exit 1
+}}
+
+Remove-Item -LiteralPath $src -Force
+Remove-Item -LiteralPath (Join-Path (Split-Path -Parent $src) 'version.txt') -Force
+Write-UpdateLog 'Previous launcher restored.'
+$dir = [System.IO.Path]::GetDirectoryName($dst)
+$arguments = '{portableArgument.Trim()}'
+if ($arguments) {{
+    Start-Process -FilePath $dst -WorkingDirectory $dir -ArgumentList $arguments
+}} else {{
+    Start-Process -FilePath $dst -WorkingDirectory $dir
+}}
+";
+
+        var encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(script));
+        Process.Start(new ProcessStartInfo("powershell.exe",
+            "-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -EncodedCommand " + encoded)
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true
+        });
+
+        Log.Write("UPDATE: откат лаунчера на " + source);
         Application.Current?.Shutdown();
     }
 
@@ -939,4 +1271,41 @@ try {{
         public string? Sha256 { get; set; }
         [JsonPropertyName("release_url")] public string? ReleaseUrl { get; set; }
     }
+}
+
+/// <summary>Signed release manifest shared by the launcher updater and nVielRE.</summary>
+internal sealed class ReleaseManifest
+{
+    public int Schema { get; set; }
+    public ManifestLauncher? Launcher { get; set; }
+
+    [JsonPropertyName("client_mod")]
+    public ManifestClientMod? ClientMod { get; set; }
+
+    [JsonPropertyName("min_java")]
+    public int MinJava { get; set; } = 21;
+
+    public string Fabric { get; set; } = "1.21.4";
+    public string? Notes { get; set; }
+}
+
+internal sealed class ManifestLauncher
+{
+    public string Version { get; set; } = "";
+    public string Asset { get; set; } = "nVielLauncher.exe";
+    public string? Sha256 { get; set; }
+    public long Size { get; set; }
+}
+
+internal sealed class ManifestClientMod
+{
+    public string Version { get; set; } = "";
+    public string Asset { get; set; } = "";
+
+    [JsonPropertyName("file_name")]
+    public string FileName { get; set; } = "";
+
+    public string? Sha256 { get; set; }
+    public long Size { get; set; }
+    public string? Notes { get; set; }
 }

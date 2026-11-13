@@ -44,6 +44,8 @@ public partial class ReWindow : Window
         AppendLog($"Ядро лаунчера {AppInfo.DisplayVersion} · {Environment.OSVersion.VersionString}");
         AppendLog("Проверяем окружение...");
 
+        UpdateRollbackCard();
+
         _ = PreflightAsync();
     }
 
@@ -284,7 +286,9 @@ public partial class ReWindow : Window
             var gameDirectory = AppServices.Settings.Current.EffectiveGameDirectory;
             AppendLog("Восстанавливаем обязательные и пользовательские моды...");
 
-            await AppServices.Mods.EnsureCoreModsAsync(gameDirectory, ct);
+            await AppServices.Mods.EnsureCoreModsAsync(gameDirectory, ct,
+                AppServices.Settings.Current.ClientModSha256,
+                AppServices.Settings.Current.ClientModFileName);
             await AppServices.Mods.SyncAsync(gameDirectory, null, ct);
 
             var (installed, total) = AppServices.Mods.GetCoreModStatus(gameDirectory);
@@ -493,6 +497,150 @@ public partial class ReWindow : Window
         catch (Exception ex)
         {
             AppendLog("Не удалось собрать отчёт: " + ex.Message, RepairLogKind.Error);
+        }
+    }
+
+    // ------------------------------------------------------------------ rollback
+
+    /// <summary>
+    /// Shows the rollback card when the game crashed right after a client mod update.
+    /// The launcher rollback button is only offered when an older exe was kept.
+    /// </summary>
+    private void UpdateRollbackCard()
+    {
+        try
+        {
+            var settings = AppServices.Settings.Current;
+            var pending = settings.PendingModRollback;
+            var hasLauncher = UpdateService.HasPreviousLauncher;
+
+            var showMod = settings.ModRollbackSuggested && pending?.IsUsable == true;
+            var showLauncher = settings.ModRollbackSuggested && hasLauncher;
+
+            if (!showMod && !showLauncher)
+            {
+                RollbackCard.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            RollbackCard.Visibility = Visibility.Visible;
+            RollbackModButton.Visibility = showMod ? Visibility.Visible : Visibility.Collapsed;
+            RollbackLauncherButton.Visibility = showLauncher ? Visibility.Visible : Visibility.Collapsed;
+
+            var parts = new List<string>();
+
+            if (showMod && pending is not null)
+            {
+                var from = string.IsNullOrWhiteSpace(pending.PreviousVersion)
+                    ? "предыдущей версии"
+                    : pending.PreviousVersion;
+                parts.Add($"Мод {pending.NewVersion} установлен, игра завершилась с ошибкой. " +
+                          $"Можно вернуть {from} во все инстансы.");
+            }
+
+            if (showLauncher)
+            {
+                var previousVersion = UpdateService.GetPreviousLauncherVersion();
+                parts.Add(string.IsNullOrWhiteSpace(previousVersion)
+                    ? "Предыдущая версия лаунчера сохранена."
+                    : $"Предыдущий лаунчер {previousVersion} сохранён.");
+            }
+
+            RollbackDetail.Text = string.Join(" ", parts);
+            RollbackTitle.Text = showMod
+                ? "Игра завершилась с ошибкой после обновления мода"
+                : "Последнее обновление лаунчера можно откатить";
+
+            AppendLog("Доступен откат: " +
+                      (showMod ? "клиентский мод" : "") +
+                      (showMod && showLauncher ? " и " : "") +
+                      (showLauncher ? "лаунчер" : "") + ".",
+                RepairLogKind.Warning);
+        }
+        catch (Exception ex)
+        {
+            RollbackCard.Visibility = Visibility.Collapsed;
+            Log.Write("RE: не удалось показать карточку отката: " + ex.Message);
+        }
+    }
+
+    private async void RollbackMod_Click(object sender, RoutedEventArgs e)
+    {
+        var answer = MessageBox.Show(
+            "Вернуть предыдущую версию клиентского мода во все инстансы?\n\n" +
+            "Новый мод будет заменён резервной копией, созданной перед обновлением.",
+            "Откат мода", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+        if (answer != MessageBoxResult.Yes) return;
+
+        RollbackModButton.IsEnabled = false;
+        RollbackLauncherButton.IsEnabled = false;
+        KeepModButton.IsEnabled = false;
+
+        try
+        {
+            var restored = await AppServices.ClientMods.RollbackAsync(CancellationToken.None);
+            AppendLog($"Мод откачен в {restored} инстанс(ов).", RepairLogKind.Success);
+            UpdateRollbackCard();
+            await PreflightAsync(writeLog: false);
+        }
+        catch (Exception ex)
+        {
+            AppendLog("Не удалось откатить мод: " + ex.Message, RepairLogKind.Error);
+            MessageBox.Show("Не удалось откатить мод:\n\n" + ex.Message,
+                "nVielRE", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            RollbackModButton.IsEnabled = true;
+            RollbackLauncherButton.IsEnabled = true;
+            KeepModButton.IsEnabled = true;
+        }
+    }
+
+    private void KeepMod_Click(object sender, RoutedEventArgs e)
+    {
+        var answer = MessageBox.Show(
+            "Оставить новую версию мода и удалить точку отката?\n\n" +
+            "Резервная копия предыдущего мода будет удалена.",
+            "Оставить мод", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+        if (answer != MessageBoxResult.Yes) return;
+
+        try
+        {
+            AppServices.ClientMods.AcceptCurrent();
+            AppendLog("Новая версия мода оставлена, точка отката удалена.", RepairLogKind.Success);
+            UpdateRollbackCard();
+        }
+        catch (Exception ex)
+        {
+            AppendLog("Не удалось сохранить выбор: " + ex.Message, RepairLogKind.Error);
+        }
+    }
+
+    private void RollbackLauncher_Click(object sender, RoutedEventArgs e)
+    {
+        var version = UpdateService.GetPreviousLauncherVersion();
+        var answer = MessageBox.Show(
+            "Вернуть предыдущую версию лаунчера" +
+            (string.IsNullOrWhiteSpace(version) ? "" : " " + version) + "?\n\n" +
+            "Текущий лаунчер закроется, будет восстановлен сохранённый exe и запущен заново. " +
+            "Настройки и инстансы не пострадают.",
+            "Откат лаунчера", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+        if (answer != MessageBoxResult.Yes) return;
+
+        try
+        {
+            AppendLog("Восстанавливаем предыдущую версию лаунчера...", RepairLogKind.Warning);
+            AppServices.Updates.RestorePreviousLauncher();
+        }
+        catch (Exception ex)
+        {
+            AppendLog("Не удалось вернуть лаунчер: " + ex.Message, RepairLogKind.Error);
+            MessageBox.Show("Не удалось вернуть предыдущую версию лаунчера:\n\n" + ex.Message,
+                "nVielRE", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 

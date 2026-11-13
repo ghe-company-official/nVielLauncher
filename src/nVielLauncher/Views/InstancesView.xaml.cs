@@ -39,6 +39,7 @@ public partial class InstancesView : UserControl, IRefreshable
     private bool _loading;
     private string? _editingId;
     private string? _deletingId;
+    private string? _editingSettingsId;
 
     public InstancesView()
     {
@@ -196,6 +197,221 @@ public partial class InstancesView : UserControl, IRefreshable
         EditorError.Visibility = Visibility.Collapsed;
         EditorBusy.Visibility = Visibility.Collapsed;
         ShowLayer(EditorLayer, InstanceNameBox);
+    }
+
+    // ------------------------------------------------------------------ per-instance settings
+
+    private void SettingsActive_Click(object sender, RoutedEventArgs e)
+    {
+        var active = AppServices.Instances.Active;
+        if (active is null || _busy) return;
+        OpenInstanceSettings(active);
+    }
+
+    private void OpenInstanceSettings(GameInstance instance)
+    {
+        _editingSettingsId = instance.Id;
+        var settings = AppServices.Settings.Current;
+
+        SettingsTitle.Text = "Настройки · " + instance.Name;
+
+        InstanceNickBox.Text = instance.Nickname ?? "";
+        NickHint.Text = string.IsNullOrWhiteSpace(instance.Nickname)
+            ? "Сейчас игра получит ник из общих настроек: «" + settings.NicknameFor(instance) + "»."
+            : "Игра получит ник «" + instance.Nickname.Trim() + "».";
+
+        var hasRam = instance.RamMb > 0;
+        RamOverrideCheck.IsChecked = hasRam;
+        InstanceRamSlider.Value = hasRam ? instance.RamMb : settings.RamMb;
+        UpdateRamUi();
+
+        InstanceJavaBox.Text = instance.JavaPath ?? "";
+
+        ScreenOverrideCheck.IsChecked = instance.Fullscreen is not null || instance.ShowResolution is not null;
+        InstanceFullscreenCheck.IsChecked = instance.Fullscreen ?? settings.Fullscreen;
+        InstanceResolutionCheck.IsChecked = instance.ShowResolution ?? settings.ShowResolution;
+        InstanceWidthBox.Text = (instance.ResolutionWidth > 0 ? instance.ResolutionWidth : settings.ResolutionWidth).ToString();
+        InstanceHeightBox.Text = (instance.ResolutionHeight > 0 ? instance.ResolutionHeight : settings.ResolutionHeight).ToString();
+        UpdateScreenUi();
+
+        SettingsError.Visibility = Visibility.Collapsed;
+        ShowLayer(SettingsLayer, InstanceNickBox);
+    }
+
+    private void RamOverride_ValueChanged(object sender, RoutedEventArgs e) => UpdateRamUi();
+
+    private void InstanceRamSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        => UpdateRamUi();
+
+    private void UpdateRamUi()
+    {
+        if (RamPanel is null || RamValueText is null || RamHint is null || RamOverrideCheck is null)
+            return;
+
+        var hasOverride = RamOverrideCheck.IsChecked == true;
+        RamPanel.Visibility = hasOverride ? Visibility.Visible : Visibility.Collapsed;
+        var value = hasOverride ? (int)InstanceRamSlider.Value : AppServices.Settings.Current.RamMb;
+        RamValueText.Text = value + " МБ";
+        RamHint.Text = hasOverride
+            ? "Отдельное значение для этого инстанса"
+            : "Используются общие настройки";
+    }
+
+    private void ScreenOverride_ValueChanged(object sender, RoutedEventArgs e) => UpdateScreenUi();
+
+    private void InstanceResolution_ValueChanged(object sender, RoutedEventArgs e) => UpdateScreenUi();
+
+    private void UpdateScreenUi()
+    {
+        if (ScreenPanel is null || ResolutionPanel is null || ScreenOverrideCheck is null)
+            return;
+
+        var on = ScreenOverrideCheck.IsChecked == true;
+        ScreenPanel.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
+        ResolutionPanel.Visibility = on && InstanceResolutionCheck.IsChecked == true
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
+
+    private void SettingsConfirm_Click(object sender, RoutedEventArgs e)
+    {
+        var instance = AppServices.Instances.All.FirstOrDefault(i =>
+            string.Equals(i.Id, _editingSettingsId, StringComparison.OrdinalIgnoreCase));
+        if (instance is null)
+        {
+            SettingsLayer.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        var nickname = (InstanceNickBox.Text ?? "").Trim();
+        if (nickname.Length > 0 && !LauncherService.IsValidNickname(nickname))
+        {
+            ShowSettingsError("Ник должен быть от 3 до 16 символов: A-Z, 0-9 и _.");
+            return;
+        }
+
+        var settings = AppServices.Settings.Current;
+        var effectiveNickname = nickname.Length > 0 ? nickname : settings.NicknameFor(null);
+        if (!LauncherService.IsValidNickname(effectiveNickname))
+        {
+            ShowSettingsError("Сначала укажи корректный ник в общих настройках — инстанс его наследует.");
+            return;
+        }
+
+        var javaPath = (InstanceJavaBox.Text ?? "").Trim();
+        if (javaPath.Length > 0 && !File.Exists(javaPath))
+        {
+            ShowSettingsError("Файл Java не найден: " + javaPath);
+            return;
+        }
+
+        var ram = RamOverrideCheck.IsChecked == true ? (int)InstanceRamSlider.Value : 0;
+
+        var overrideScreen = ScreenOverrideCheck.IsChecked == true;
+        bool? fullscreen = overrideScreen ? InstanceFullscreenCheck.IsChecked : null;
+        bool? showResolution = overrideScreen ? InstanceResolutionCheck.IsChecked : null;
+        int width = 0;
+        int height = 0;
+        if (overrideScreen && showResolution == true)
+        {
+            var widthText = (InstanceWidthBox.Text ?? "").Trim();
+            var heightText = (InstanceHeightBox.Text ?? "").Trim();
+            var widthOk = int.TryParse(widthText, out width) && width is >= 854 and <= 3840;
+            var heightOk = int.TryParse(heightText, out height) && height is >= 480 and <= 2160;
+            if (!widthOk || !heightOk)
+            {
+                ShowSettingsError("Размер окна: от 854×480 до 3840×2160.");
+                return;
+            }
+        }
+
+        instance.Nickname = nickname.Length > 0 ? nickname : null;
+        instance.RamMb = ram;
+        instance.JavaPath = javaPath.Length > 0 ? javaPath : null;
+        instance.Fullscreen = fullscreen;
+        instance.ShowResolution = showResolution;
+        instance.ResolutionWidth = width;
+        instance.ResolutionHeight = height;
+        AppServices.Settings.Save();
+
+        SettingsLayer.Visibility = Visibility.Collapsed;
+        _editingSettingsId = null;
+        (Window.GetWindow(this) as MainWindow)?.OnInstanceChanged();
+        Notify.Show("Настройки сохранены", instance.Name, "success");
+        Refresh();
+    }
+
+    private void ResetInstanceSettings_Click(object sender, RoutedEventArgs e)
+    {
+        var instance = AppServices.Instances.All.FirstOrDefault(i =>
+            string.Equals(i.Id, _editingSettingsId, StringComparison.OrdinalIgnoreCase));
+        if (instance is null) return;
+
+        instance.Nickname = null;
+        instance.RamMb = 0;
+        instance.JavaPath = null;
+        instance.Fullscreen = null;
+        instance.ShowResolution = null;
+        instance.ResolutionWidth = 0;
+        instance.ResolutionHeight = 0;
+        AppServices.Settings.Save();
+
+        OpenInstanceSettings(instance);
+        Notify.Show("Настройки сброшены", "Инстанс снова использует общие настройки.", "info");
+    }
+
+    private void CloseSettings_Click(object sender, RoutedEventArgs e)
+    {
+        SettingsLayer.Visibility = Visibility.Collapsed;
+        _editingSettingsId = null;
+    }
+
+    private void ShowSettingsError(string message)
+    {
+        SettingsError.Text = message;
+        SettingsError.Visibility = Visibility.Visible;
+    }
+
+    // ------------------------------------------------------------------ cloning
+
+    private void CloneActive_Click(object sender, RoutedEventArgs e)
+    {
+        var active = AppServices.Instances.Active;
+        if (active is null || _busy) return;
+        _ = CloneAsync(active);
+    }
+
+    private void CloneRow_Click(object sender, RoutedEventArgs e)
+    {
+        if (_busy || sender is not Button { Tag: string id }) return;
+        var instance = AppServices.Instances.All.FirstOrDefault(i =>
+            string.Equals(i.Id, id, StringComparison.OrdinalIgnoreCase));
+        if (instance is null) return;
+        _ = CloneAsync(instance);
+    }
+
+    private async Task CloneAsync(GameInstance source)
+    {
+        SetBusy(true);
+        Notify.Show("Копируем инстанс", "Копия «" + source.Name + "» создаётся — большие папки займут время.");
+
+        try
+        {
+            var clone = await Task.Run(() => AppServices.Instances.Clone(
+                source.Id, new Progress<LaunchProgress>(_ => { }), CancellationToken.None));
+
+            (Window.GetWindow(this) as MainWindow)?.OnInstanceChanged();
+            Notify.Show("Инстанс скопирован", "«" + clone.Name + "» готов и стал активным.", "success");
+        }
+        catch (Exception ex)
+        {
+            Notify.Show("Не удалось скопировать инстанс", ex.Message, "error");
+        }
+        finally
+        {
+            SetBusy(false);
+            Refresh();
+        }
     }
 
     private async void EditorConfirm_Click(object sender, RoutedEventArgs e)

@@ -12,21 +12,41 @@ public sealed record InstanceRowData(GameInstance Instance, InstanceStats Stats,
 /// </summary>
 public sealed class InstanceService
 {
-    private readonly SettingsService _settings;
+    private readonly SettingsService? _settingsService;
+    private readonly LauncherSettings _current;
 
     public InstanceService(SettingsService settings)
     {
-        _settings = settings;
-        _settings.Current.EnsureInstances();
+        _settingsService = settings;
+        _current = settings.Current;
+        _current.EnsureInstances();
     }
 
-    public IReadOnlyList<GameInstance> All => _settings.Current.Instances;
+    /// <summary>Test constructor: operates on a detached settings object without persistence.</summary>
+    public InstanceService(LauncherSettings current)
+    {
+        _settingsService = null;
+        _current = current;
+        _current.EnsureInstances();
+    }
 
-    public GameInstance? Active => _settings.Current.ActiveInstance;
+    private LauncherSettings Current => _settingsService?.Current ?? _current;
+
+    private void Save()
+    {
+        if (_settingsService is null)
+            Current.EnsureInstances();
+        else
+            _settingsService.Save();
+    }
+
+    public IReadOnlyList<GameInstance> All => Current.Instances;
+
+    public GameInstance? Active => Current.ActiveInstance;
 
     public string GetDirectory(GameInstance instance) =>
         instance.IsDefault
-            ? _settings.Current.SharedRuntimeDirectory
+            ? Current.SharedRuntimeDirectory
             : instance.Directory;
 
     public void SetActive(string id)
@@ -34,8 +54,8 @@ public sealed class InstanceService
         if (All.All(i => !string.Equals(i.Id, id, StringComparison.OrdinalIgnoreCase)))
             throw new InvalidOperationException("Инстанс не найден.");
 
-        _settings.Current.ActiveInstanceId = id;
-        _settings.Save();
+        Current.ActiveInstanceId = id;
+        Save();
     }
 
     public GameInstance Create(
@@ -44,7 +64,7 @@ public sealed class InstanceService
         IProgress<LaunchProgress>? progress,
         CancellationToken ct)
     {
-        var settings = _settings.Current;
+        var settings = Current;
         var active = settings.ActiveInstance;
         var id = Guid.NewGuid().ToString("N");
         var directory = Path.Combine(AppPaths.InstancesDirectory, id);
@@ -72,7 +92,7 @@ public sealed class InstanceService
 
         settings.Instances.Add(instance);
         settings.ActiveInstanceId = instance.Id;
-        _settings.Save();
+        Save();
 
         Log.Write($"INSTANCE: создан «{instance.Name}» → {directory}");
         return instance;
@@ -84,12 +104,90 @@ public sealed class InstanceService
                        ?? throw new InvalidOperationException("Инстанс не найден.");
 
         instance.Name = CleanName(name);
-        _settings.Save();
+        Save();
+    }
+
+    /// <summary>
+    /// Creates an exact copy of an instance: mods, configs, worlds, resource packs,
+    /// screenshots, root files plus every per-instance setting and the server list.
+    /// </summary>
+    public GameInstance Clone(string id, IProgress<LaunchProgress>? progress, CancellationToken ct)
+    {
+        var settings = Current;
+        var source = All.FirstOrDefault(i => string.Equals(i.Id, id, StringComparison.OrdinalIgnoreCase))
+                     ?? throw new InvalidOperationException("Инстанс не найден.");
+
+        var newId = Guid.NewGuid().ToString("N");
+        var directory = Path.Combine(AppPaths.InstancesDirectory, newId);
+        var clone = new GameInstance
+        {
+            Id = newId,
+            Name = CloneName(source.Name, settings),
+            Directory = directory,
+            IsDefault = false,
+            CreatedUtc = DateTime.UtcNow,
+            Nickname = source.Nickname,
+            RamMb = source.RamMb,
+            JavaPath = source.JavaPath,
+            ShowResolution = source.ShowResolution,
+            Fullscreen = source.Fullscreen,
+            ResolutionWidth = source.ResolutionWidth,
+            ResolutionHeight = source.ResolutionHeight,
+            Servers = source.Servers.Select(s => new ServerEntry
+            {
+                Name = s.Name,
+                Host = s.Host,
+                Port = s.Port,
+                LastPlayedUtc = s.LastPlayedUtc
+            }).ToList()
+        };
+
+        try
+        {
+            Directory.CreateDirectory(directory);
+            EnsureLayout(directory);
+
+            var sourceDirectory = GetDirectory(source);
+            foreach (var folder in new[] { "mods", "config", "saves", "resourcepacks", "shaderpacks", "screenshots" })
+                CopyDirectory(sourceDirectory, directory, folder, progress, ct);
+            foreach (var file in new[] { "options.txt", "servers.dat", "servers.dat_old", "usercache.json" })
+                CopyFile(sourceDirectory, directory, file);
+        }
+        catch (Exception ex)
+        {
+            Log.Write($"INSTANCE: клон «{clone.Name}» не создан: {ex.Message}");
+            TryDelete(directory);
+            throw new InvalidOperationException("Не удалось скопировать инстанс: " + ex.Message, ex);
+        }
+
+        settings.Instances.Add(clone);
+        settings.ActiveInstanceId = clone.Id;
+        Save();
+
+        Log.Write($"INSTANCE: клон «{clone.Name}» из «{source.Name}» → {directory}");
+        return clone;
+    }
+
+    /// <summary>Clone names look like «X (копия)» and then «X (копия 2)» without duplicates.</summary>
+    private static string CloneName(string baseName, LauncherSettings settings)
+    {
+        var taken = settings.Instances
+            .Select(i => i.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var first = CleanName(baseName + " (копия)");
+        if (!taken.Contains(first)) return first;
+
+        for (var n = 2;; n++)
+        {
+            var candidate = CleanName(baseName + " (копия " + n + ")");
+            if (!taken.Contains(candidate)) return candidate;
+        }
     }
 
     public bool Delete(string id)
     {
-        var settings = _settings.Current;
+        var settings = Current;
         var instance = All.FirstOrDefault(i => string.Equals(i.Id, id, StringComparison.OrdinalIgnoreCase));
         if (instance is null) return false;
 
@@ -121,7 +219,7 @@ public sealed class InstanceService
             settings.ActiveInstanceId = next.Id;
         }
 
-        _settings.Save();
+        Save();
         Log.Write($"INSTANCE: удалён «{instance.Name}»");
         return true;
     }
@@ -220,6 +318,20 @@ public sealed class InstanceService
         catch
         {
             // Let the caller decide whether the file can still be deleted.
+        }
+    }
+
+    /// <summary>Best-effort cleanup after a failed clone: no half-copied folders.</summary>
+    private static void TryDelete(string directory)
+    {
+        try
+        {
+            if (Directory.Exists(directory))
+                DeleteDirectory(directory);
+        }
+        catch
+        {
+            // ignored
         }
     }
 

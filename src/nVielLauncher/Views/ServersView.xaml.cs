@@ -27,7 +27,11 @@ public partial class ServersView : UserControl, IRefreshable
     {
         _rows.Clear();
 
-        foreach (var server in AppServices.Settings.Current.Servers)
+        var settings = AppServices.Settings.Current;
+        var instance = settings.ActiveInstance ?? settings.Instances.FirstOrDefault(i => i.IsDefault);
+        var servers = instance?.Servers ?? settings.Servers;
+
+        foreach (var server in servers)
         {
             var meta = server.LastPlayedUtc is { } last
                 ? "был " + last.ToLocalTime().ToString("dd.MM HH:mm")
@@ -44,9 +48,11 @@ public partial class ServersView : UserControl, IRefreshable
 
         CountBadge.Text = _rows.Count.ToString();
         EmptyState.Visibility = _rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        SubHeader.Text = _rows.Count == 0
+        SubHeader.Text = instance is null
             ? "Сохрани любимые сервера и заходи в один клик"
-            : $"{_rows.Count} сервер(ов) сохранено";
+            : _rows.Count == 0
+                ? $"Список принадлежит инстансу «{instance.Name}»"
+                : $"{_rows.Count} сервер(ов) · инстанс «{instance.Name}»";
     }
 
     private void Add_Click(object sender, RoutedEventArgs e)
@@ -83,7 +89,15 @@ public partial class ServersView : UserControl, IRefreshable
         }
 
         var settings = AppServices.Settings.Current;
-        settings.Servers.Add(new ServerEntry
+        var instance = settings.ActiveInstance
+                       ?? settings.Instances.FirstOrDefault(i => i.IsDefault);
+        if (instance is null)
+        {
+            AddStatus.Text = "Сначала выбери инстанс.";
+            return;
+        }
+
+        instance.Servers.Add(new ServerEntry
         {
             Name = string.IsNullOrWhiteSpace(NameBox.Text) ? host : NameBox.Text!.Trim(),
             Host = host,
@@ -109,7 +123,10 @@ public partial class ServersView : UserControl, IRefreshable
     {
         if (sender is not FrameworkElement { DataContext: ServerRow row }) return;
 
-        AppServices.Settings.Current.Servers.RemoveAll(s => ReferenceEquals(s, row.Entry));
+        var settings = AppServices.Settings.Current;
+        var instance = settings.ActiveInstance
+                       ?? settings.Instances.FirstOrDefault(i => i.IsDefault);
+        instance?.Servers.RemoveAll(s => ReferenceEquals(s, row.Entry));
         AppServices.Settings.Save();
         Refresh();
         Notify.Show("Сервер удалён", row.Name);

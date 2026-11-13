@@ -25,11 +25,14 @@ public sealed class JavaService
         _settings = settings;
     }
 
-    public Task<JavaInfo?> DetectAsync(int minMajor, CancellationToken ct)
+    public Task<JavaInfo?> DetectAsync(int minMajor, CancellationToken ct, string? preferredPath = null)
     {
         var candidates = new List<string>();
 
-        if (!string.IsNullOrWhiteSpace(_settings.Current.JavaPath))
+        // A per-instance Java path wins; the global path is probed only as a fallback.
+        if (!string.IsNullOrWhiteSpace(preferredPath))
+            candidates.Add(preferredPath);
+        else if (!string.IsNullOrWhiteSpace(_settings.Current.JavaPath))
             candidates.Add(_settings.Current.JavaPath);
 
         var path = Environment.GetEnvironmentVariable("PATH") ?? "";
@@ -64,17 +67,21 @@ public sealed class JavaService
 
         if (best is not null)
         {
-            _settings.Current.JavaPath = best.JavaExe;
+            // remember the last working Java globally only when it was a global search;
+            // per-instance paths must not leak into settings.json for other instances
+            if (string.IsNullOrWhiteSpace(preferredPath))
+                _settings.Current.JavaPath = best.JavaExe;
             return Task.FromResult<JavaInfo?>(best);
         }
 
         return Task.FromResult<JavaInfo?>(null);
     }
 
-    public async Task<JavaInfo> EnsureJavaAsync(int minMajor, IProgress<LaunchProgress> progress, CancellationToken ct)
+    public async Task<JavaInfo> EnsureJavaAsync(
+        int minMajor, IProgress<LaunchProgress> progress, CancellationToken ct, string? preferredPath = null)
     {
         progress.Report(new LaunchProgress(0, "Поиск Java " + minMajor, "Проверяем установленные версии"));
-        var found = await DetectAsync(minMajor, ct);
+        var found = await DetectAsync(minMajor, ct, preferredPath);
         if (found is not null)
         {
             progress.Report(new LaunchProgress(100, "Java найдена", $"Java {found.Major} · {found.Home}"));

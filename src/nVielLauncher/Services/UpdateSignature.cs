@@ -51,4 +51,22 @@ public static class UpdateSignature
             return false;
         }
     }
+
+    /// <summary>Verifies an in-memory document (for example manifest.json) with the release key.</summary>
+    public static bool VerifyBytes(byte[] data, byte[] signature, string publicKeyBase64)
+    {
+        try
+        {
+            if (data.Length == 0 || signature.Length is <= 0 or > MaxSignatureBytes)
+                return false;
+
+            using var key = ECDsa.Create();
+            key.ImportSubjectPublicKeyInfo(Convert.FromBase64String(publicKeyBase64), out _);
+            return key.VerifyData(data, signature, HashAlgorithmName.SHA256);
+        }
+        catch (Exception ex) when (ex is CryptographicException or FormatException)
+        {
+            return false;
+        }
+    }
 }

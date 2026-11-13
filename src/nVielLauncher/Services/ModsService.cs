@@ -1,4 +1,5 @@
 using System.IO;
+using System.Security.Cryptography;
 
 namespace nVielLauncher.Services;
 
@@ -12,9 +13,14 @@ public sealed class ModsService
 
     /// <summary>
     /// Installs the launcher's built-in mods into the game folder on every start so they
-    /// can never be removed or tampered with.
+    /// can never be removed or tampered with. A client mod downloaded from the release
+    /// manifest takes precedence over the embedded copy, and stale nViel jars are removed.
     /// </summary>
-    public async Task EnsureCoreModsAsync(string gameDirectory, CancellationToken ct)
+    public async Task EnsureCoreModsAsync(
+        string gameDirectory,
+        CancellationToken ct,
+        string? clientModSha256 = null,
+        string? clientModFileName = null)
     {
         try
         {
@@ -37,6 +43,28 @@ public sealed class ModsService
 
                 try
                 {
+                    if (IsClientMod(fileName))
+                    {
+                        // A client mod installed from manifest.json owns the nViel jar:
+                        // never add the embedded (possibly older) copy next to it.
+                        if (!string.IsNullOrWhiteSpace(clientModFileName))
+                        {
+                            var managed = Path.Combine(targetFolder, clientModFileName);
+                            if (File.Exists(managed) || File.Exists(managed + ".disabled"))
+                                continue;
+                        }
+
+                        // The user may have disabled the built-in mod on purpose.
+                        if (File.Exists(destination + ".disabled"))
+                            continue;
+
+                        // Same build already installed from the manifest.
+                        if (!string.IsNullOrWhiteSpace(clientModSha256) &&
+                            File.Exists(destination) &&
+                            await Sha256MatchesAsync(destination, clientModSha256, ct))
+                            continue;
+                    }
+
                     await using var source = assembly.GetManifestResourceStream(resource);
                     if (source is null) continue;
 
@@ -64,6 +92,8 @@ public sealed class ModsService
                     // built-in mods must never break the launch
                 }
             }
+
+            CleanupStaleClientMods(targetFolder, resources, clientModFileName);
         }
         catch (OperationCanceledException)
         {
@@ -72,6 +102,70 @@ public sealed class ModsService
         catch
         {
             // ignored
+        }
+    }
+
+    private static bool IsClientMod(string fileName) =>
+        fileName.StartsWith("nviel", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Removes older nViel jars so Fabric does not load two client mod versions.</summary>
+    private static void CleanupStaleClientMods(
+        string modsFolder,
+        IEnumerable<string> embeddedResources,
+        string? clientModFileName)
+    {
+        try
+        {
+            var keep = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var resource in embeddedResources)
+            {
+                var name = resource[EmbeddedPrefix.Length..];
+                if (IsClientMod(name)) keep.Add(name);
+            }
+
+            if (!string.IsNullOrWhiteSpace(clientModFileName))
+                keep.Add(clientModFileName);
+
+            foreach (var file in Directory.EnumerateFiles(modsFolder, "*.jar*", SearchOption.TopDirectoryOnly))
+            {
+                var name = Path.GetFileName(file);
+                if (!IsClientMod(name)) continue;
+
+                var baseName = name.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase)
+                    ? name[..^".disabled".Length]
+                    : name;
+
+                if (keep.Contains(baseName)) continue;
+
+                try
+                {
+                    File.SetAttributes(file, FileAttributes.Normal);
+                    File.Delete(file);
+                    Log.Write("Удалён устаревший клиентский мод: " + name);
+                }
+                catch
+                {
+                    // a locked stale jar is retried on the next launch
+                }
+            }
+        }
+        catch
+        {
+            // optional cleanup
+        }
+    }
+
+    private static async Task<bool> Sha256MatchesAsync(string path, string expected, CancellationToken ct)
+    {
+        try
+        {
+            await using var stream = File.OpenRead(path);
+            var hash = await SHA256.HashDataAsync(stream, ct);
+            return Convert.ToHexString(hash).Equals(expected, StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
         }
     }
 

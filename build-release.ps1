@@ -3,6 +3,9 @@
     [string]$Runtime = "win-x64",
     [string]$SigningKey = "$env:APPDATA\.nviel-signing\update-private-key.b64",
     [string]$PublicKey = "$env:APPDATA\.nviel-signing\update-public-key.b64",
+    [string]$ModJar = "",
+    [string]$ModVersion = "",
+    [string]$Notes = "",
     [switch]$NoSign
 )
 
@@ -70,10 +73,94 @@ if (-not $NoSign) {
 
 $hash = (Get-FileHash $exe.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
 
+# ------------------------------------------------------------------ client mod + manifest
+
+$embedded = Join-Path $root "src\nVielLauncher\embedded\nviel-1.0.0.jar"
+if (-not $ModJar) {
+    $ModJar = if (Test-Path $embedded) { $embedded } else { "" }
+}
+
+$modFile = $null
+$modHash = $null
+$modSize = 0
+
+if ($ModJar -and (Test-Path $ModJar)) {
+    $modFile = Join-Path $out (Split-Path -Leaf $ModJar)
+    Copy-Item -LiteralPath $ModJar -Destination $modFile -Force
+    $modHash = (Get-FileHash $modFile -Algorithm SHA256).Hash.ToLowerInvariant()
+    $modSize = (Get-Item $modFile).Length
+    Write-Host "Client mod:    $modFile ($modSize bytes, SHA-256 $modHash)"
+} else {
+    Write-Warning "Client mod jar not found; manifest will be published without a mod."
+}
+
+if (-not $ModVersion -and $modFile) {
+    $match = [regex]::Match((Split-Path -Leaf $modFile), '(\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.\-]+)?)')
+    if ($match.Success) { $ModVersion = $match.Groups[1].Value }
+}
+if (-not $ModVersion) { $ModVersion = "1.0.0" }
+
+$version = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($exe.FullName).ProductVersion
+if ($version -match '^(\d+\.\d+\.\d+(?:\.\d+)?)') { $version = $matches[1] }
+
+if (-not $Notes) {
+    $Notes = "Обновление лаунчера и клиентского мода nViel."
+}
+
+$clientMod = $null
+if ($modFile) {
+    $clientMod = [ordered]@{
+        version   = $ModVersion
+        asset     = (Split-Path -Leaf $modFile)
+        file_name = (Split-Path -Leaf $modFile)
+        sha256    = $modHash
+        size      = $modSize
+        notes     = "Клиентский мод nViel $ModVersion для Fabric 1.21.4."
+    }
+}
+
+$manifest = [ordered]@{
+    schema     = 1
+    launcher   = [ordered]@{
+        version = $version
+        asset   = $exe.Name
+        sha256  = $hash
+        size    = $exe.Length
+    }
+    client_mod = $clientMod
+    min_java   = 21
+    fabric     = "1.21.4"
+    notes      = $Notes
+}
+
+$manifestPath = Join-Path $out "manifest.json"
+$manifestJson = $manifest | ConvertTo-Json -Depth 6
+[System.IO.File]::WriteAllText($manifestPath, $manifestJson, (New-Object System.Text.UTF8Encoding($false)))
+$manifestSignature = $manifestPath + ".sig"
+
+if (-not $NoSign) {
+    & $dotnet run --project $signer -c Release -- $manifestPath $manifestSignature $SigningKey
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path $manifestSignature)) { throw "Manifest signature failed" }
+
+    if (Test-Path $PublicKey) {
+        & $dotnet run --project $signer -c Release -- verify $manifestPath $manifestSignature $PublicKey
+        if ($LASTEXITCODE -ne 0) { throw "Manifest signature verification failed" }
+    }
+} else {
+    Remove-Item $manifestSignature -Force -ErrorAction SilentlyContinue
+}
+
 Write-Host ""
 Write-Host "Release build: $($exe.FullName)"
-Write-Host "Version:       $($exe.VersionInfo.ProductVersion)"
+Write-Host "Version:       $version"
 Write-Host "Size:          $($exe.Length) bytes"
 Write-Host "SHA-256:       $hash"
 if (Test-Path $signature) { Write-Host "Signature:     $signature" }
+if ($modFile) {
+    Write-Host "Client mod:    $modFile"
+    Write-Host "Mod version:   $ModVersion"
+    Write-Host "Mod SHA-256:   $modHash"
+}
+Write-Host "Manifest:      $manifestPath"
+if (Test-Path $manifestSignature) { Write-Host "Manifest sig:  $manifestSignature" }
 
