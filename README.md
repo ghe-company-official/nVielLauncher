@@ -5,7 +5,7 @@
 Чёрно-белый лаунчер Minecraft на WPF (.NET 8) для Fabric 1.21.4: оффлайн-вход,
 моды с Modrinth, сборки `.mrpack`, сервера, профили, обучение и диагностика падений.
 
-Текущая версия: **1.2.1 Global**.
+Текущая версия: **1.2.3 Global**.
 
 ## Возможности
 
@@ -52,7 +52,7 @@ single-instance mutex, поэтому может работать паралле
 ```json
 {
   "schema": 1,
-  "launcher": { "version": "1.2.1", "asset": "nVielLauncher.exe", "sha256": "…", "size": 0 },
+  "launcher": { "version": "1.2.3", "asset": "nVielLauncher.exe", "sha256": "…", "size": 0 },
   "client_mod": {
     "version": "1.0.0",
     "asset": "nviel-1.0.0.jar",
@@ -111,15 +111,15 @@ GET https://updates.example.com/nviel/latest?channel=stable
 
 ```json
 {
-  "version": "1.2.1",
-  "tag": "v1.2.1",
-  "name": "nViel Launcher 1.2.1 Global",
+  "version": "1.2.3",
+  "tag": "v1.2.3",
+  "name": "nViel Launcher 1.2.3 Global",
   "notes": "Что нового...",
   "download_url": "https://updates.example.com/nviel/nVielLauncher.exe",
   "signature_url": "https://updates.example.com/nviel/nVielLauncher.exe.sig",
   "size": 84483337,
   "sha256": "…",
-  "release_url": "https://github.com/…/releases/tag/v1.2.1"
+  "release_url": "https://github.com/…/releases/tag/v1.2.3"
 }
 ```
 
@@ -132,7 +132,7 @@ ECDSA-подпись, поэтому relay не может подменить ex
 1. Приватный репозиторий: `ghe-company-official/nVielLauncher-releases`.
 2. Fine-grained token для лаунчера: только этот репозиторий, `Contents: Read`.
 3. Для публикации нужен отдельный token с `Contents: Read and write`; в лаунчер его не вставляйте.
-4. Соберите и подпишите exe, создайте Release с тегом версии (например, `v1.2.1`) и
+4. Соберите и подпишите exe, создайте Release с тегом версии (например, `v1.2.3`) и
    прикрепите `nVielLauncher.exe`, `nVielLauncher.exe.sig`, `manifest.json`,
    `manifest.json.sig` и `nviel-1.0.0.jar`.
 

@@ -1,0 +1,44 @@
+<UserControl x:Class="nVielLauncher.Controls.ColorWheelPicker"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FontFamily="{StaticResource TextFont}">
+    <StackPanel Orientation="Horizontal">
+        <Grid x:Name="WheelHost" Width="164" Height="164" Cursor="Cross" Focusable="True"
+              MouseLeftButtonDown="Wheel_MouseLeftButtonDown"
+              MouseMove="Wheel_MouseMove"
+              MouseLeftButtonUp="Wheel_MouseLeftButtonUp"
+              MouseLeave="Wheel_MouseLeave">
+            <Image x:Name="WheelImage" Stretch="Fill" SnapsToDevicePixels="True" />
+            <Canvas x:Name="MarkerCanvas" IsHitTestVisible="False">
+                <Ellipse x:Name="Marker" Width="12" Height="12" Stroke="#FFFFFFFF" StrokeThickness="2"
+                         Fill="#33000000" />
+            </Canvas>
+        </Grid>
+
+        <StackPanel Margin="18,0,0,0" Width="198" VerticalAlignment="Center">
+            <Grid>
+                <TextBlock Text="Яркость" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" />
+                <TextBlock x:Name="ValueText" Text="100%" HorizontalAlignment="Right" FontSize="11"
+                           Foreground="{StaticResource TextMutedBrush}" />
+            </Grid>
+            <Slider x:Name="ValueSlider" Minimum="0" Maximum="1" Value="1" Margin="0,6,0,0"
+                    Style="{StaticResource SlimSlider}" ValueChanged="ValueSlider_ValueChanged" />
+
+            <Grid Margin="0,14,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border x:Name="Preview" Width="38" Height="38" CornerRadius="10"
+                        BorderBrush="#33FFFFFF" BorderThickness="1" />
+                <TextBox x:Name="HexBox" Grid.Column="1" Style="{StaticResource InputBox}" Margin="10,0,0,0"
+                         FontFamily="{StaticResource MonoFont}" FontSize="12" MaxLength="9"
+                         KeyDown="HexBox_KeyDown" LostFocus="HexBox_LostFocus" />
+            </Grid>
+
+            <TextBlock Text="Круг задаёт оттенок и насыщенность, ползунок — яркость. Можно ввести HEX вручную."
+                       FontSize="10" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"
+                       Margin="0,10,0,0" LineHeight="14" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>

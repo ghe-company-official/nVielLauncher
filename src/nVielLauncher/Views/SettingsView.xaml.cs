@@ -28,6 +28,9 @@ public partial class SettingsView : UserControl, IRefreshable
         _loading = true;
         InitializeComponent();
 
+        BuildAccentSwatches();
+        AccentPicker.ColorChanged += AccentPicker_ColorChanged;
+
         _saveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(450) };
         _saveTimer.Tick += (_, _) =>
         {
@@ -326,26 +329,108 @@ public partial class SettingsView : UserControl, IRefreshable
     private void Accent_Click(object sender, MouseButtonEventArgs e)
     {
         if (sender is not FrameworkElement { Tag: string hex }) return;
+        ApplyAccent(hex, toast: true);
+    }
 
+    private void AccentPicker_ColorChanged(Color color)
+    {
+        ApplyAccent(ToHex(color), toast: false);
+    }
+
+    private void CustomAccent_Click(object sender, RoutedEventArgs e)
+    {
+        var show = CustomAccentPanel.Visibility != Visibility.Visible;
+        CustomAccentPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        CustomAccentButton.Content = show ? "Скрыть цветовой круг" : "Свой цвет…";
+
+        if (!show) return;
+
+        if (TryParseAccent(AppServices.Settings.Current.AccentColor, out var color))
+            AccentPicker.SetColor(color);
+
+        CustomAccentPanel.BringIntoView();
+    }
+
+    private void ApplyAccent(string hex, bool toast)
+    {
         AppServices.Settings.Current.AccentColor = hex;
         HighlightAccent(hex);
         (Window.GetWindow(this) as MainWindow)?.ApplyAppearance();
         ScheduleSave();
-        ShowToast("Акцент обновлён");
+
+        if (toast) ShowToast("Акцент обновлён");
+    }
+
+    private void BuildAccentSwatches()
+    {
+        AccentSwatches.Children.Clear();
+
+        foreach (var hex in AccentPalette.Presets)
+        {
+            var color = (Color)ColorConverter.ConvertFromString(hex);
+            var brush = new SolidColorBrush(color);
+            brush.Freeze();
+
+            var swatch = new Border
+            {
+                Width = 26,
+                Height = 26,
+                CornerRadius = new CornerRadius(13),
+                Background = brush,
+                BorderBrush = new SolidColorBrush(Color.FromArgb(0x33, 0xFF, 0xFF, 0xFF)),
+                BorderThickness = new Thickness(1),
+                Cursor = Cursors.Hand,
+                Margin = new Thickness(0, 0, 10, 10),
+                Tag = hex
+            };
+
+            swatch.MouseLeftButtonUp += Accent_Click;
+            AccentSwatches.Children.Add(swatch);
+        }
     }
 
     private void HighlightAccent(string color)
     {
         var selected = new SolidColorBrush(Color.FromArgb(0xDD, 0xFF, 0xFF, 0xFF));
         var idle = new SolidColorBrush(Color.FromArgb(0x33, 0xFF, 0xFF, 0xFF));
+        var hasColor = TryParseAccent(color, out var activeColor);
 
-        foreach (var swatch in new[] { Accent0, Accent1, Accent2, Accent3, Accent4 })
+        foreach (var child in AccentSwatches.Children)
         {
-            var isActive = string.Equals(swatch.Tag as string, color, StringComparison.OrdinalIgnoreCase);
+            if (child is not Border swatch) continue;
+
+            var isActive = hasColor && swatch.Tag is string tag &&
+                           TryParseAccent(tag, out var swatchColor) &&
+                           ColorsEqual(swatchColor, activeColor);
+
             swatch.BorderThickness = new Thickness(isActive ? 3 : 1);
             swatch.BorderBrush = isActive ? selected : idle;
         }
+
+        if (hasColor && !ColorsEqual(activeColor, AccentPicker.SelectedColor))
+            AccentPicker.SetColor(activeColor);
     }
+
+    private static bool TryParseAccent(string? text, out Color color)
+    {
+        color = Colors.White;
+        if (string.IsNullOrWhiteSpace(text)) return false;
+
+        try
+        {
+            color = (Color)ColorConverter.ConvertFromString(text);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static string ToHex(Color color) => $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+
+    private static bool ColorsEqual(Color a, Color b) =>
+        a.R == b.R && a.G == b.G && a.B == b.B;
 
     private void ResolutionBox_TextChanged(object sender, TextChangedEventArgs e)
     {

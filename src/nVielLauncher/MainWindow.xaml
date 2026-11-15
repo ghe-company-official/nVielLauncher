@@ -848,23 +848,7 @@
                                                FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,10,0,0" />
 
                                     <TextBlock Text="Акцентный оттенок" FontSize="12.5" Margin="0,24,0,0" />
-                                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                        <Border x:Name="SetupAccent0" Width="26" Height="26" CornerRadius="13" Background="#FFFFFFFF"
-                                                BorderBrush="#33FFFFFF" BorderThickness="2" Cursor="Hand" Tag="#FFFFFFFF"
-                                                MouseLeftButtonUp="SetupAccent_Click" />
-                                        <Border x:Name="SetupAccent1" Width="26" Height="26" CornerRadius="13" Background="#FFC8CDD6"
-                                                BorderBrush="#33FFFFFF" BorderThickness="2" Cursor="Hand" Tag="#FFC8CDD6"
-                                                Margin="10,0,0,0" MouseLeftButtonUp="SetupAccent_Click" />
-                                        <Border x:Name="SetupAccent2" Width="26" Height="26" CornerRadius="13" Background="#FFBFD4E8"
-                                                BorderBrush="#33FFFFFF" BorderThickness="2" Cursor="Hand" Tag="#FFBFD4E8"
-                                                Margin="10,0,0,0" MouseLeftButtonUp="SetupAccent_Click" />
-                                        <Border x:Name="SetupAccent3" Width="26" Height="26" CornerRadius="13" Background="#FFE8D9BF"
-                                                BorderBrush="#33FFFFFF" BorderThickness="2" Cursor="Hand" Tag="#FFE8D9BF"
-                                                Margin="10,0,0,0" MouseLeftButtonUp="SetupAccent_Click" />
-                                        <Border x:Name="SetupAccent4" Width="26" Height="26" CornerRadius="13" Background="#FFBFE8D0"
-                                                BorderBrush="#33FFFFFF" BorderThickness="2" Cursor="Hand" Tag="#FFBFE8D0"
-                                                Margin="10,0,0,0" MouseLeftButtonUp="SetupAccent_Click" />
-                                    </StackPanel>
+                                    <WrapPanel x:Name="SetupAccentSwatches" Margin="0,10,0,0" />
 
                                     <CheckBox x:Name="SetupGlowToggle" Style="{StaticResource ToggleSwitch}" Margin="0,24,0,0">
                                         <StackPanel>

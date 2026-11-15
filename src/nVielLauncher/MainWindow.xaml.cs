@@ -102,6 +102,8 @@ public partial class MainWindow : Window
         ProfilesList.ItemsSource = _profiles;
         DiagnosticList.ItemsSource = _diagnostics;
 
+        BuildSetupAccentSwatches();
+
         Loaded += OnLoaded;
         PreviewKeyDown += Window_KeyDown;
         Closed += (_, _) =>
@@ -1388,11 +1390,41 @@ public partial class MainWindow : Window
         var selected = new SolidColorBrush(Color.FromArgb(0xDD, 0xFF, 0xFF, 0xFF));
         var idle = new SolidColorBrush(Color.FromArgb(0x33, 0xFF, 0xFF, 0xFF));
 
-        foreach (var swatch in new[] { SetupAccent0, SetupAccent1, SetupAccent2, SetupAccent3, SetupAccent4 })
+        foreach (var child in SetupAccentSwatches.Children)
         {
+            if (child is not Border swatch) continue;
+
             var isActive = string.Equals(swatch.Tag as string, color, StringComparison.OrdinalIgnoreCase);
             swatch.BorderThickness = new Thickness(isActive ? 3 : 1);
             swatch.BorderBrush = isActive ? selected : idle;
+        }
+    }
+
+    private void BuildSetupAccentSwatches()
+    {
+        SetupAccentSwatches.Children.Clear();
+
+        foreach (var hex in AccentPalette.Presets)
+        {
+            var color = (Color)ColorConverter.ConvertFromString(hex);
+            var brush = new SolidColorBrush(color);
+            brush.Freeze();
+
+            var swatch = new Border
+            {
+                Width = 26,
+                Height = 26,
+                CornerRadius = new CornerRadius(13),
+                Background = brush,
+                BorderBrush = new SolidColorBrush(Color.FromArgb(0x33, 0xFF, 0xFF, 0xFF)),
+                BorderThickness = new Thickness(1),
+                Cursor = Cursors.Hand,
+                Margin = new Thickness(0, 0, 10, 10),
+                Tag = hex
+            };
+
+            swatch.MouseLeftButtonUp += SetupAccent_Click;
+            SetupAccentSwatches.Children.Add(swatch);
         }
     }
 
