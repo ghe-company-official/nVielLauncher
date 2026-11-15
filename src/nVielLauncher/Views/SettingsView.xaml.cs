@@ -22,6 +22,7 @@ public partial class SettingsView : UserControl, IRefreshable
     private bool _loading;
     private bool _javaChecked;
     private bool _started;
+    private bool _checkingUpdates;
 
     public SettingsView()
     {
@@ -713,6 +714,54 @@ public partial class SettingsView : UserControl, IRefreshable
         Refresh();
         (Window.GetWindow(this) as MainWindow)?.ApplyAppearance();
         ShowToast("Настройки сброшены");
+    }
+
+    // ------------------------------------------------------------------ updates
+
+    private async void CheckUpdates_Click(object sender, RoutedEventArgs e)
+    {
+        if (_checkingUpdates) return;
+        if (Window.GetWindow(this) is not MainWindow main) return;
+
+        _checkingUpdates = true;
+        CheckUpdatesButton.IsEnabled = false;
+        UpdateStatusText.Visibility = Visibility.Visible;
+        UpdateStatusText.Text = "Проверяю обновления…";
+
+        try
+        {
+            var result = await main.CheckForUpdatesManuallyAsync();
+
+            if (result is null)
+            {
+                UpdateStatusText.Text = "Проверка уже выполняется.";
+                return;
+            }
+
+            var mod = result.ClientMod;
+            var modPending = mod is not null && AppServices.ClientMods.NeedsUpdate(mod);
+
+            UpdateStatusText.Text = result.Status switch
+            {
+                UpdateStatus.Available when result.Update is not null =>
+                    "Доступно обновление " + result.Update.Version + ".",
+                UpdateStatus.Available when modPending =>
+                    "Доступен клиентский мод " + mod!.Version + ".",
+                UpdateStatus.Available => "Клиентский мод обновлён.",
+                UpdateStatus.UpToDate => "Установлена актуальная версия.",
+                _ => result.Message
+            };
+        }
+        catch (Exception ex)
+        {
+            Log.Write("UPDATE: ручная проверка не удалась: " + ex);
+            UpdateStatusText.Text = "Не удалось проверить обновления: " + ex.Message;
+        }
+        finally
+        {
+            _checkingUpdates = false;
+            CheckUpdatesButton.IsEnabled = true;
+        }
     }
 
     // ------------------------------------------------------------------ recovery

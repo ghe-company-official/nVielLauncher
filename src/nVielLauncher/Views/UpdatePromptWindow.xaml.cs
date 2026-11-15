@@ -25,7 +25,7 @@ public partial class UpdatePromptWindow : Window
 
         VersionText.Text = update is not null
             ? AppInfo.ProductName + " " + update.Version + " " + AppInfo.Edition
-            : "РљР»РёРµРЅС‚СЃРєРёР№ РјРѕРґ nViel " + (mod?.Version ?? "");
+            : "Клиентский мод nViel " + (mod?.Version ?? "");
 
         NotesText.Text = update?.Notes ?? "";
         NotesPanel.Visibility = string.IsNullOrWhiteSpace(update?.Notes)
@@ -35,25 +35,25 @@ public partial class UpdatePromptWindow : Window
         if (mod is not null)
         {
             ModPanel.Visibility = Visibility.Visible;
-            ModTitle.Text = "РљР»РёРµРЅС‚СЃРєРёР№ РјРѕРґ nViel " + mod.Version;
-            ModMeta.Text = FormatSize(mod.Size) + " В· SHA-256 РїСЂРѕРІРµСЂСЏРµС‚СЃСЏ РїРµСЂРµРґ СѓСЃС‚Р°РЅРѕРІРєРѕР№";
+            ModTitle.Text = "Клиентский мод nViel " + mod.Version;
+            ModMeta.Text = FormatSize(mod.Size) + " · SHA-256 проверяется перед установкой";
             ModNotes.Text = string.IsNullOrWhiteSpace(mod.Notes)
-                ? "РњРѕРґ Р±СѓРґРµС‚ СѓСЃС‚Р°РЅРѕРІР»РµРЅ РІРѕ РІСЃРµ РёРЅСЃС‚Р°РЅСЃС‹, СЃС‚Р°СЂР°СЏ РІРµСЂСЃРёСЏ СЃРѕС…СЂР°РЅРёС‚СЃСЏ РґР»СЏ РѕС‚РєР°С‚Р°."
+                ? "Мод будет установлен во все инстансы, старая версия сохранится для отката."
                 : mod.Notes;
         }
 
         InstallButton.Content = update is not null && mod is not null
-            ? "РћР±РЅРѕРІРёС‚СЊ РІСЃС‘"
+            ? "Обновить всё"
             : update is null
-                ? "РћР±РЅРѕРІРёС‚СЊ РјРѕРґ"
-                : "РЈСЃС‚Р°РЅРѕРІРёС‚СЊ";
+                ? "Обновить мод"
+                : "Установить";
     }
 
     private static string FormatSize(long bytes)
     {
-        if (bytes >= 1024L * 1024) return (bytes / 1024d / 1024).ToString("0.0") + " РњР‘";
-        if (bytes >= 1024) return (bytes / 1024d).ToString("0") + " РљР‘";
-        return Math.Max(0, bytes) + " Р‘";
+        if (bytes >= 1024L * 1024) return (bytes / 1024d / 1024).ToString("0.0") + " МБ";
+        if (bytes >= 1024) return (bytes / 1024d).ToString("0") + " КБ";
+        return Math.Max(0, bytes) + " Б";
     }
 
     private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -106,11 +106,11 @@ public partial class UpdatePromptWindow : Window
     {
         if (!_busy) return;
 
-        Log.Write("UPDATE: РѕС‚РјРµРЅР° СЃРєР°С‡РёРІР°РЅРёСЏ");
+        Log.Write("UPDATE: отмена скачивания");
         _cts?.Cancel();
         LaterButton.IsEnabled = false;
         StatusText.Visibility = Visibility.Visible;
-        StatusText.Text = "РћС‚РјРµРЅР°...";
+        StatusText.Text = "Отмена...";
     }
 
     private async void Install_Click(object sender, RoutedEventArgs e)
@@ -121,11 +121,11 @@ public partial class UpdatePromptWindow : Window
         _cts = new CancellationTokenSource();
         InstallButton.IsEnabled = false;
         CloseButton.IsEnabled = false;
-        LaterButton.Content = "РћС‚РјРµРЅР°";
+        LaterButton.Content = "Отмена";
         UpdateProgress.Visibility = Visibility.Visible;
         UpdateProgress.Value = 0;
         StatusText.Visibility = Visibility.Visible;
-        StatusText.Text = "РџРѕРґРіРѕС‚РѕРІРєР°...";
+        StatusText.Text = "Подготовка...";
 
         try
         {
@@ -137,37 +137,37 @@ public partial class UpdatePromptWindow : Window
             if (_mod is not null)
             {
                 if (AppServices.Launcher.IsRunning)
-                    throw new InvalidOperationException("РЎРЅР°С‡Р°Р»Р° Р·Р°РєСЂРѕР№ Minecraft вЂ” С„Р°Р№Р»С‹ РјРѕРґР° Р·Р°РЅСЏС‚С‹ РёРіСЂРѕР№.");
+                    throw new InvalidOperationException("Сначала закрой Minecraft — файлы мода заняты игрой.");
 
-                Log.Write("UPDATE: СЃРєР°С‡РёРІР°СЋ РєР»РёРµРЅС‚СЃРєРёР№ РјРѕРґ " + _mod.Version);
+                Log.Write("UPDATE: скачиваю клиентский мод " + _mod.Version);
                 var modProgress = new Progress<double>(value => totalProgress.Report(value * 0.4));
                 var result = await AppServices.ClientMods.InstallAsync(
                     _mod, modProgress, stage, _cts.Token);
 
-                Log.Write($"UPDATE: РјРѕРґ {result.Version} СѓСЃС‚Р°РЅРѕРІР»РµРЅ РІ {result.Instances} РёРЅСЃС‚Р°РЅСЃ(РѕРІ)");
+                Log.Write($"UPDATE: мод {result.Version} установлен в {result.Instances} инстанс(ов)");
                 totalProgress.Report(0.4);
             }
 
             if (_update is null)
             {
                 UpdateProgress.Value = 100;
-                StatusText.Text = "РљР»РёРµРЅС‚СЃРєРёР№ РјРѕРґ РѕР±РЅРѕРІР»С‘РЅ. РџРµСЂРµР·Р°РїСѓСЃРє РЅРµ С‚СЂРµР±СѓРµС‚СЃСЏ.";
-                InstallButton.Content = "Р“РѕС‚РѕРІРѕ";
+                StatusText.Text = "Клиентский мод обновлён. Перезапуск не требуется.";
+                InstallButton.Content = "Готово";
                 InstallButton.IsEnabled = false;
                 CloseButton.IsEnabled = true;
-                LaterButton.Content = "Р—Р°РєСЂС‹С‚СЊ";
+                LaterButton.Content = "Закрыть";
                 LaterButton.IsEnabled = true;
                 _busy = false;
                 return;
             }
 
             var launcherProgress = new Progress<double>(value => totalProgress.Report(0.4 + value * 0.6));
-            Log.Write("UPDATE: РЅР°С‡РёРЅР°СЋ СЃРєР°С‡РёРІР°РЅРёРµ " + _update.Tag);
+            Log.Write("UPDATE: начинаю скачивание " + _update.Tag);
             var path = await AppServices.Updates.DownloadAsync(_update, launcherProgress, _cts.Token, stage);
-            Log.Write("UPDATE: СЃРєР°С‡Р°РЅРѕ Рё РїСЂРѕРІРµСЂРµРЅРѕ " + path);
+            Log.Write("UPDATE: скачано и проверено " + path);
 
             UpdateProgress.Value = 100;
-            StatusText.Text = "РЈСЃС‚Р°РЅРѕРІРєР° Рё РїРµСЂРµР·Р°РїСѓСЃРє...";
+            StatusText.Text = "Установка и перезапуск...";
             await Task.Delay(400);
             _cts.Token.ThrowIfCancellationRequested();
 
@@ -175,19 +175,19 @@ public partial class UpdatePromptWindow : Window
             _busy = false;
             _cts?.Dispose();
             _cts = null;
-            Log.Write("UPDATE: Р·Р°РїСѓСЃРєР°СЋ СѓСЃС‚Р°РЅРѕРІРєСѓ Рё РїРµСЂРµР·Р°РїСѓСЃРє");
+            Log.Write("UPDATE: запускаю установку и перезапуск");
             AppServices.Updates.ApplyAndRestart(path);
         }
         catch (OperationCanceledException)
         {
-            StatusText.Text = "РћР±РЅРѕРІР»РµРЅРёРµ РѕС‚РјРµРЅРµРЅРѕ.";
-            ResetButtons("РџРѕРІС‚РѕСЂРёС‚СЊ");
+            StatusText.Text = "Обновление отменено.";
+            ResetButtons("Повторить");
         }
         catch (Exception ex)
         {
-            Log.Write("UPDATE: СѓСЃС‚Р°РЅРѕРІРєР° РЅРµ СѓРґР°Р»Р°СЃСЊ: " + ex);
-            StatusText.Text = "РќРµ СѓРґР°Р»РѕСЃСЊ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РѕР±РЅРѕРІР»РµРЅРёРµ: " + ex.Message;
-            ResetButtons("РџРѕРІС‚РѕСЂРёС‚СЊ");
+            Log.Write("UPDATE: установка не удалась: " + ex);
+            StatusText.Text = "Не удалось установить обновление: " + ex.Message;
+            ResetButtons("Повторить");
         }
         finally
         {
@@ -205,6 +205,6 @@ public partial class UpdatePromptWindow : Window
         InstallButton.Content = installText;
         CloseButton.IsEnabled = true;
         LaterButton.IsEnabled = true;
-        LaterButton.Content = "Р—Р°РєСЂС‹С‚СЊ";
+        LaterButton.Content = "Закрыть";
     }
 }

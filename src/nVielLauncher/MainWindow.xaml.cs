@@ -197,9 +197,17 @@ public partial class MainWindow : Window
         _updateTimer.Start();
     }
 
-    private async Task CheckForUpdatesAsync(bool force = false)
+    /// <summary>
+    /// Update check started from Settings. It ignores the per-session "already prompted"
+    /// set, so pressing the button always opens the dialog when something is available.
+    /// Returns null when another update dialog is already open.
+    /// </summary>
+    public Task<UpdateCheckResult?> CheckForUpdatesManuallyAsync()
+        => CheckForUpdatesAsync(force: true, manual: true);
+
+    private async Task<UpdateCheckResult?> CheckForUpdatesAsync(bool force = false, bool manual = false)
     {
-        if (_updateDialogOpen) return;
+        if (_updateDialogOpen) return null;
 
         try
         {
@@ -210,10 +218,10 @@ public partial class MainWindow : Window
                 ? candidate
                 : null;
 
-            if (update is null && mod is null) return;
+            if (update is null && mod is null) return result;
 
             var key = (update?.Tag ?? "mod") + "|" + (mod?.Version ?? "");
-            if (!_promptedUpdateTags.Add(key)) return;
+            if (!manual && !_promptedUpdateTags.Add(key)) return result;
 
             _updateDialogOpen = true;
             Log.Write(update is not null
@@ -234,11 +242,14 @@ public partial class MainWindow : Window
             {
                 _updateDialogOpen = false;
             }
+
+            return result;
         }
         catch (Exception ex)
         {
             _updateDialogOpen = false;
             Log.Write("UPDATE: окно обновления не открылось: " + ex);
+            return new UpdateCheckResult(UpdateStatus.Error, "Не удалось открыть окно обновления.");
         }
     }
 
