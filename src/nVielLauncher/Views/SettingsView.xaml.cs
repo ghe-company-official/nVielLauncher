@@ -66,7 +66,7 @@ public partial class SettingsView : UserControl, IRefreshable
         StartAmbientAnimations();
         StartMonitor();
 
-        AboutVersionText.Text = $"{AppInfo.DisplayName} · Fabric 1.21.4";
+        AboutVersionText.Text = $"{AppInfo.DisplayName} · {AppInfo.Codename} · Fabric 1.21.4";
 
         Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
         {
@@ -103,7 +103,6 @@ public partial class SettingsView : UserControl, IRefreshable
         CloseLauncherToggle.IsChecked = settings.CloseLauncherOnLaunch;
         FullscreenToggle.IsChecked = settings.Fullscreen;
         ShowResolutionToggle.IsChecked = settings.ShowResolution;
-        ShowLogToggle.IsChecked = settings.ShowLogOnHome;
         AnimationsToggle.IsChecked = settings.AnimationsEnabled;
         BlurToggle.IsChecked = settings.BlurEnabled;
         GlowToggle.IsChecked = settings.BackgroundGlow;
@@ -324,7 +323,6 @@ public partial class SettingsView : UserControl, IRefreshable
         settings.CloseLauncherOnLaunch = CloseLauncherToggle.IsChecked == true;
         settings.Fullscreen = FullscreenToggle.IsChecked == true;
         settings.ShowResolution = ShowResolutionToggle.IsChecked == true;
-        settings.ShowLogOnHome = ShowLogToggle.IsChecked == true;
         settings.AnimationsEnabled = AnimationsToggle.IsChecked == true;
         settings.BlurEnabled = BlurToggle.IsChecked == true;
         settings.BackgroundGlow = GlowToggle.IsChecked == true;
@@ -775,7 +773,6 @@ public partial class SettingsView : UserControl, IRefreshable
         settings.CloseLauncherOnLaunch = CloseLauncherToggle.IsChecked == true;
         settings.Fullscreen = FullscreenToggle.IsChecked == true;
         settings.ShowResolution = ShowResolutionToggle.IsChecked == true;
-        settings.ShowLogOnHome = ShowLogToggle.IsChecked == true;
 
         AppServices.Settings.Save();
         ShowToast();
@@ -892,6 +889,9 @@ public partial class SettingsView : UserControl, IRefreshable
 
     private void OpenLogs_Click(object sender, RoutedEventArgs e) => ShellHelper.OpenFolder(AppPaths.LogsDirectory);
 
+    private void Diagnose_Click(object sender, RoutedEventArgs e)
+        => (Window.GetWindow(this) as MainWindow)?.ShowDiagnostics();
+
     private void OpenMigration_Click(object sender, RoutedEventArgs e)
         => (Window.GetWindow(this) as MainWindow)?.OpenMigration("settings");
 
@@ -999,7 +999,6 @@ public partial class SettingsView : UserControl, IRefreshable
         settings.CloseLauncherOnLaunch = false;
         settings.Fullscreen = false;
         settings.ShowResolution = false;
-        settings.ShowLogOnHome = true;
         settings.AnimationsEnabled = true;
         settings.BlurEnabled = true;
         settings.BackgroundGlow = true;

@@ -3,6 +3,74 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              FontFamily="{StaticResource TextFont}">
 
+    <UserControl.Resources>
+        <!-- Ambient vector animation: slow orbits, breathing halos, floating geometry. -->
+        <Storyboard x:Key="HomeAmbient">
+            <DoubleAnimation Storyboard.TargetName="DashSpin" Storyboard.TargetProperty="Angle"
+                             From="0" To="360" Duration="0:1:30" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="ArcSpin" Storyboard.TargetProperty="Angle"
+                             From="0" To="360" Duration="0:0:18" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="ArcSpinReverse" Storyboard.TargetProperty="Angle"
+                             From="0" To="-360" Duration="0:0:26" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="OrbitSlow" Storyboard.TargetProperty="Angle"
+                             From="0" To="360" Duration="0:0:34" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="OrbitMid" Storyboard.TargetProperty="Angle"
+                             From="0" To="-360" Duration="0:0:21" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="OrbitFast" Storyboard.TargetProperty="Angle"
+                             From="0" To="360" Duration="0:0:13" RepeatBehavior="Forever" />
+
+            <DoubleAnimation Storyboard.TargetName="HaloScale1" Storyboard.TargetProperty="ScaleX"
+                             From="0.8" To="1.22" Duration="0:0:3.6" AutoReverse="True" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="HaloScale1" Storyboard.TargetProperty="ScaleY"
+                             From="0.8" To="1.22" Duration="0:0:3.6" AutoReverse="True" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="Halo1" Storyboard.TargetProperty="Opacity"
+                             From="0.34" To="0" Duration="0:0:3.6" AutoReverse="True" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="HaloScale2" Storyboard.TargetProperty="ScaleX"
+                             From="0.8" To="1.22" Duration="0:0:3.6" BeginTime="0:0:1.8" AutoReverse="True" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="HaloScale2" Storyboard.TargetProperty="ScaleY"
+                             From="0.8" To="1.22" Duration="0:0:3.6" BeginTime="0:0:1.8" AutoReverse="True" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="Halo2" Storyboard.TargetProperty="Opacity"
+                             From="0.28" To="0" Duration="0:0:3.6" BeginTime="0:0:1.8" AutoReverse="True" RepeatBehavior="Forever" />
+
+            <DoubleAnimation Storyboard.TargetName="GlowScale" Storyboard.TargetProperty="ScaleX"
+                             From="0.92" To="1.06" Duration="0:0:2.8" AutoReverse="True" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="GlowScale" Storyboard.TargetProperty="ScaleY"
+                             From="0.92" To="1.06" Duration="0:0:2.8" AutoReverse="True" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="Glow" Storyboard.TargetProperty="Opacity"
+                             From="0.1" To="0.2" Duration="0:0:2.8" AutoReverse="True" RepeatBehavior="Forever" />
+
+            <DoubleAnimation Storyboard.TargetName="CubeFloat" Storyboard.TargetProperty="Y"
+                             From="0" To="-12" Duration="0:0:4.6" AutoReverse="True" RepeatBehavior="Forever">
+                <DoubleAnimation.EasingFunction>
+                    <SineEase EasingMode="EaseInOut" />
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="CubeTilt" Storyboard.TargetProperty="Angle"
+                             From="-6" To="6" Duration="0:0:6" AutoReverse="True" RepeatBehavior="Forever">
+                <DoubleAnimation.EasingFunction>
+                    <SineEase EasingMode="EaseInOut" />
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+
+            <DoubleAnimation Storyboard.TargetName="Spark1" Storyboard.TargetProperty="Opacity"
+                             From="0.12" To="0.95" Duration="0:0:2.2" AutoReverse="True" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="Spark2" Storyboard.TargetProperty="Opacity"
+                             From="0.1" To="0.8" Duration="0:0:2.9" BeginTime="0:0:0.7" AutoReverse="True" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="Spark3" Storyboard.TargetProperty="Opacity"
+                             From="0.1" To="0.75" Duration="0:0:3.4" BeginTime="0:0:1.3" AutoReverse="True" RepeatBehavior="Forever" />
+
+            <DoubleAnimation Storyboard.TargetName="StatusDot" Storyboard.TargetProperty="Opacity"
+                             From="1" To="0.3" Duration="0:0:1.6" AutoReverse="True" RepeatBehavior="Forever" />
+
+            <DoubleAnimation Storyboard.TargetName="UnderlineScale" Storyboard.TargetProperty="ScaleX"
+                             From="0.35" To="1" Duration="0:0:4.4" AutoReverse="True" RepeatBehavior="Forever">
+                <DoubleAnimation.EasingFunction>
+                    <SineEase EasingMode="EaseInOut" />
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+    </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -28,319 +96,298 @@
             </Border>
         </Grid>
 
-        <!-- ============ content ============ -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="298" />
-            </Grid.ColumnDefinitions>
+        <!-- ============ hero ============ -->
+        <Border Grid.Row="1" Style="{StaticResource Card}" Padding="0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-            <!-- hero -->
-            <Border Style="{StaticResource Card}" Padding="26,24">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
+                <StackPanel Margin="34,28,18,28" VerticalAlignment="Center">
+                    <TextBlock Text="MINECRAFT · FABRIC 1.21.4" Style="{StaticResource Overline}" />
 
-                    <Grid Grid.Row="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <TextBlock Text="nViel" FontFamily="{StaticResource DisplayFont}" FontSize="52"
+                                   FontWeight="SemiBold" VerticalAlignment="Bottom" />
+                        <TextBlock Text="launcher" FontFamily="{StaticResource DisplayFont}" FontSize="21"
+                                   FontWeight="Light" Foreground="{DynamicResource TextSecondaryBrush}"
+                                   Margin="12,0,0,10" VerticalAlignment="Bottom" />
+                    </StackPanel>
 
-                        <Button x:Name="PlayButton" Style="{StaticResource PlayButton}" Width="150" Height="150"
-                                HorizontalAlignment="Left" VerticalAlignment="Center" Click="Play_Click"
-                                ToolTip="Играть (Ctrl+Enter)" AutomationProperties.Name="Играть">
-                            <Grid Width="150" Height="150">
-                                <Ellipse Fill="{DynamicResource BgSoftBrush}" Stroke="{DynamicResource StrokeStrongBrush}" StrokeThickness="1" />
-                                <Ellipse x:Name="DashRing" Margin="11" Stroke="{DynamicResource BorderSubtleBrush}" StrokeThickness="1"
-                                         StrokeDashArray="2 6" />
-                                <Ellipse x:Name="BusyRing" Margin="6" Stroke="{DynamicResource AccentBrush}" StrokeThickness="2.5"
-                                         StrokeDashArray="70 260" StrokeDashCap="Round" Visibility="Collapsed" />
-                                <Path x:Name="PlayIcon" Data="{DynamicResource IconPlay}" Fill="{DynamicResource AccentBrush}"
-                                      Width="42" Height="42" Stretch="Uniform" Margin="9,0,0,0" />
-                                <TextBlock x:Name="PlayPercent" Text="0%" FontFamily="{StaticResource DisplayFont}"
-                                           FontSize="26" FontWeight="SemiBold" HorizontalAlignment="Center"
-                                           VerticalAlignment="Center" Visibility="Collapsed" />
-                            </Grid>
+                    <Border Height="2" Width="128" HorizontalAlignment="Left" Margin="2,8,0,0"
+                            Background="{DynamicResource AccentBrush}" RenderTransformOrigin="0,0.5">
+                        <Border.RenderTransform>
+                            <ScaleTransform x:Name="UnderlineScale" ScaleX="1" ScaleY="1" />
+                        </Border.RenderTransform>
+                    </Border>
+
+                    <TextBlock x:Name="NickLine" Text="Игрок: Steve" FontSize="13"
+                               Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,14,0,0" />
+
+                    <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                        <Border Style="{StaticResource InsetCard}" Padding="11,6" Margin="0,0,8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{DynamicResource IconRam}" Width="12" Height="12" Stretch="Uniform"
+                                      Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4"
+                                      VerticalAlignment="Center" />
+                                <TextBlock x:Name="ChipRam" Text="4096 МБ" FontSize="11" Margin="7,0,0,0"
+                                           VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource InsetCard}" Padding="11,6">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{DynamicResource IconMods}" Width="12" Height="12" Stretch="Uniform"
+                                      Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4"
+                                      StrokeLineJoin="Round" VerticalAlignment="Center" />
+                                <TextBlock x:Name="ChipMods" Text="0 модов" FontSize="11" Margin="7,0,0,0"
+                                           VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,24,0,0">
+                        <Button x:Name="PlayButton" Style="{StaticResource PrimaryButton}" Click="Play_Click"
+                                Padding="28,15" ToolTip="Играть (Ctrl+Enter)" AutomationProperties.Name="Играть">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{DynamicResource IconPlay}" Width="15" Height="15" Stretch="Uniform"
+                                      Fill="{DynamicResource OnAccentBrush}" VerticalAlignment="Center" />
+                                <TextBlock x:Name="PlayLabel" Text="Играть" Margin="10,0,0,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Ctrl+Enter" FontSize="10" FontWeight="Normal" Opacity="0.6"
+                                           Margin="14,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
                         </Button>
+                        <Button Style="{StaticResource GhostButton}" Content="Сменить профиль" Margin="10,0,0,0"
+                                Click="ChangeNick_Click" VerticalAlignment="Center" />
+                    </StackPanel>
 
-                        <StackPanel Grid.Column="1" Margin="30,4,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="MINECRAFT" Style="{StaticResource Overline}" />
-                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                <TextBlock Text="Fabric" FontFamily="{StaticResource DisplayFont}" FontSize="36"
-                                           FontWeight="SemiBold" />
-                                <TextBlock Text=" 1.21.4" FontFamily="{StaticResource DisplayFont}" FontSize="36"
-                                           FontWeight="Light" Foreground="{DynamicResource TextSecondaryBrush}" />
+                    <Border Style="{StaticResource InsetCard}" Padding="14,11" Margin="0,20,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock x:Name="StatusText" Text="Готов к запуску" FontSize="13" FontWeight="SemiBold" />
+                                    <TextBlock x:Name="PercentText" Text="0%" Margin="10,0,0,0" FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <ProgressBar x:Name="Progress" Style="{StaticResource SlimProgress}" Value="0"
+                                             Margin="0,8,0,0" Visibility="Collapsed" />
+                                <TextBlock x:Name="DetailText" Text="Файлы проверятся автоматически при запуске"
+                                           FontSize="11" Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0"
+                                           TextTrimming="CharacterEllipsis" />
                             </StackPanel>
+                            <Button x:Name="StopButton" Grid.Column="1" Content="Остановить игру"
+                                    Style="{StaticResource SmallGhostButton}" VerticalAlignment="Center"
+                                    Visibility="Collapsed" Click="Stop_Click" />
+                        </Grid>
+                    </Border>
+                </StackPanel>
 
-                            <TextBlock x:Name="NickLine" Text="Игрок: Steve" FontSize="12.5"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,8,0,0" />
+                <!-- animated vector scene -->
+                <Grid Grid.Column="1" Width="336" Height="336" Margin="0,16,26,16" VerticalAlignment="Center">
+                    <Ellipse Width="250" Height="250" Fill="{DynamicResource AccentBrush}" Opacity="0.10">
+                        <Ellipse.Effect>
+                            <BlurEffect Radius="72" />
+                        </Ellipse.Effect>
+                    </Ellipse>
 
-                            <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
-                                <Border Style="{StaticResource InsetCard}" Padding="11,6" Margin="0,0,8,0">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Path Data="{DynamicResource IconRam}" Width="12" Height="12" Stretch="Uniform"
-                                              Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4"
-                                              VerticalAlignment="Center" />
-                                        <TextBlock x:Name="ChipRam" Text="4096 МБ" FontSize="11" Margin="7,0,0,0"
-                                                   VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    </StackPanel>
-                                </Border>
-                                <Border Style="{StaticResource InsetCard}" Padding="11,6" Margin="0,0,8,0">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Path Data="{DynamicResource IconMods}" Width="12" Height="12" Stretch="Uniform"
-                                              Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4"
-                                              StrokeLineJoin="Round" VerticalAlignment="Center" />
-                                        <TextBlock x:Name="ChipMods" Text="0 модов" FontSize="11" Margin="7,0,0,0"
-                                                   VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    </StackPanel>
-                                </Border>
-                                <Border Style="{StaticResource InsetCard}" Padding="11,6">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Path Data="{DynamicResource IconJava}" Width="12" Height="12" Stretch="Uniform"
-                                              Fill="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
-                                        <TextBlock x:Name="ChipJava" Text="Java —" FontSize="11" Margin="7,0,0,0"
-                                                   VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-                        </StackPanel>
+                    <!-- slow dashed orbit -->
+                    <Ellipse Width="310" Height="310" Stroke="{DynamicResource BorderSubtleBrush}" StrokeThickness="1"
+                             StrokeDashArray="1.5 7" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform>
+                            <RotateTransform x:Name="DashSpin" Angle="0" />
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+
+                    <!-- breathing halos -->
+                    <Ellipse x:Name="Halo1" Width="214" Height="214" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1"
+                             Opacity="0.3" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform>
+                            <ScaleTransform x:Name="HaloScale1" ScaleX="1" ScaleY="1" />
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+                    <Ellipse x:Name="Halo2" Width="214" Height="214" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1"
+                             Opacity="0.24" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform>
+                            <ScaleTransform x:Name="HaloScale2" ScaleX="1" ScaleY="1" />
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+
+                    <!-- rotating SVG arcs -->
+                    <Path Stroke="{DynamicResource AccentBrush}" StrokeThickness="3" StrokeStartLineCap="Round"
+                          StrokeEndLineCap="Round" Data="M168,26 A142,142 0 0 1 310,168">
+                        <Path.RenderTransform>
+                            <RotateTransform x:Name="ArcSpin" CenterX="168" CenterY="168" Angle="0" />
+                        </Path.RenderTransform>
+                    </Path>
+                    <Path Stroke="{DynamicResource AccentBrush}" StrokeThickness="2" Opacity="0.45" StrokeStartLineCap="Round"
+                          StrokeEndLineCap="Round" Data="M168,52 A116,116 0 0 0 284,168">
+                        <Path.RenderTransform>
+                            <RotateTransform x:Name="ArcSpinReverse" CenterX="168" CenterY="168" Angle="0" />
+                        </Path.RenderTransform>
+                    </Path>
+
+                    <!-- orbiting particles -->
+                    <Grid RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <RotateTransform x:Name="OrbitSlow" Angle="0" />
+                        </Grid.RenderTransform>
+                        <Ellipse Width="6" Height="6" Fill="{DynamicResource AccentBrush}" HorizontalAlignment="Center"
+                                 VerticalAlignment="Top" Margin="0,5,0,0" />
+                    </Grid>
+                    <Grid Margin="42" RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <RotateTransform x:Name="OrbitMid" Angle="0" />
+                        </Grid.RenderTransform>
+                        <Ellipse Width="5" Height="5" Fill="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center"
+                                 VerticalAlignment="Top" Margin="0,4,0,0" />
+                    </Grid>
+                    <Grid Margin="76" RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <RotateTransform x:Name="OrbitFast" Angle="0" />
+                        </Grid.RenderTransform>
+                        <Ellipse Width="4" Height="4" Fill="{DynamicResource BorderStrongBrush}" HorizontalAlignment="Center"
+                                 VerticalAlignment="Top" Margin="0,3,0,0" />
                     </Grid>
 
-                    <StackPanel Grid.Row="1" Margin="0,22,0,0">
-                        <Grid>
-                            <TextBlock x:Name="StatusText" Text="Готов к запуску" FontSize="13.5" FontWeight="SemiBold" />
-                            <TextBlock x:Name="PercentText" Text="0%" HorizontalAlignment="Right" FontSize="13.5"
-                                       FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </Grid>
+                    <!-- floating cube -->
+                    <Canvas Width="336" Height="336">
+                        <Canvas.RenderTransform>
+                            <TranslateTransform x:Name="CubeFloat" Y="0" />
+                        </Canvas.RenderTransform>
+                        <Canvas Canvas.Left="262" Canvas.Top="26" Width="48" Height="48" RenderTransformOrigin="0.5,0.5">
+                            <Canvas.RenderTransform>
+                                <RotateTransform x:Name="CubeTilt" Angle="0" />
+                            </Canvas.RenderTransform>
+                            <Path Data="M24 2 L44 13 L24 24 L4 13 Z" Fill="{DynamicResource AccentBrush}" Opacity="0.9"
+                                  Stroke="{DynamicResource BorderSoftBrush}" StrokeThickness="0.8" StrokeLineJoin="Round" />
+                            <Path Data="M4 13 L24 24 L24 46 L4 35 Z" Fill="{DynamicResource AccentBrush}" Opacity="0.5"
+                                  Stroke="{DynamicResource BorderSoftBrush}" StrokeThickness="0.8" StrokeLineJoin="Round" />
+                            <Path Data="M44 13 L24 24 L24 46 L44 35 Z" Fill="{DynamicResource AccentBrush}" Opacity="0.28"
+                                  Stroke="{DynamicResource BorderSoftBrush}" StrokeThickness="0.8" StrokeLineJoin="Round" />
+                        </Canvas>
 
-                        <ProgressBar x:Name="Progress" Style="{StaticResource SlimProgress}" Value="0" Margin="0,10,0,0" />
+                        <!-- sparkles -->
+                        <Path x:Name="Spark1" Canvas.Left="58" Canvas.Top="72"
+                              Data="M0,-7 L1.8,-1.8 L7,0 L1.8,1.8 L0,7 L-1.8,1.8 L-7,0 L-1.8,-1.8 Z"
+                              Fill="{DynamicResource AccentBrush}" Opacity="0.6" />
+                        <Path x:Name="Spark2" Canvas.Left="276" Canvas.Top="236"
+                              Data="M0,-5 L1.3,-1.3 L5,0 L1.3,1.3 L0,5 L-1.3,1.3 L-5,0 L-1.3,-1.3 Z"
+                              Fill="{DynamicResource TextSecondaryBrush}" Opacity="0.4" />
+                        <Path x:Name="Spark3" Canvas.Left="42" Canvas.Top="250"
+                              Data="M0,-4 L1,-1 L4,0 L1,1 L0,4 L-1,1 L-4,0 L-1,-1 Z"
+                              Fill="{DynamicResource AccentBrush}" Opacity="0.35" />
+                    </Canvas>
 
-                        <Grid Margin="0,10,0,0">
-                            <TextBlock x:Name="DetailText" Text="Файлы проверятся автоматически при запуске"
-                                       FontSize="11.5" Foreground="{DynamicResource TextMutedBrush}"
-                                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                            <Button x:Name="StopButton" Content="Остановить игру" Style="{StaticResource SmallGhostButton}"
-                                    HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed"
-                                    Click="Stop_Click" />
+                    <!-- play orb -->
+                    <Button x:Name="PlayOrb" Style="{StaticResource PlayButton}" Width="176" Height="176"
+                            HorizontalAlignment="Center" VerticalAlignment="Center" Click="Play_Click"
+                            ToolTip="Играть (Ctrl+Enter)" AutomationProperties.Name="Играть">
+                        <Grid Width="176" Height="176">
+                            <Ellipse Fill="{DynamicResource BgSoftBrush}" Stroke="{DynamicResource StrokeStrongBrush}" StrokeThickness="1" />
+                            <Ellipse x:Name="Glow" Width="146" Height="146" Fill="{DynamicResource AccentBrush}" Opacity="0.14"
+                                     RenderTransformOrigin="0.5,0.5">
+                                <Ellipse.Effect>
+                                    <BlurEffect Radius="30" />
+                                </Ellipse.Effect>
+                                <Ellipse.RenderTransform>
+                                    <ScaleTransform x:Name="GlowScale" ScaleX="1" ScaleY="1" />
+                                </Ellipse.RenderTransform>
+                            </Ellipse>
+                            <Ellipse Width="176" Height="176" Stroke="{DynamicResource BorderSubtleBrush}" StrokeThickness="1"
+                                     StrokeDashArray="1 5" />
+                            <Path x:Name="PlayIcon" Data="{DynamicResource IconPlay}" Fill="{DynamicResource AccentBrush}"
+                                  Width="52" Height="52" Stretch="Uniform" Margin="12,0,0,0" />
+                            <TextBlock x:Name="PlayPercent" Text="0%" FontFamily="{StaticResource DisplayFont}"
+                                       FontSize="30" FontWeight="SemiBold" HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" Visibility="Collapsed" />
                         </Grid>
+                    </Button>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- ============ quick info ============ -->
+        <Grid Grid.Row="2" Margin="0,14,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Style="{StaticResource Card}" Padding="16,13" Margin="0,0,7,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Width="38" Height="38" CornerRadius="19" Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource OverlayStrongBrush}" BorderThickness="1" VerticalAlignment="Center">
+                        <TextBlock x:Name="AvatarLetter" Text="S" FontSize="15" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center">
+                        <TextBlock x:Name="NicknameText" Text="Steve" FontSize="13.5" FontWeight="SemiBold"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="Оффлайн-профиль" FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}"
+                                   Margin="0,3,0,0" />
                     </StackPanel>
+                    <Button Grid.Column="2" Style="{StaticResource LinkButton}" Content="Сменить"
+                            VerticalAlignment="Center" Click="ChangeNick_Click" />
                 </Grid>
             </Border>
 
-            <!-- right column -->
-            <StackPanel Grid.Column="1" Margin="14,0,0,0">
-                <Border Style="{StaticResource Card}" Padding="18,16">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Border Width="46" Height="46" CornerRadius="23" Background="{DynamicResource SurfaceBrush}"
-                                BorderBrush="{DynamicResource OverlayStrongBrush}" BorderThickness="1">
-                            <TextBlock x:Name="AvatarLetter" Text="S" FontSize="17" FontWeight="SemiBold"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
-                            <TextBlock x:Name="NicknameText" Text="Steve" FontSize="15" FontWeight="SemiBold"
-                                       TextTrimming="CharacterEllipsis" />
-                            <TextBlock Text="Оффлайн-профиль" FontSize="11" Foreground="{DynamicResource TextMutedBrush}"
-                                       Margin="0,3,0,0" />
-                        </StackPanel>
-                        <Button Grid.Column="2" Style="{StaticResource LinkButton}" Content="Сменить"
-                                VerticalAlignment="Center" Click="ChangeNick_Click" />
-                    </Grid>
-                </Border>
-
-                <Border Style="{StaticResource Card}" Padding="16,8" Margin="0,12,0,0">
-                    <StackPanel>
-                        <Grid Height="37">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <Border Width="22" Height="22" CornerRadius="7" Background="{DynamicResource OverlaySoftBrush}"
-                                    BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1" VerticalAlignment="Center">
-                                <Path Data="{DynamicResource IconSparkles}" Width="11" Height="11" Stretch="Uniform"
-                                      Fill="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <TextBlock Grid.Column="1" Text="Версия" FontSize="12" Margin="9,0,0,0"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
-                            <TextBlock Grid.Column="2" Text="Fabric 1.21.4" FontSize="12.5" FontWeight="Medium" VerticalAlignment="Center" />
-                        </Grid>
-                        <Border Height="1" Background="{DynamicResource StrokeSoftBrush}" />
-                        <Grid Height="37">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <Border Width="22" Height="22" CornerRadius="7" Background="{DynamicResource OverlaySoftBrush}"
-                                    BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1" VerticalAlignment="Center">
-                                <Path Data="{DynamicResource IconMods}" Width="11" Height="11" Stretch="Uniform"
-                                      Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
-                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <TextBlock Grid.Column="1" Text="Моды" FontSize="12" Margin="9,0,0,0"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
-                            <TextBlock Grid.Column="2" x:Name="StatMods" Text="0" FontSize="12.5" FontWeight="Medium" VerticalAlignment="Center" />
-                        </Grid>
-                        <Border Height="1" Background="{DynamicResource StrokeSoftBrush}" />
-                        <Grid Height="37" Cursor="Hand" MouseLeftButtonUp="Instances_Click"
-                              ToolTip="Открыть инстансы">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <Border Width="22" Height="22" CornerRadius="7" Background="{DynamicResource OverlaySoftBrush}"
-                                    BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1" VerticalAlignment="Center">
-                                <Path Data="{DynamicResource IconInstance}" Width="11" Height="11" Stretch="Uniform"
-                                      Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
-                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <TextBlock Grid.Column="1" Text="Инстанс" FontSize="12" Margin="9,0,0,0"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
-                            <TextBlock Grid.Column="2" x:Name="StatInstance" Text="Основная" FontSize="12.5" FontWeight="Medium"
-                                       MaxWidth="112" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                        </Grid>
-                        <Border Height="1" Background="{DynamicResource StrokeSoftBrush}" />
-                        <Grid Height="37">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <Border Width="22" Height="22" CornerRadius="7" Background="{DynamicResource OverlaySoftBrush}"
-                                    BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1" VerticalAlignment="Center">
-                                <Path Data="{DynamicResource IconJava}" Width="11" Height="11" Stretch="Uniform"
-                                      Fill="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <TextBlock Grid.Column="1" Text="Java" FontSize="12" Margin="9,0,0,0"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
-                            <TextBlock Grid.Column="2" x:Name="StatJava" Text="проверка..." FontSize="12.5" FontWeight="Medium" VerticalAlignment="Center" />
-                        </Grid>
-                        <Border Height="1" Background="{DynamicResource StrokeSoftBrush}" />
-                        <Grid Height="37">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <Border Width="22" Height="22" CornerRadius="7" Background="{DynamicResource OverlaySoftBrush}"
-                                    BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1" VerticalAlignment="Center">
-                                <Path Data="{DynamicResource IconClock}" Width="11" Height="11" Stretch="Uniform"
-                                      Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
-                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <TextBlock Grid.Column="1" Text="Запуск" FontSize="12" Margin="9,0,0,0"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
-                            <TextBlock Grid.Column="2" x:Name="StatLastLaunch" Text="—" FontSize="12" FontWeight="Medium"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
-                        </Grid>
-                    </StackPanel>
-                </Border>
-
-                <Grid Margin="0,12,0,0">
+            <Border Grid.Column="1" Style="{StaticResource Card}" Padding="16,13" Margin="7,0,7,0"
+                    Cursor="Hand" MouseLeftButtonUp="Instances_Click" ToolTip="Открыть инстансы">
+                <Grid>
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Style="{StaticResource IconTile}" Width="38" Height="38" CornerRadius="12"
+                            VerticalAlignment="Center">
+                        <Path Data="{DynamicResource IconInstance}" Width="15" Height="15" Stretch="Uniform"
+                              Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
+                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center">
+                        <TextBlock x:Name="StatInstance" Text="Основная" FontSize="13.5" FontWeight="SemiBold"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="Активный инстанс" FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}"
+                                   Margin="0,3,0,0" />
+                    </StackPanel>
+                    <Path Grid.Column="2" Data="{DynamicResource IconChevronRight}" Width="12" Height="12"
+                          Stretch="Uniform" Stroke="{DynamicResource TextMutedBrush}" StrokeThickness="1.4"
+                          VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="2" Style="{StaticResource Card}" Padding="16,13" Margin="7,0,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <Button Style="{StaticResource ActionTile}" Margin="0,0,5,5" Click="OpenGameFolder_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <Border Width="26" Height="26" CornerRadius="8" Background="{DynamicResource OverlaySoftBrush}"
-                                    BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1">
-                                <Path Data="{DynamicResource IconFolder}" Width="12" Height="12" Stretch="Uniform"
-                                      Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
-                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="Папка игры" FontSize="12" FontWeight="Medium" />
-                                <TextBlock Text="Открыть" FontSize="9.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
-                            </StackPanel>
-                        </StackPanel>
-                    </Button>
-
-                    <Button Grid.Column="1" Style="{StaticResource ActionTile}" Margin="5,0,0,5" Click="OpenModsFolder_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <Border Width="26" Height="26" CornerRadius="8" Background="{DynamicResource OverlaySoftBrush}"
-                                    BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1">
-                                <Path Data="{DynamicResource IconMods}" Width="12" Height="12" Stretch="Uniform"
-                                      Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
-                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="Моды" FontSize="12" FontWeight="Medium" />
-                                <TextBlock Text="Папка mods" FontSize="9.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
-                            </StackPanel>
-                        </StackPanel>
-                    </Button>
-
-                    <Button Grid.Row="1" Style="{StaticResource ActionTile}" Margin="0,5,5,0" Click="OpenLogsFolder_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <Border Width="26" Height="26" CornerRadius="8" Background="{DynamicResource OverlaySoftBrush}"
-                                    BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1">
-                                <Path Data="{DynamicResource IconLogs}" Width="12" Height="12" Stretch="Uniform"
-                                      Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
-                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="Журнал" FontSize="12" FontWeight="Medium" />
-                                <TextBlock Text="Логи" FontSize="9.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
-                            </StackPanel>
-                        </StackPanel>
-                    </Button>
-
-                    <Button Grid.Row="1" Grid.Column="1" Style="{StaticResource ActionTile}" Margin="5,5,0,0" Click="ChangeNick_Click">
-                        <StackPanel Orientation="Horizontal">
-                            <Border Width="26" Height="26" CornerRadius="8" Background="{DynamicResource OverlaySoftBrush}"
-                                    BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1">
-                                <Path Data="{DynamicResource IconUser}" Width="12" Height="12" Stretch="Uniform"
-                                      Fill="{DynamicResource TextSecondaryBrush}"
-                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="Профиль" FontSize="12" FontWeight="Medium" />
-                                <TextBlock Text="Сменить ник" FontSize="9.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
-                            </StackPanel>
-                        </StackPanel>
-                    </Button>
-                </Grid>
-            </StackPanel>
-        </Grid>
-
-        <!-- ============ log ============ -->
-        <Border x:Name="LogCard" Grid.Row="2" Style="{StaticResource Card}" Margin="0,14,0,0" Height="166">
-            <Grid Margin="16,12,10,10">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-
-                <Grid>
-                    <TextBlock Text="ЖУРНАЛ ЛАУНЧЕРА" Style="{StaticResource Overline}" VerticalAlignment="Center" />
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Style="{StaticResource LinkButton}" Content="Диагностика" Click="Diagnose_Click" />
-                        <Button Style="{StaticResource LinkButton}" Content="Копировать" Margin="14,0,0,0" Click="CopyLog_Click" />
-                        <Button Style="{StaticResource LinkButton}" Content="Очистить" Margin="14,0,0,0" Click="ClearLog_Click" />
+                    <Border Style="{StaticResource IconTile}" Width="38" Height="38" CornerRadius="12"
+                            VerticalAlignment="Center">
+                        <Path Data="{DynamicResource IconClock}" Width="15" Height="15" Stretch="Uniform"
+                              Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock x:Name="StatLastLaunch" Text="—" FontSize="13.5" FontWeight="SemiBold"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="Последний запуск" FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}"
+                                   Margin="0,3,0,0" />
                     </StackPanel>
                 </Grid>
-
-                <TextBox x:Name="LogBox" Grid.Row="1" Margin="0,8,0,0" IsReadOnly="True" TextWrapping="NoWrap"
-                         Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextSecondaryBrush}"
-                         FontFamily="{StaticResource MonoFont}" FontSize="11.5" VerticalScrollBarVisibility="Auto"
-                         HorizontalScrollBarVisibility="Disabled" IsReadOnlyCaretVisible="False" Padding="0,2,2,0" />
-            </Grid>
-        </Border>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

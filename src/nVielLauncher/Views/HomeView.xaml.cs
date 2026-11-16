@@ -1,7 +1,6 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using System.Windows.Media.Animation;
 using nVielLauncher.Services;
 
@@ -10,15 +9,13 @@ namespace nVielLauncher.Views;
 public partial class HomeView : UserControl, IRefreshable
 {
     private bool _running;
-    private bool _ringsStarted;
-    private bool _javaChecked;
-    private int _logLines;
+    private bool _ambientStarted;
+    private Storyboard? _ambient;
 
     public HomeView()
     {
         InitializeComponent();
 
-        Log.Message += OnLogMessage;
         AppServices.Launcher.GameStarted += OnGameStarted;
         AppServices.Launcher.GameExited += OnGameExited;
 
@@ -27,11 +24,8 @@ public partial class HomeView : UserControl, IRefreshable
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        StartRings();
+        SyncAmbient();
         Refresh();
-
-        if (_logLines == 0)
-            AppendLog("Добро пожаловать в nViel Launcher. Нажми «Играть» — файлы загрузятся автоматически.");
     }
 
     private static string Plural(int count, string one, string few, string many)
@@ -63,23 +57,31 @@ public partial class HomeView : UserControl, IRefreshable
         }
     }
 
-    private void StartRings()
+    /// <summary>Runs the ambient vector animation unless the user disabled animations.</summary>
+    private void SyncAmbient()
     {
-        if (_ringsStarted) return;
-        _ringsStarted = true;
+        if (!AppServices.Settings.Current.AnimationsEnabled)
+        {
+            _ambient?.Stop(this);
+            _ambient = null;
+            _ambientStarted = false;
+            return;
+        }
 
-        DashRing.RenderTransformOrigin = new Point(0.5, 0.5);
-        var dashRotate = new RotateTransform();
-        DashRing.RenderTransform = dashRotate;
-        dashRotate.BeginAnimation(RotateTransform.AngleProperty,
-            new DoubleAnimation(0, 360, TimeSpan.FromSeconds(46)) { RepeatBehavior = RepeatBehavior.Forever });
+        if (_ambientStarted) return;
+        _ambientStarted = true;
 
-        BusyRing.RenderTransformOrigin = new Point(0.5, 0.5);
-        BusyRing.RenderTransform = new RotateTransform();
+        if (Resources["HomeAmbient"] is Storyboard storyboard)
+        {
+            _ambient = storyboard;
+            storyboard.Begin(this, true);
+        }
     }
 
     public void Refresh()
     {
+        SyncAmbient();
+
         var settings = AppServices.Settings.Current;
         var nickname = string.IsNullOrWhiteSpace(settings.Nickname) ? "Steve" : settings.Nickname;
 
@@ -93,9 +95,7 @@ public partial class HomeView : UserControl, IRefreshable
         StatInstance.Text = instanceName;
         StatInstance.ToolTip = settings.EffectiveGameDirectory;
         var mods = CountMods(settings.EffectiveGameDirectory);
-        StatMods.Text = mods.ToString();
         ChipMods.Text = mods + " " + Plural(mods, "мод", "мода", "модов");
-        LogCard.Visibility = settings.ShowLogOnHome ? Visibility.Visible : Visibility.Collapsed;
 
         if (settings.LastLaunchUtc is { } lastUtc)
         {
@@ -111,37 +111,13 @@ public partial class HomeView : UserControl, IRefreshable
 
         if (!_running)
         {
+            Progress.Visibility = Visibility.Collapsed;
             Progress.Value = 0;
             PercentText.Text = "0%";
             StatusText.Text = "Готов к запуску";
             DetailText.Text = "Файлы проверятся автоматически при запуске";
             PillText.Text = "ГОТОВ К ЗАПУСКУ";
-        }
-
-        if (!_javaChecked)
-            _ = DetectJavaAsync();
-    }
-
-    private async Task DetectJavaAsync()
-    {
-        _javaChecked = true;
-        try
-        {
-            var info = await Task.Run(() => AppServices.Java.DetectAsync(21, CancellationToken.None));
-            if (info is null)
-            {
-                StatJava.Text = "не найдена";
-                ChipJava.Text = "Java —";
-            }
-            else
-            {
-                StatJava.Text = $"Java {info.Major}";
-                ChipJava.Text = $"Java {info.Major}";
-            }
-        }
-        catch
-        {
-            StatJava.Text = "не найдена";
+            PlayLabel.Text = "Играть";
         }
     }
 
@@ -160,13 +136,15 @@ public partial class HomeView : UserControl, IRefreshable
     {
         StopButton.Visibility = running ? Visibility.Visible : Visibility.Collapsed;
         PlayButton.IsEnabled = !running;
-        PlayIcon.Visibility = running ? Visibility.Visible : Visibility.Visible;
+        PlayOrb.IsEnabled = !running;
+        PlayLabel.Text = running ? "В игре" : "Играть";
 
         if (running)
         {
             PillText.Text = "ИГРАЕТ";
             StatusText.Text = "Игра запущена";
             PercentText.Text = "100%";
+            Progress.Visibility = Visibility.Visible;
             Progress.Value = 100;
             DetailText.Text = "Minecraft работает — можно свернуть лаунчер";
         }
@@ -174,7 +152,6 @@ public partial class HomeView : UserControl, IRefreshable
 
     private void Stop_Click(object sender, RoutedEventArgs e)
     {
-        AppendLog("Запрошена остановка игры...");
         AppServices.Launcher.KillGame();
     }
 
@@ -194,7 +171,7 @@ public partial class HomeView : UserControl, IRefreshable
         Dispatcher.BeginInvoke(() =>
         {
             _running = false;
-            AppendLog($"Minecraft закрыт (код {code}).");
+            Progress.Visibility = Visibility.Collapsed;
             Progress.Value = 0;
             PercentText.Text = "0%";
             StatusText.Text = "Готов к запуску";
@@ -202,7 +179,7 @@ public partial class HomeView : UserControl, IRefreshable
             PillText.Text = "ГОТОВ К ЗАПУСКУ";
             SetRunningUi(false);
             PlayButton.IsEnabled = true;
-            PlayIcon.Visibility = Visibility.Visible;
+            PlayOrb.IsEnabled = true;
             PlayPercent.Visibility = Visibility.Collapsed;
 
             var window = Window.GetWindow(this) as MainWindow;
@@ -218,79 +195,7 @@ public partial class HomeView : UserControl, IRefreshable
         });
     }
 
-    // ------------------------------------------------------------------ log
-
-    private void OnLogMessage(string line)
-    {
-        if (!Dispatcher.CheckAccess())
-        {
-            Dispatcher.BeginInvoke(() => AppendLog(line));
-            return;
-        }
-
-        AppendLog(line);
-    }
-
-    private void AppendLog(string line)
-    {
-        if (!Dispatcher.CheckAccess())
-        {
-            Dispatcher.BeginInvoke(() => AppendLog(line));
-            return;
-        }
-
-        LogBox.AppendText(line + Environment.NewLine);
-        _logLines++;
-
-        if (_logLines > 700)
-        {
-            var lines = LogBox.Text.Replace("\r\n", "\n").Split('\n');
-            LogBox.Text = string.Join(Environment.NewLine, lines.Skip(Math.Max(0, lines.Length - 350)));
-            _logLines = 350;
-        }
-
-        LogBox.ScrollToEnd();
-    }
-
-    private void CopyLog_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            Clipboard.SetText(LogBox.Text);
-        }
-        catch
-        {
-            // ignored
-        }
-    }
-
-    private void ClearLog_Click(object sender, RoutedEventArgs e)
-    {
-        LogBox.Clear();
-        _logLines = 0;
-    }
-
     // ------------------------------------------------------------------ actions
-
-    private void OpenGameFolder_Click(object sender, RoutedEventArgs e)
-    {
-        var directory = AppServices.Settings.Current.EffectiveGameDirectory;
-        Directory.CreateDirectory(directory);
-        ShellHelper.OpenFolder(directory);
-    }
-
-    private void OpenModsFolder_Click(object sender, RoutedEventArgs e)
-    {
-        var directory = Path.Combine(AppServices.Settings.Current.EffectiveGameDirectory, "mods");
-        Directory.CreateDirectory(directory);
-        ShellHelper.OpenFolder(directory);
-    }
-
-    private void OpenLogsFolder_Click(object sender, RoutedEventArgs e)
-        => ShellHelper.OpenFolder(AppPaths.LogsDirectory);
-
-    private void Diagnose_Click(object sender, RoutedEventArgs e)
-        => (Window.GetWindow(this) as MainWindow)?.ShowDiagnostics();
 
     private void ChangeNick_Click(object sender, RoutedEventArgs e)
         => (Window.GetWindow(this) as MainWindow)?.ShowProfiles();

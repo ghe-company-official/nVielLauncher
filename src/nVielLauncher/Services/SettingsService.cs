@@ -42,7 +42,6 @@ public sealed class LauncherSettings
     public bool ShowResolution { get; set; }
     public int ResolutionWidth { get; set; } = 1280;
     public int ResolutionHeight { get; set; } = 720;
-    public bool ShowLogOnHome { get; set; } = true;
     public bool AnimationsEnabled { get; set; } = true;
     public bool BlurEnabled { get; set; } = true;
     public bool ShowSplash { get; set; } = true;

@@ -6,7 +6,7 @@
 оффлайн-вход, моды с Modrinth, сборки `.mrpack`, сервера, профили, обучение и
 диагностика падений.
 
-Текущая версия: **1.2.4.9 Global**.
+Текущая версия: **1.2.5 Global**.
 
 ## Возможности
 
@@ -29,6 +29,8 @@
 - тема Material You: палитра строится из акцентного и основного цвета в OKLCH,
   режим nViel остаётся монохромным;
 - кастомизация иконок: свой SVG-контур для каждой из 37 иконок с откатом к исходной;
+- новый главный экран: анимированная векторная сцена, крупная кнопка «Играть»,
+  профиль, активный инстанс и последний запуск; журнал и папки — в настройках;
 - автообновление из приватного GitHub Releases с проверкой detached-подписи ECDSA,
   размера, PE-заголовка, версии и SHA-256;
 - health-check после обновления и автоматический откат на предыдущую версию.
@@ -57,7 +59,7 @@ single-instance mutex, поэтому может работать паралле
 ```json
 {
   "schema": 1,
-  "launcher": { "version": "1.2.4.9", "asset": "nVielLauncher.exe", "sha256": "…", "size": 0 },
+  "launcher": { "version": "1.2.5", "asset": "nVielLauncher.exe", "sha256": "…", "size": 0 },
   "client_mod": {
     "version": "1.0.0",
     "asset": "nviel-1.0.0.jar",
@@ -116,15 +118,15 @@ GET https://updates.example.com/nviel/latest?channel=stable
 
 ```json
 {
-  "version": "1.2.4.9",
-  "tag": "v1.2.4.9",
-  "name": "nViel Launcher 1.2.4.9 Global",
+  "version": "1.2.5",
+  "tag": "v1.2.5",
+  "name": "nViel Launcher 1.2.5 Global",
   "notes": "Что нового...",
   "download_url": "https://updates.example.com/nviel/nVielLauncher.exe",
   "signature_url": "https://updates.example.com/nviel/nVielLauncher.exe.sig",
   "size": 84483337,
   "sha256": "…",
-  "release_url": "https://github.com/…/releases/tag/v1.2.4.9"
+  "release_url": "https://github.com/…/releases/tag/v1.2.5"
 }
 ```
 
@@ -137,7 +139,7 @@ ECDSA-подпись, поэтому relay не может подменить ex
 1. Приватный репозиторий: `ghe-company-official/nVielLauncher-releases`.
 2. Fine-grained token для лаунчера: только этот репозиторий, `Contents: Read`.
 3. Для публикации нужен отдельный token с `Contents: Read and write`; в лаунчер его не вставляйте.
-4. Соберите и подпишите exe, создайте Release с тегом версии (например, `v1.2.4.9`) и
+4. Соберите и подпишите exe, создайте Release с тегом версии (например, `v1.2.5`) и
    прикрепите `nVielLauncher.exe`, `nVielLauncher.exe.sig`, `manifest.json`,
    `manifest.json.sig` и `nviel-1.0.0.jar`.
 

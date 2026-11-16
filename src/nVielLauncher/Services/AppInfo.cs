@@ -24,10 +24,13 @@ public static class AppInfo
     public static Version Version { get; } =
         Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0, 0);
 
-    /// <summary>Version in the form 1.2.4.9 (the revision is included when non-zero).</summary>
+    /// <summary>Version in the form 1.2.5 (the revision is included when non-zero).</summary>
     public static string VersionLabel { get; } = VersionUtil.Format(Version);
 
     public static string DisplayVersion { get; } = VersionLabel + " " + Edition;
+
+    /// <summary>Human-readable name of the update wave this build belongs to.</summary>
+    public const string Codename = "Window Update · First Chapter";
 
     public static string DisplayName { get; } = ProductName + " " + DisplayVersion;
 
