@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.IO;
 using System.Security.Cryptography;
+using System.Windows;
+using System.Windows.Media;
 using nVielLauncher.Services;
 using Xunit;
 
@@ -41,10 +43,10 @@ public sealed class VersionUtilTests
     }
 
     [Fact]
-    public void ProductVersionIs123Global()
+    public void ProductVersionIs1249Global()
     {
-        Assert.Equal("1.2.3", AppInfo.VersionLabel);
-        Assert.Equal("1.2.3 Global", AppInfo.DisplayVersion);
+        Assert.Equal("1.2.4.9", AppInfo.VersionLabel);
+        Assert.Equal("1.2.4.9 Global", AppInfo.DisplayVersion);
     }
 }
 
@@ -234,6 +236,146 @@ public sealed class UpdateHealthTests
         Assert.Equal(marker, UpdateHealth.GetMarkerPath(new[] { "--update-health", marker, "--re" }));
         Assert.Null(UpdateHealth.GetMarkerPath(new[] { "--update-health" }));
         Assert.Null(UpdateHealth.GetMarkerPath(Array.Empty<string>()));
+    }
+}
+
+public sealed class MaterialThemeTests
+{
+    [Theory]
+    [InlineData("material", "material")]
+    [InlineData("Material", "material")]
+    [InlineData("nViel", "nViel")]
+    [InlineData("NVIEL", "nViel")]
+    [InlineData(null, "material")]
+    [InlineData("", "material")]
+    [InlineData("unknown", "material")]
+    public void NormalizesThemeMode(string? input, string expected)
+    {
+        Assert.Equal(expected, MaterialTheme.NormalizeMode(input));
+        Assert.Equal(expected == "material", MaterialTheme.IsMaterial(input));
+    }
+
+    [Fact]
+    public void ParsesColoursAndFallsBackToTheDefault()
+    {
+        Assert.Equal(Color.FromRgb(0x12, 0x34, 0x56), MaterialTheme.ParseOpaque("#123456", MaterialTheme.DefaultSeed));
+        Assert.Equal(Color.FromRgb(0x12, 0x34, 0x56), MaterialTheme.ParseOpaque("#80123456", MaterialTheme.DefaultSeed));
+        Assert.Equal(MaterialTheme.DefaultSeed, MaterialTheme.ParseOpaque("not-a-colour", MaterialTheme.DefaultSeed));
+        Assert.Equal(MaterialTheme.DefaultBase, MaterialTheme.ParseOpaque(null, MaterialTheme.DefaultBase));
+    }
+
+    [Fact]
+    public void AppliesMaterialBrushesFromTheSeedAndBase()
+    {
+        var resources = new ResourceDictionary();
+        var settings = new LauncherSettings
+        {
+            ThemeMode = MaterialTheme.ModeMaterial,
+            AccentColor = "#FFD0BCFF",
+            BaseColor = "#FF6750A4",
+        };
+
+        MaterialTheme.Apply(resources, settings);
+
+        var accent = Assert.IsType<SolidColorBrush>(resources["AccentBrush"]);
+        var background = Assert.IsType<SolidColorBrush>(resources["BgBrush"]);
+        var text = Assert.IsType<SolidColorBrush>(resources["TextPrimaryBrush"]);
+
+        Assert.True(accent.Color.R > 0x90 && accent.Color.B > 0xD0, "the accent must stay in the violet family");
+        Assert.True(background.Color.R < 0x30 && background.Color.G < 0x30 && background.Color.B < 0x30,
+            "the material background must be dark");
+        Assert.True(text.Color.R > 0xD0 && text.Color.G > 0xD0, "the material text must be light");
+        Assert.Equal(accent.Color, Assert.IsType<Color>(resources["AccentColor"]));
+        Assert.Equal(accent.Color, ((SolidColorBrush)resources["AccentBrush"]).Color);
+        Assert.NotEqual(background.Color, Assert.IsType<SolidColorBrush>(resources["SurfaceBrush"]).Color);
+    }
+
+    [Fact]
+    public void ChangingTheBaseColourChangesTheSurfacesButNotTheAccent()
+    {
+        var first = new ResourceDictionary();
+        var second = new ResourceDictionary();
+
+        MaterialTheme.Apply(first, new LauncherSettings { BaseColor = "#FF6750A4", AccentColor = "#FFD0BCFF" });
+        MaterialTheme.Apply(second, new LauncherSettings { BaseColor = "#FF006A60", AccentColor = "#FFD0BCFF" });
+
+        var firstBackground = ((SolidColorBrush)first["BgBrush"]).Color;
+        var secondBackground = ((SolidColorBrush)second["BgBrush"]).Color;
+
+        Assert.NotEqual(firstBackground, secondBackground);
+        Assert.Equal(((SolidColorBrush)first["AccentBrush"]).Color, ((SolidColorBrush)second["AccentBrush"]).Color);
+    }
+
+    [Fact]
+    public void NvielModeKeepsTheMonochromeSurfacesAndHonoursTheAccent()
+    {
+        var resources = new ResourceDictionary();
+        var accent = Color.FromRgb(0x33, 0xDD, 0x88);
+
+        MaterialTheme.Apply(resources, new LauncherSettings
+        {
+            ThemeMode = MaterialTheme.ModeNviel,
+            AccentColor = "#FF33DD88",
+            BaseColor = "#FF6750A4",
+        });
+
+        Assert.Equal(Color.FromRgb(0x06, 0x06, 0x08), ((SolidColorBrush)resources["BgBrush"]).Color);
+        Assert.Equal(accent, ((SolidColorBrush)resources["AccentBrush"]).Color);
+    }
+}
+
+public sealed class IconThemeTests
+{
+    [Fact]
+    public void CatalogKeysAreUniqueAndEveryDefaultPathParses()
+    {
+        Assert.Equal(37, IconCatalog.All.Count);
+        Assert.Equal(IconCatalog.All.Count, IconCatalog.All.Select(icon => icon.Key).Distinct().Count());
+
+        foreach (var icon in IconCatalog.All)
+        {
+            Assert.True(IconTheme.TryParse(icon.PathData, out var geometry), icon.Key + " has an invalid default path");
+            Assert.False(geometry!.IsEmpty(), icon.Key + " has an empty default path");
+        }
+    }
+
+    [Theory]
+    [InlineData("M0 0 L10 10")]
+    [InlineData(" M 2 2 h 8 v 8 z ")]
+    public void AcceptsValidSvgPaths(string path)
+    {
+        Assert.True(IconTheme.TryParse(path, out var geometry));
+        Assert.NotNull(geometry);
+        Assert.False(geometry!.IsEmpty());
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("definitely not a path")]
+    [InlineData("M0 0 L")]
+    public void RejectsEmptyOrBrokenPaths(string? path)
+    {
+        Assert.False(IconTheme.TryParse(path, out var geometry));
+        Assert.Null(geometry);
+    }
+
+    [Fact]
+    public void AppliesOverridesAndFallsBackToTheDefaultGeometry()
+    {
+        var resources = new ResourceDictionary();
+        var settings = new LauncherSettings();
+        settings.IconOverrides["IconHome"] = "M0 0 L24 0 L24 24 Z";
+        settings.IconOverrides["IconPlay"] = "not a path";
+
+        IconTheme.Apply(resources, settings);
+
+        var home = Assert.IsAssignableFrom<Geometry>(resources["IconHome"]);
+        Assert.Equal(new Rect(0, 0, 24, 24), home.Bounds);
+        Assert.Equal(IconCatalog.CreateGeometry("IconPlay").ToString(),
+            Assert.IsAssignableFrom<Geometry>(resources["IconPlay"]).ToString());
+        Assert.All(IconCatalog.All, icon => Assert.True(resources.Contains(icon.Key), icon.Key + " is missing"));
     }
 }
 

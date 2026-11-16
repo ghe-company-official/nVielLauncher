@@ -53,6 +53,8 @@ public partial class App : Application
 
         base.OnStartup(e);
 
+        MaterialTheme.Apply(Resources, AppServices.Settings.Current);
+
         Window window = reMode ? new ReWindow() : new MainWindow();
         MainWindow = window;
 

@@ -1591,26 +1591,8 @@ public partial class MainWindow : Window
     public void ApplyAppearance()
     {
         var settings = AppServices.Settings.Current;
-
-        if (TryParseColor(settings.AccentColor, out var accent))
-            Application.Current.Resources["AccentBrush"] = new SolidColorBrush(accent);
-
+        MaterialTheme.Apply(Application.Current.Resources, settings);
         BackdropLayer.Visibility = settings.BackgroundGlow ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private static bool TryParseColor(string text, out Color color)
-    {
-        color = Colors.White;
-        if (string.IsNullOrWhiteSpace(text)) return false;
-        try
-        {
-            color = (Color)ColorConverter.ConvertFromString(text);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
     }
 
     // ------------------------------------------------------------------ chrome

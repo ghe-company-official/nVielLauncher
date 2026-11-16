@@ -11,44 +11,44 @@
 
         <!-- brand -->
         <StackPanel x:Name="BrandBlock" VerticalAlignment="Center" Margin="52,0,30,0" Opacity="0">
-            <Border Background="#0BFFFFFF" BorderBrush="#18FFFFFF" BorderThickness="1" CornerRadius="8"
+            <Border Background="{DynamicResource OverlayFaintBrush}" BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1" CornerRadius="8"
                     Padding="10,5" HorizontalAlignment="Left">
                 <TextBlock Text="MINECRAFT · FABRIC 1.21.4" FontSize="9.5" FontWeight="SemiBold"
-                           Foreground="{StaticResource TextSecondaryBrush}" />
+                           Foreground="{DynamicResource TextSecondaryBrush}" />
             </Border>
 
             <TextBlock Text="nViel" FontFamily="{StaticResource DisplayFont}" FontSize="82" FontWeight="Bold"
                        Margin="0,20,0,0" />
 
             <TextBlock Text="Тихий чёрно-белый лаунчер. Один клик — и ты в мире."
-                       FontSize="14.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"
+                       FontSize="14.5" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0"
                        TextWrapping="Wrap" MaxWidth="420" HorizontalAlignment="Left" />
 
             <StackPanel Orientation="Horizontal" Margin="0,30,0,0">
                 <Border Style="{StaticResource InsetCard}" Padding="12,7" Margin="0,0,10,0">
                     <StackPanel Orientation="Horizontal">
-                        <Path Data="{StaticResource IconMods}" Width="13" Height="13" Stretch="Uniform"
-                              Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
+                        <Path Data="{DynamicResource IconMods}" Width="13" Height="13" Stretch="Uniform"
+                              Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
                               VerticalAlignment="Center" />
                         <TextBlock Text="Fabric" FontSize="11.5" Margin="8,0,0,0" VerticalAlignment="Center"
-                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource InsetCard}" Padding="12,7" Margin="0,0,10,0">
                     <StackPanel Orientation="Horizontal">
-                        <Path Data="{StaticResource IconRam}" Width="13" Height="13" Stretch="Uniform"
-                              Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                        <Path Data="{DynamicResource IconRam}" Width="13" Height="13" Stretch="Uniform"
+                              Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4"
                               VerticalAlignment="Center" />
                         <TextBlock Text="Java 21" FontSize="11.5" Margin="8,0,0,0" VerticalAlignment="Center"
-                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource InsetCard}" Padding="12,7">
                     <StackPanel Orientation="Horizontal">
-                        <Path Data="{StaticResource IconBolt}" Width="13" Height="13" Stretch="Uniform"
-                              Fill="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                        <Path Data="{DynamicResource IconBolt}" Width="13" Height="13" Stretch="Uniform"
+                              Fill="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
                         <TextBlock Text="Оффлайн" FontSize="11.5" Margin="8,0,0,0" VerticalAlignment="Center"
-                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
                     </StackPanel>
                 </Border>
             </StackPanel>
@@ -62,13 +62,13 @@
             <StackPanel>
                 <TextBlock Text="Вход" FontFamily="{StaticResource DisplayFont}" FontSize="26" FontWeight="SemiBold" />
                 <TextBlock Text="Введи ник, чтобы начать играть" FontSize="12.5"
-                           Foreground="{StaticResource TextSecondaryBrush}" Margin="0,6,0,0" />
+                           Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,6,0,0" />
 
                 <TextBlock Text="НИКНЕЙМ" Style="{StaticResource Overline}" Margin="0,26,0,8" />
                 <TextBox x:Name="NickBox" Style="{StaticResource BigInputBox}" Tag="Steve" MaxLength="16"
                          KeyDown="NickBox_KeyDown" />
 
-                <TextBlock x:Name="ErrorText" Foreground="#FFB9B9C4" FontSize="11.5" Margin="2,10,0,0"
+                <TextBlock x:Name="ErrorText" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11.5" Margin="2,10,0,0"
                            Visibility="Collapsed" TextWrapping="Wrap" />
 
                 <Button x:Name="LoginButton" Style="{StaticResource PrimaryButton}" Height="50" Margin="0,20,0,0"

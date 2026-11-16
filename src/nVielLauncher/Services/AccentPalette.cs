@@ -21,4 +21,17 @@ public static class AccentPalette
         "#FFBFD9E8", // sky
         "#FFCBE8BF"  // sage
     };
+
+    /// <summary>Base colours used by the Material You theme. Only hue and chroma matter.</summary>
+    public static readonly string[] BasePresets =
+    {
+        "#FF6750A4", // purple
+        "#FF4F6B2A", // olive
+        "#FF2F6A8C", // blue
+        "#FF8C4A5B", // rose
+        "#FF8C6A2F", // amber
+        "#FF2F8C7A", // teal
+        "#FF5B4A8C", // indigo
+        "#FF8C3A2F"  // rust
+    };
 }

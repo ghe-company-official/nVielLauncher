@@ -5,7 +5,7 @@
 
     <UserControl.Resources>
         <Style x:Key="MigrationCheck" TargetType="CheckBox">
-            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
@@ -14,10 +14,10 @@
                     <ControlTemplate TargetType="CheckBox">
                         <StackPanel Orientation="Horizontal" Background="Transparent">
                             <Border x:Name="Box" Width="16" Height="16" CornerRadius="4"
-                                    Background="#FF14141A" BorderBrush="{StaticResource StrokeStrongBrush}"
+                                    Background="{DynamicResource SurfaceHoverBrush}" BorderBrush="{DynamicResource StrokeStrongBrush}"
                                     BorderThickness="1" VerticalAlignment="Center">
                                 <Path x:Name="Check" Data="M3 8.2 6.4 11.5 13 4.8" Width="10" Height="10"
-                                      Stretch="Uniform" Stroke="#FF08080A" StrokeThickness="1.8"
+                                      Stretch="Uniform" Stroke="{DynamicResource BgSoftBrush}" StrokeThickness="1.8"
                                       StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                       Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
@@ -30,7 +30,7 @@
                                 <Setter TargetName="Check" Property="Visibility" Value="Visible" />
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Box" Property="BorderBrush" Value="#FF4A4A55" />
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource TextMutedBrush}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.4" />
@@ -56,19 +56,19 @@
             <StackPanel>
                 <TextBlock Text="Перенос данных" Style="{StaticResource SectionTitle}" />
                 <TextBlock Text="Скопируй миры, моды и настройки из старых лаунчеров — оригиналы останутся на месте"
-                           FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,5,0,0"
+                           FontSize="12.5" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,5,0,0"
                            TextWrapping="Wrap" MaxWidth="640" HorizontalAlignment="Left" />
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                <Border Background="#0BFFFFFF" BorderBrush="#1AFFFFFF" BorderThickness="1"
+                <Border Background="{DynamicResource OverlayFaintBrush}" BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1"
                         CornerRadius="10" Padding="12,7">
                     <StackPanel Orientation="Horizontal">
-                        <Path Data="{StaticResource IconFolder}" Width="12" Height="12" Stretch="Uniform"
-                              Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                        <Path Data="{DynamicResource IconFolder}" Width="12" Height="12" Stretch="Uniform"
+                              Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4"
                               StrokeLineJoin="Round" VerticalAlignment="Center" />
                         <TextBlock x:Name="CountBadge" Text="0" FontSize="10.5" FontWeight="SemiBold"
-                                   Margin="8,0,0,0" Foreground="{StaticResource TextSecondaryBrush}" />
+                                   Margin="8,0,0,0" Foreground="{DynamicResource TextSecondaryBrush}" />
                     </StackPanel>
                 </Border>
                 <Button x:Name="BackButton" Style="{StaticResource SmallGhostButton}" Content="Назад"
@@ -84,7 +84,7 @@
                     <ItemsControl x:Name="LauncherList" Visibility="Collapsed">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Background="#0AFFFFFF" BorderBrush="#18FFFFFF" BorderThickness="1"
+                                <Border Background="{DynamicResource OverlayFaintBrush}" BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1"
                                         CornerRadius="12" Padding="12,10" Margin="0,0,0,8">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -102,7 +102,7 @@
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="{Binding Name}" FontSize="12.5"
                                                            FontWeight="SemiBold" />
-                                                <Border Background="#14FFFFFF" BorderBrush="#22FFFFFF"
+                                                <Border Background="{DynamicResource OverlayBrush}" BorderBrush="{DynamicResource OverlayStrongBrush}"
                                                         BorderThickness="1" CornerRadius="5" Padding="6,1"
                                                         Margin="8,0,0,0" VerticalAlignment="Center">
                                                     <Border.Style>
@@ -115,19 +115,19 @@
                                                         </Style>
                                                     </Border.Style>
                                                     <TextBlock Text="{Binding Note}" FontSize="9"
-                                                               Foreground="{StaticResource TextMutedBrush}" />
+                                                               Foreground="{DynamicResource TextMutedBrush}" />
                                                 </Border>
                                             </StackPanel>
                                             <TextBlock Text="{Binding DataSummary}" FontSize="11"
-                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
                                                        Margin="0,4,0,0" TextWrapping="Wrap" />
                                             <TextBlock Text="{Binding PathText}" FontSize="10"
-                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       Foreground="{DynamicResource TextMutedBrush}"
                                                        Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
                                         </StackPanel>
 
                                         <TextBlock Grid.Column="2" Text="{Binding Description}" FontSize="10"
-                                                   Foreground="{StaticResource TextMutedBrush}"
+                                                   Foreground="{DynamicResource TextMutedBrush}"
                                                    MaxWidth="190" TextAlignment="Right" TextWrapping="Wrap"
                                                    Margin="12,2,0,0" VerticalAlignment="Top" />
                                     </Grid>
@@ -142,7 +142,7 @@
                     <TextBlock x:Name="EmptyTitle" Text="Ищу старые лаунчеры..." FontSize="14"
                                FontWeight="SemiBold" HorizontalAlignment="Center" TextAlignment="Center" />
                     <TextBlock x:Name="EmptySubtitle" Text="Проверяю известные лаунчеры и их папки."
-                               FontSize="11.5" Foreground="{StaticResource TextMutedBrush}"
+                               FontSize="11.5" Foreground="{DynamicResource TextMutedBrush}"
                                TextAlignment="Center" Margin="0,6,0,0" TextWrapping="Wrap" />
                     <Button x:Name="RetryButton" Style="{StaticResource SmallGhostButton}" Content="Проверить снова"
                             HorizontalAlignment="Center" Margin="0,14,0,0" Padding="16,8"
@@ -174,14 +174,14 @@
         <StackPanel Grid.Row="3">
             <ProgressBar x:Name="WorkProgress" Style="{StaticResource SlimProgress}"
                          IsIndeterminate="True" Visibility="Collapsed" />
-            <TextBlock x:Name="StatusText" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}"
+            <TextBlock x:Name="StatusText" FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}"
                        TextWrapping="Wrap" Margin="2,8,0,0" Visibility="Collapsed" />
         </StackPanel>
 
         <!-- actions -->
         <Grid Grid.Row="4" Margin="0,14,0,0">
             <Button x:Name="RemoveButton" Style="{StaticResource SmallGhostButton}"
-                    Content="Удалить старые..." Padding="14,9" Foreground="#FFE09A9A"
+                    Content="Удалить старые..." Padding="14,9" Foreground="{DynamicResource DangerBrush}"
                     HorizontalAlignment="Left" Visibility="Collapsed"
                     Click="Remove_Click" ToolTip="Открыть штатные деинсталляторы выбранных лаунчеров" />
 

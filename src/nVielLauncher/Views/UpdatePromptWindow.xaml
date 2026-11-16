@@ -12,7 +12,7 @@
         ShowInTaskbar="False"
         FontFamily="{StaticResource TextFont}"
         FontSize="13"
-        Foreground="{StaticResource TextPrimaryBrush}"
+        Foreground="{DynamicResource TextPrimaryBrush}"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
         KeyDown="Window_KeyDown"
@@ -24,8 +24,8 @@
     </WindowChrome.WindowChrome>
 
     <Border Margin="18"
-            Background="{StaticResource BgBrush}"
-            BorderBrush="#33FFFFFF"
+            Background="{DynamicResource BgBrush}"
+            BorderBrush="{DynamicResource BorderSubtleBrush}"
             BorderThickness="1"
             CornerRadius="18">
         <Border.Effect>
@@ -58,8 +58,8 @@
                     </Grid.ColumnDefinitions>
 
                     <Border Style="{StaticResource IconTile}" Width="40" Height="40" CornerRadius="12">
-                        <Path Data="{StaticResource IconRefresh}" Width="17" Height="17" Stretch="Uniform"
-                              Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                        <Path Data="{DynamicResource IconRefresh}" Width="17" Height="17" Stretch="Uniform"
+                              Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4"
                               StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                               HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
@@ -67,7 +67,7 @@
                     <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                         <TextBlock Text="Обновление" Style="{StaticResource CardTitle}" />
                         <TextBlock x:Name="VersionText" FontSize="11.5"
-                                   Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0" />
+                                   Foreground="{DynamicResource TextMutedBrush}" Margin="0,4,0,0" />
                     </StackPanel>
                 </Grid>
 
@@ -79,33 +79,33 @@
 
             <TextBlock Grid.Row="1" Text="Хотите установить обновление?"
                        FontFamily="{StaticResource DisplayFont}" FontSize="23" FontWeight="SemiBold"
-                       Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap"
                        Margin="0,22,0,0" />
 
             <TextBlock Grid.Row="2"
                        Text="Файл будет скачан, проверен по цифровой подписи и лаунчер перезапустится."
-                       FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"
+                       FontSize="11.5" Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap"
                        Margin="0,8,0,0" />
 
-            <Border Grid.Row="3" x:Name="NotesPanel" Background="#0AFFFFFF" BorderBrush="#18FFFFFF"
+            <Border Grid.Row="3" x:Name="NotesPanel" Background="{DynamicResource OverlayFaintBrush}" BorderBrush="{DynamicResource OverlayBrush}"
                     BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,16,0,0"
                     MaxHeight="132">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <TextBlock x:Name="NotesText" FontSize="11" LineHeight="17"
-                               Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" />
+                               Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
                 </ScrollViewer>
             </Border>
 
-            <Border Grid.Row="4" x:Name="ModPanel" Background="#0AFFFFFF" BorderBrush="#18FFFFFF"
+            <Border Grid.Row="4" x:Name="ModPanel" Background="{DynamicResource OverlayFaintBrush}" BorderBrush="{DynamicResource OverlayBrush}"
                     BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,10,0,0"
                     Visibility="Collapsed">
                 <StackPanel>
                     <TextBlock x:Name="ModTitle" FontSize="12" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextPrimaryBrush}" />
-                    <TextBlock x:Name="ModMeta" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <TextBlock x:Name="ModMeta" FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}"
                                Margin="0,3,0,0" />
                     <TextBlock x:Name="ModNotes" FontSize="11" LineHeight="16"
-                               Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap"
                                Margin="0,6,0,0" />
                 </StackPanel>
             </Border>
@@ -114,7 +114,7 @@
                          Value="0" Margin="0,18,0,0" Visibility="Collapsed" />
 
             <TextBlock Grid.Row="6" x:Name="StatusText" FontSize="10.5"
-                       Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap"
                        Margin="0,9,0,0" Visibility="Collapsed" />
 
             <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,22,0,0">

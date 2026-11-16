@@ -2,10 +2,11 @@
 
 Официальный репозиторий nViel. Telegram: [@nvielclient](https://t.me/nvielclient).
 
-Чёрно-белый лаунчер Minecraft на WPF (.NET 8) для Fabric 1.21.4: оффлайн-вход,
-моды с Modrinth, сборки `.mrpack`, сервера, профили, обучение и диагностика падений.
+Лаунчер Minecraft на WPF (.NET 8) для Fabric 1.21.4 с темами Material You и nViel:
+оффлайн-вход, моды с Modrinth, сборки `.mrpack`, сервера, профили, обучение и
+диагностика падений.
 
-Текущая версия: **1.2.3 Global**.
+Текущая версия: **1.2.4.9 Global**.
 
 ## Возможности
 
@@ -25,6 +26,9 @@
 - архив диагностики с логами, crash-report, версией, Java и обезличенными настройками;
 - portable-режим (`--portable` или `portable.flag` рядом с exe);
 - экспорт и импорт настроек в JSON;
+- тема Material You: палитра строится из акцентного и основного цвета в OKLCH,
+  режим nViel остаётся монохромным;
+- кастомизация иконок: свой SVG-контур для каждой из 37 иконок с откатом к исходной;
 - автообновление из приватного GitHub Releases с проверкой detached-подписи ECDSA,
   размера, PE-заголовка, версии и SHA-256;
 - health-check после обновления и автоматический откат на предыдущую версию.
@@ -45,14 +49,15 @@ single-instance mutex, поэтому может работать паралле
 При запуске и затем раз в 6 часов лаунчер проверяет последний GitHub Release приватного
 `ghe-company-official/nVielLauncher-releases`. Если доступна новая версия лаунчера или
 клиентского мода, появляется окно **«Что нового»** с версиями, размером и списком
-изменений; кнопки **«Обновить всё»** / **«Позже»**. В настройках раздела обновлений нет.
+изменений; кнопки **«Обновить всё»** / **«Позже»**. В настройках есть кнопка
+**«Проверить обновления»**, чтобы не ждать автопроверки при запуске.
 
 Единый источник версий — подписанный `manifest.json` в релизе:
 
 ```json
 {
   "schema": 1,
-  "launcher": { "version": "1.2.3", "asset": "nVielLauncher.exe", "sha256": "…", "size": 0 },
+  "launcher": { "version": "1.2.4.9", "asset": "nVielLauncher.exe", "sha256": "…", "size": 0 },
   "client_mod": {
     "version": "1.0.0",
     "asset": "nviel-1.0.0.jar",
@@ -111,15 +116,15 @@ GET https://updates.example.com/nviel/latest?channel=stable
 
 ```json
 {
-  "version": "1.2.3",
-  "tag": "v1.2.3",
-  "name": "nViel Launcher 1.2.3 Global",
+  "version": "1.2.4.9",
+  "tag": "v1.2.4.9",
+  "name": "nViel Launcher 1.2.4.9 Global",
   "notes": "Что нового...",
   "download_url": "https://updates.example.com/nviel/nVielLauncher.exe",
   "signature_url": "https://updates.example.com/nviel/nVielLauncher.exe.sig",
   "size": 84483337,
   "sha256": "…",
-  "release_url": "https://github.com/…/releases/tag/v1.2.3"
+  "release_url": "https://github.com/…/releases/tag/v1.2.4.9"
 }
 ```
 
@@ -132,7 +137,7 @@ ECDSA-подпись, поэтому relay не может подменить ex
 1. Приватный репозиторий: `ghe-company-official/nVielLauncher-releases`.
 2. Fine-grained token для лаунчера: только этот репозиторий, `Contents: Read`.
 3. Для публикации нужен отдельный token с `Contents: Read and write`; в лаунчер его не вставляйте.
-4. Соберите и подпишите exe, создайте Release с тегом версии (например, `v1.2.3`) и
+4. Соберите и подпишите exe, создайте Release с тегом версии (например, `v1.2.4.9`) и
    прикрепите `nVielLauncher.exe`, `nVielLauncher.exe.sig`, `manifest.json`,
    `manifest.json.sig` и `nviel-1.0.0.jar`.
 

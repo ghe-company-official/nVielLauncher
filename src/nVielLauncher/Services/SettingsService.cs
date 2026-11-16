@@ -46,7 +46,10 @@ public sealed class LauncherSettings
     public bool AnimationsEnabled { get; set; } = true;
     public bool BlurEnabled { get; set; } = true;
     public bool ShowSplash { get; set; } = true;
-    public string AccentColor { get; set; } = "#FFFFFFFF";
+    public string AccentColor { get; set; } = MaterialTheme.DefaultSeedHex;
+    public string ThemeMode { get; set; } = MaterialTheme.ModeMaterial;
+    public string BaseColor { get; set; } = MaterialTheme.DefaultBaseHex;
+    public Dictionary<string, string> IconOverrides { get; set; } = new();
     public bool BackgroundGlow { get; set; } = true;
     public List<ServerEntry> Servers { get; set; } = new();
     public string? QuickJoinHost { get; set; }
@@ -302,7 +305,10 @@ public sealed class SettingsService
         Current.Servers ??= new List<ServerEntry>();
         Current.Profiles ??= new List<PlayerProfile>();
         Current.Nickname ??= "";
-        if (string.IsNullOrWhiteSpace(Current.AccentColor)) Current.AccentColor = "#FFFFFFFF";
+        if (string.IsNullOrWhiteSpace(Current.AccentColor)) Current.AccentColor = MaterialTheme.DefaultSeedHex;
+        if (string.IsNullOrWhiteSpace(Current.ThemeMode)) Current.ThemeMode = MaterialTheme.ModeMaterial;
+        if (string.IsNullOrWhiteSpace(Current.BaseColor)) Current.BaseColor = MaterialTheme.DefaultBaseHex;
+        Current.IconOverrides ??= new Dictionary<string, string>();
         Current.EnsureInstances();
     }
 
@@ -355,7 +361,12 @@ public sealed class SettingsService
         loaded.Profiles ??= new List<PlayerProfile>();
         loaded.Nickname ??= "";
         if (string.IsNullOrWhiteSpace(loaded.AccentColor))
-            loaded.AccentColor = "#FFFFFFFF";
+            loaded.AccentColor = MaterialTheme.DefaultSeedHex;
+        if (string.IsNullOrWhiteSpace(loaded.ThemeMode))
+            loaded.ThemeMode = MaterialTheme.ModeMaterial;
+        if (string.IsNullOrWhiteSpace(loaded.BaseColor))
+            loaded.BaseColor = MaterialTheme.DefaultBaseHex;
+        loaded.IconOverrides ??= new Dictionary<string, string>();
         if (loaded.RamMb <= 0)
             loaded.RamMb = DefaultRamMb;
         if (loaded.ResolutionWidth < 854)

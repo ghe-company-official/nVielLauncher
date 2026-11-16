@@ -9,19 +9,19 @@
             <StackPanel>
                 <TextBlock Text="Инстансы" Style="{StaticResource SectionTitle}" />
                 <TextBlock Text="Отдельные сборки: свои моды, миры, конфиги и настройки"
-                           FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,5,0,0" />
+                           FontSize="12.5" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,5,0,0" />
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                <Border Background="#0BFFFFFF" BorderBrush="#18FFFFFF" BorderThickness="1" CornerRadius="9"
+                <Border Background="{DynamicResource OverlayFaintBrush}" BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1" CornerRadius="9"
                         Padding="12,7" Margin="0,0,10,0">
                     <TextBlock x:Name="CountText" Text="1 инстанс" FontSize="11.5"
-                               Foreground="{StaticResource TextSecondaryBrush}" />
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
                 </Border>
                 <Button x:Name="CreateButton" Style="{StaticResource PrimaryButton}" Click="Create_Click"
                         ToolTip="Создать новый инстанс">
                     <StackPanel Orientation="Horizontal">
-                        <Path Data="{StaticResource IconPlus}" Width="13" Height="13" Stretch="Uniform"
+                        <Path Data="{DynamicResource IconPlus}" Width="13" Height="13" Stretch="Uniform"
                               Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                               StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                         <TextBlock Text="Создать" Margin="7,0,0,0" />
@@ -43,27 +43,27 @@
 
                         <Border Style="{StaticResource IconTile}" Width="48" Height="48" CornerRadius="14"
                                 VerticalAlignment="Top">
-                            <Path Data="{StaticResource IconInstance}" Width="21" Height="21" Stretch="Uniform"
-                                  Stroke="{StaticResource TextPrimaryBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
+                            <Path Data="{DynamicResource IconInstance}" Width="21" Height="21" Stretch="Uniform"
+                                  Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
 
                         <StackPanel Grid.Column="1" Margin="14,0,18,0" VerticalAlignment="Center">
                             <TextBlock Text="АКТИВНЫЙ ИНСТАНС" FontSize="9.5" FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextMutedBrush}" />
+                                       Foreground="{DynamicResource TextMutedBrush}" />
                             <TextBlock x:Name="ActiveName" Text="Основная" FontSize="21" FontWeight="SemiBold"
                                        FontFamily="{StaticResource DisplayFont}" Margin="0,5,0,0" />
-                            <TextBlock x:Name="ActivePath" Text="—" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}"
+                            <TextBlock x:Name="ActivePath" Text="—" FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}"
                                        Margin="0,5,0,0" TextTrimming="CharacterEllipsis" />
                             <TextBlock x:Name="ActiveStats" Text="—" FontSize="11.5"
-                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,0" />
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,8,0,0" />
                         </StackPanel>
 
                         <StackPanel Grid.Column="2" VerticalAlignment="Center">
                             <Button Style="{StaticResource GhostButton}" Click="OpenActiveFolder_Click"
                                     ToolTip="Открыть папку активного инстанса">
                                 <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource IconFolder}" Width="13" Height="13" Stretch="Uniform"
+                                    <Path Data="{DynamicResource IconFolder}" Width="13" Height="13" Stretch="Uniform"
                                           Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                                           StrokeThickness="1.4" StrokeLineJoin="Round" />
                                     <TextBlock Text="Папка" Margin="7,0,0,0" />
@@ -72,7 +72,7 @@
                             <Button Style="{StaticResource GhostButton}" Margin="0,8,0,0" Click="SettingsActive_Click"
                                     ToolTip="Память, ник, Java и окно только для этого инстанса">
                                 <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource IconSliders}" Width="13" Height="13" Stretch="Uniform"
+                                    <Path Data="{DynamicResource IconSliders}" Width="13" Height="13" Stretch="Uniform"
                                           Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                                           StrokeThickness="1.4" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                     <TextBlock Text="Настройки" Margin="7,0,0,0" />
@@ -81,7 +81,7 @@
                             <Button Style="{StaticResource GhostButton}" Margin="0,8,0,0" Click="CloneActive_Click"
                                     ToolTip="Точная копия этого инстанса: моды, миры и настройки">
                                 <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource IconCopy}" Width="13" Height="13" Stretch="Uniform"
+                                    <Path Data="{DynamicResource IconCopy}" Width="13" Height="13" Stretch="Uniform"
                                           Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                                           StrokeThickness="1.4" StrokeLineJoin="Round" />
                                     <TextBlock Text="Клонировать" Margin="7,0,0,0" />
@@ -90,7 +90,7 @@
                             <Button Style="{StaticResource GhostButton}" Margin="0,8,0,0" Click="Rename_Click"
                                     ToolTip="Переименовать активный инстанс">
                                 <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource IconSettings}" Width="13" Height="13" Stretch="Uniform"
+                                    <Path Data="{DynamicResource IconSettings}" Width="13" Height="13" Stretch="Uniform"
                                           Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
                                     <TextBlock Text="Переименовать" Margin="7,0,0,0" />
                                 </StackPanel>
@@ -98,7 +98,7 @@
                             <Button x:Name="DeleteActiveButton" Style="{StaticResource GhostButton}" Margin="0,8,0,0"
                                     Click="DeleteActive_Click" ToolTip="Удалить активный инстанс вместе с файлами">
                                 <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource IconTrash}" Width="13" Height="13" Stretch="Uniform"
+                                    <Path Data="{DynamicResource IconTrash}" Width="13" Height="13" Stretch="Uniform"
                                           Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                                           StrokeThickness="1.4" StrokeLineJoin="Round" />
                                     <TextBlock Text="Удалить" Margin="7,0,0,0" />
@@ -112,20 +112,20 @@
                     <TextBlock Text="Все инстансы" Style="{StaticResource CardTitle}" />
                     <TextBlock x:Name="ListHint" Text="Нажми «Выбрать», чтобы переключиться"
                                HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="10.5"
-                               Foreground="{StaticResource TextMutedBrush}" />
+                               Foreground="{DynamicResource TextMutedBrush}" />
                 </Grid>
 
                 <StackPanel x:Name="LoadingPanel" Visibility="Collapsed">
                     <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,10">
                         <StackPanel>
-                            <Border Height="12" Width="180" CornerRadius="4" Background="#12FFFFFF" HorizontalAlignment="Left" />
-                            <Border Height="9" Width="310" CornerRadius="4" Background="#0BFFFFFF" Margin="0,10,0,0" HorizontalAlignment="Left" />
+                            <Border Height="12" Width="180" CornerRadius="4" Background="{DynamicResource OverlaySoftBrush}" HorizontalAlignment="Left" />
+                            <Border Height="9" Width="310" CornerRadius="4" Background="{DynamicResource OverlayFaintBrush}" Margin="0,10,0,0" HorizontalAlignment="Left" />
                         </StackPanel>
                     </Border>
                     <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,10">
                         <StackPanel>
-                            <Border Height="12" Width="150" CornerRadius="4" Background="#12FFFFFF" HorizontalAlignment="Left" />
-                            <Border Height="9" Width="260" CornerRadius="4" Background="#0BFFFFFF" Margin="0,10,0,0" HorizontalAlignment="Left" />
+                            <Border Height="12" Width="150" CornerRadius="4" Background="{DynamicResource OverlaySoftBrush}" HorizontalAlignment="Left" />
+                            <Border Height="9" Width="260" CornerRadius="4" Background="{DynamicResource OverlayFaintBrush}" Margin="0,10,0,0" HorizontalAlignment="Left" />
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -144,8 +144,8 @@
 
                                     <Border Style="{StaticResource IconTile}" Width="38" Height="38" CornerRadius="11"
                                             VerticalAlignment="Center">
-                                        <Path Data="{StaticResource IconInstance}" Width="16" Height="16" Stretch="Uniform"
-                                              Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                                        <Path Data="{DynamicResource IconInstance}" Width="16" Height="16" Stretch="Uniform"
+                                              Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4"
                                               StrokeLineJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                     </Border>
 
@@ -153,23 +153,23 @@
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold"
                                                        VerticalAlignment="Center" />
-                                            <Border Background="#18FFFFFF" BorderBrush="#2AFFFFFF" BorderThickness="1"
+                                            <Border Background="{DynamicResource OverlayBrush}" BorderBrush="{DynamicResource OverlayStrongBrush}" BorderThickness="1"
                                                     CornerRadius="5" Padding="6,2" Margin="8,0,0,0"
                                                     Visibility="{Binding ActiveBadgeVisibility}">
                                                 <TextBlock Text="АКТИВЕН" FontSize="8.5" FontWeight="SemiBold"
-                                                           Foreground="{StaticResource TextPrimaryBrush}" />
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
                                             </Border>
-                                            <Border Background="#0BFFFFFF" BorderBrush="#18FFFFFF" BorderThickness="1"
+                                            <Border Background="{DynamicResource OverlayFaintBrush}" BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1"
                                                     CornerRadius="5" Padding="6,2" Margin="6,0,0,0"
                                                     Visibility="{Binding DefaultBadgeVisibility}">
                                                 <TextBlock Text="ОСНОВНОЙ" FontSize="8.5"
-                                                           Foreground="{StaticResource TextMutedBrush}" />
+                                                           Foreground="{DynamicResource TextMutedBrush}" />
                                             </Border>
                                         </StackPanel>
-                                        <TextBlock Text="{Binding Path}" FontSize="10" Foreground="{StaticResource TextMutedBrush}"
+                                        <TextBlock Text="{Binding Path}" FontSize="10" Foreground="{DynamicResource TextMutedBrush}"
                                                    Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
                                         <TextBlock Text="{Binding Stats}" FontSize="10.5"
-                                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,5,0,0" />
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,5,0,0" />
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
@@ -191,13 +191,13 @@
 
                 <Border x:Name="EmptyState" Style="{StaticResource Card}" Padding="26,28" Visibility="Collapsed">
                     <StackPanel HorizontalAlignment="Center">
-                        <Path Data="{StaticResource IconInstance}" Width="30" Height="30" Stretch="Uniform"
-                              Stroke="{StaticResource TextMutedBrush}" StrokeThickness="1.2"
+                        <Path Data="{DynamicResource IconInstance}" Width="30" Height="30" Stretch="Uniform"
+                              Stroke="{DynamicResource TextMutedBrush}" StrokeThickness="1.2"
                               HorizontalAlignment="Center" />
                         <TextBlock Text="Пока только основной инстанс" FontSize="14" FontWeight="SemiBold"
                                    HorizontalAlignment="Center" Margin="0,12,0,0" />
                         <TextBlock Text="Создай отдельную сборку, чтобы не смешивать моды и миры."
-                                   FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                   FontSize="11" Foreground="{DynamicResource TextMutedBrush}"
                                    HorizontalAlignment="Center" Margin="0,5,0,0" />
                     </StackPanel>
                 </Border>
@@ -205,7 +205,7 @@
         </ScrollViewer>
 
         <!-- per-instance settings -->
-        <Grid x:Name="SettingsLayer" Visibility="Collapsed" Background="#CC050507" Panel.ZIndex="55">
+        <Grid x:Name="SettingsLayer" Visibility="Collapsed" Background="{DynamicResource ScrimBrush}" Panel.ZIndex="55">
             <Border Style="{StaticResource Card}" Width="470" Padding="22,20"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
                 <ScrollViewer MaxHeight="540" VerticalScrollBarVisibility="Auto">
@@ -215,25 +215,25 @@
                                 <TextBlock x:Name="SettingsTitle" Text="Настройки инстанса" FontSize="19"
                                            FontWeight="SemiBold" FontFamily="{StaticResource DisplayFont}" />
                                 <TextBlock Text="Пустые поля работают как в общих настройках."
-                                           FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,0" />
+                                           FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0" />
                             </StackPanel>
                             <Button Style="{StaticResource GhostButton}" Content="Сбросить" Click="ResetInstanceSettings_Click"
                                     HorizontalAlignment="Right" VerticalAlignment="Top"
                                     ToolTip="Убрать все индивидуальные настройки этого инстанса" />
                         </Grid>
 
-                        <TextBlock Text="НИК В ОФФЛАЙНЕ" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}"
+                        <TextBlock Text="НИК В ОФФЛАЙНЕ" FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}"
                                    Margin="0,18,0,6" />
                         <TextBox x:Name="InstanceNickBox" Style="{StaticResource InputBox}" MaxLength="16" />
                         <TextBlock x:Name="NickHint" Text="" FontSize="10.5"
-                                   Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,0" />
+                                   Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0" />
 
                         <CheckBox x:Name="RamOverrideCheck" Style="{StaticResource ToggleSwitch}" Margin="0,18,0,0"
                                   Checked="RamOverride_ValueChanged" Unchecked="RamOverride_ValueChanged">
                             <StackPanel>
                                 <TextBlock Text="Свой объём памяти" FontSize="13" />
                                 <TextBlock x:Name="RamHint" Text="" FontSize="10.5"
-                                           Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                                           Foreground="{DynamicResource TextMutedBrush}" Margin="0,3,0,0" />
                             </StackPanel>
                         </CheckBox>
                         <Grid x:Name="RamPanel" Visibility="Collapsed" Margin="0,12,0,0">
@@ -244,11 +244,11 @@
                                 TickFrequency="512" IsSnapToTickEnabled="True" Margin="0,12,0,0"
                                 ValueChanged="InstanceRamSlider_ValueChanged" />
 
-                        <TextBlock Text="ПУТЬ К JAVA.EXE (ПОЛНОСТЬЮ)" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}"
+                        <TextBlock Text="ПУТЬ К JAVA.EXE (ПОЛНОСТЬЮ)" FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}"
                                    Margin="0,18,0,6" />
                         <TextBox x:Name="InstanceJavaBox" Style="{StaticResource InputBox}" />
                         <TextBlock Text="Например: C:\Program Files\Eclipse Adoptium\jdk-21\bin\javaw.exe. Пусто — общая Java."
-                                   FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"
+                                   FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap"
                                    Margin="0,6,0,0" />
 
                         <CheckBox x:Name="ScreenOverrideCheck" Style="{StaticResource ToggleSwitch}" Margin="0,18,0,0"
@@ -256,7 +256,7 @@
                             <StackPanel>
                                 <TextBlock Text="Свои настройки окна игры" FontSize="13" />
                                 <TextBlock Text="Снимите галочку, чтобы окно запускалось как в общих настройках."
-                                           FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                                           FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,3,0,0" />
                             </StackPanel>
                         </CheckBox>
 
@@ -270,15 +270,15 @@
                             </CheckBox>
                             <StackPanel x:Name="ResolutionPanel" Orientation="Horizontal" Margin="0,10,0,0">
                                 <TextBox x:Name="InstanceWidthBox" Style="{StaticResource InputBox}" Width="92" />
-                                <TextBlock Text="×" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
+                                <TextBlock Text="×" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}"
                                            Margin="8,0" VerticalAlignment="Center" />
                                 <TextBox x:Name="InstanceHeightBox" Style="{StaticResource InputBox}" Width="92" />
                             </StackPanel>
                         </StackPanel>
 
-                        <TextBlock x:Name="SettingsError" Text="" FontSize="10.5" Foreground="#FFFF9A9A"
+                        <TextBlock x:Name="SettingsError" Text="" FontSize="10.5" Foreground="{DynamicResource DangerBrush}"
                                    TextWrapping="Wrap" Margin="0,4,0,0" Visibility="Collapsed" />
-                        <TextBlock x:Name="SettingsBusy" Text="" FontSize="10.5" Foreground="{StaticResource TextSecondaryBrush}"
+                        <TextBlock x:Name="SettingsBusy" Text="" FontSize="10.5" Foreground="{DynamicResource TextSecondaryBrush}"
                                    Margin="0,12,0,0" Visibility="Collapsed" />
 
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
@@ -292,16 +292,16 @@
         </Grid>
 
         <!-- in-page editor -->
-        <Grid x:Name="EditorLayer" Visibility="Collapsed" Background="#CC050507" Panel.ZIndex="50">
+        <Grid x:Name="EditorLayer" Visibility="Collapsed" Background="{DynamicResource ScrimBrush}" Panel.ZIndex="50">
             <Border Style="{StaticResource Card}" Width="430" Padding="22,20"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
                 <StackPanel>
                     <TextBlock x:Name="EditorTitle" Text="Новый инстанс" FontSize="19" FontWeight="SemiBold"
                                FontFamily="{StaticResource DisplayFont}" />
                     <TextBlock Text="Название видно только в лаунчере. Файлы останутся в отдельной папке."
-                               FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,0" />
+                               FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0" />
 
-                    <TextBlock Text="Название" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}"
+                    <TextBlock Text="Название" FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}"
                                Margin="0,18,0,6" />
                     <TextBox x:Name="InstanceNameBox" Style="{StaticResource InputBox}" MaxLength="40"
                              KeyDown="InstanceNameBox_KeyDown" />
@@ -311,13 +311,13 @@
                         <StackPanel>
                             <TextBlock Text="Скопировать моды и конфиги" FontSize="13" />
                             <TextBlock Text="Из активного инстанса. Миры не копируются."
-                                       FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                                       FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,3,0,0" />
                         </StackPanel>
                     </CheckBox>
 
-                    <TextBlock x:Name="EditorError" Text="" FontSize="10.5" Foreground="#FFFF9A9A"
+                    <TextBlock x:Name="EditorError" Text="" FontSize="10.5" Foreground="{DynamicResource DangerBrush}"
                                TextWrapping="Wrap" Margin="0,12,0,0" Visibility="Collapsed" />
-                    <TextBlock x:Name="EditorBusy" Text="" FontSize="10.5" Foreground="{StaticResource TextSecondaryBrush}"
+                    <TextBlock x:Name="EditorBusy" Text="" FontSize="10.5" Foreground="{DynamicResource TextSecondaryBrush}"
                                Margin="0,12,0,0" Visibility="Collapsed" />
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
@@ -330,17 +330,17 @@
         </Grid>
 
         <!-- delete confirmation -->
-        <Grid x:Name="ConfirmLayer" Visibility="Collapsed" Background="#CC050507" Panel.ZIndex="60">
+        <Grid x:Name="ConfirmLayer" Visibility="Collapsed" Background="{DynamicResource ScrimBrush}" Panel.ZIndex="60">
             <Border Style="{StaticResource Card}" Width="410" Padding="22,20"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
                 <StackPanel>
                     <TextBlock Text="Удалить инстанс?" FontSize="19" FontWeight="SemiBold"
                                FontFamily="{StaticResource DisplayFont}" />
-                    <TextBlock x:Name="DeleteText" Text="" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"
+                    <TextBlock x:Name="DeleteText" Text="" FontSize="11.5" Foreground="{DynamicResource TextSecondaryBrush}"
                                TextWrapping="Wrap" Margin="0,9,0,0" />
                     <TextBlock Text="Папка инстанса, миры, моды и конфиги будут удалены без возможности отмены."
-                               FontSize="10.5" Foreground="#FFFF9A9A" TextWrapping="Wrap" Margin="0,8,0,0" />
-                    <TextBlock x:Name="DeleteError" Text="" FontSize="10.5" Foreground="#FFFF9A9A"
+                               FontSize="10.5" Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap" Margin="0,8,0,0" />
+                    <TextBlock x:Name="DeleteError" Text="" FontSize="10.5" Foreground="{DynamicResource DangerBrush}"
                                TextWrapping="Wrap" Margin="0,10,0,0" Visibility="Collapsed" />
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
                         <Button Style="{StaticResource GhostButton}" Content="Оставить" Click="CloseDelete_Click" />

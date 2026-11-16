@@ -16,17 +16,17 @@
             <StackPanel>
                 <TextBlock Text="Сервера" Style="{StaticResource SectionTitle}" />
                 <TextBlock x:Name="SubHeader" Text="Сохрани любимые сервера и заходи в один клик"
-                           FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,5,0,0" />
+                           FontSize="12.5" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,5,0,0" />
             </StackPanel>
 
-            <Border HorizontalAlignment="Right" VerticalAlignment="Center" Background="#0BFFFFFF"
-                    BorderBrush="#1AFFFFFF" BorderThickness="1" CornerRadius="10" Padding="12,7">
+            <Border HorizontalAlignment="Right" VerticalAlignment="Center" Background="{DynamicResource OverlayFaintBrush}"
+                    BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1" CornerRadius="10" Padding="12,7">
                 <StackPanel Orientation="Horizontal">
-                    <Path Data="{StaticResource IconGlobe}" Width="12" Height="12" Stretch="Uniform"
-                          Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                    <Path Data="{DynamicResource IconGlobe}" Width="12" Height="12" Stretch="Uniform"
+                          Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4"
                           StrokeLineJoin="Round" VerticalAlignment="Center" />
                     <TextBlock x:Name="CountBadge" Text="0" FontSize="10.5" FontWeight="SemiBold" Margin="8,0,0,0"
-                               Foreground="{StaticResource TextSecondaryBrush}" />
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
                 </StackPanel>
             </Border>
         </Grid>
@@ -51,7 +51,7 @@
                     <Button Grid.Column="3" Style="{StaticResource SmallGhostButton}" Content="Добавить"
                             Margin="8,0,0,0" VerticalAlignment="Center" Click="Add_Click" />
                 </Grid>
-                <TextBlock x:Name="AddStatus" FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                <TextBlock x:Name="AddStatus" FontSize="11" Foreground="{DynamicResource TextMutedBrush}"
                            Margin="2,10,0,0" Text="Адрес можно вставлять как «host» или «host:port»" />
             </StackPanel>
         </Border>
@@ -72,10 +72,10 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
 
-                                        <Border Width="34" Height="34" CornerRadius="10" Background="#FF101016"
-                                                BorderBrush="#FF1E1E26" BorderThickness="1">
-                                            <Path Data="{StaticResource IconGlobe}" Width="15" Height="15" Stretch="Uniform"
-                                                  Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                                        <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource SurfaceHoverBrush}"
+                                                BorderBrush="{DynamicResource StrokeStrongBrush}" BorderThickness="1">
+                                            <Path Data="{DynamicResource IconGlobe}" Width="15" Height="15" Stretch="Uniform"
+                                                  Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4"
                                                   StrokeLineJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                         </Border>
 
@@ -83,11 +83,11 @@
                                             <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Medium"
                                                        TextTrimming="CharacterEllipsis" />
                                             <TextBlock Text="{Binding Address}" FontSize="11"
-                                                       Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                                                       Foreground="{DynamicResource TextMutedBrush}" Margin="0,3,0,0" />
                                         </StackPanel>
 
                                         <TextBlock Grid.Column="2" Text="{Binding Meta}" FontSize="10.5"
-                                                   Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center"
                                                    Margin="0,0,12,0" />
 
                                         <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
@@ -104,16 +104,16 @@
                 </ScrollViewer>
 
                 <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <Border Width="54" Height="54" CornerRadius="16" Background="#FF0B0B0F"
-                            BorderBrush="#FF232330" BorderThickness="1" HorizontalAlignment="Center">
-                        <Path Data="{StaticResource IconGlobe}" Width="22" Height="22" Stretch="Uniform"
-                              Stroke="{StaticResource TextMutedBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
+                    <Border Width="54" Height="54" CornerRadius="16" Background="{DynamicResource BgSoftBrush}"
+                            BorderBrush="{DynamicResource StrokeStrongBrush}" BorderThickness="1" HorizontalAlignment="Center">
+                        <Path Data="{DynamicResource IconGlobe}" Width="22" Height="22" Stretch="Uniform"
+                              Stroke="{DynamicResource TextMutedBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
                               HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <TextBlock Text="Серверов пока нет" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center"
                                Margin="0,16,0,0" />
                     <TextBlock Text="Добавь адрес сверху — и сможешь заходить на сервер прямо из лаунчера."
-                               FontSize="12" Foreground="{StaticResource TextMutedBrush}" MaxWidth="400"
+                               FontSize="12" Foreground="{DynamicResource TextMutedBrush}" MaxWidth="400"
                                TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,0" />
                 </StackPanel>
             </Grid>

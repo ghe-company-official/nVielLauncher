@@ -23,6 +23,8 @@ public partial class SettingsView : UserControl, IRefreshable
     private bool _javaChecked;
     private bool _started;
     private bool _checkingUpdates;
+    private readonly Dictionary<string, Border> _iconTiles = new();
+    private string _iconKey = "";
 
     public SettingsView()
     {
@@ -30,7 +32,11 @@ public partial class SettingsView : UserControl, IRefreshable
         InitializeComponent();
 
         BuildAccentSwatches();
+        BuildThemeModeChips();
+        BuildBaseSwatches();
+        BuildIconTiles();
         AccentPicker.ColorChanged += AccentPicker_ColorChanged;
+        BasePicker.ColorChanged += BasePicker_ColorChanged;
 
         _saveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(450) };
         _saveTimer.Tick += (_, _) =>
@@ -103,6 +109,8 @@ public partial class SettingsView : UserControl, IRefreshable
         GlowToggle.IsChecked = settings.BackgroundGlow;
         SplashToggle.IsChecked = settings.ShowSplash;
         HighlightAccent(settings.AccentColor);
+        RefreshThemeSelection();
+        HighlightBase(settings.BaseColor);
 
         ResolutionWidthBox.Text = settings.ResolutionWidth.ToString();
         ResolutionHeightBox.Text = settings.ResolutionHeight.ToString();
@@ -412,6 +420,300 @@ public partial class SettingsView : UserControl, IRefreshable
             AccentPicker.SetColor(activeColor);
     }
 
+    // ------------------------------------------------------------------ theme
+
+    private void BuildThemeModeChips()
+    {
+        ThemeModePanel.Children.Clear();
+        AddThemeChip(MaterialTheme.ModeMaterial, "Material You");
+        AddThemeChip(MaterialTheme.ModeNviel, "nViel");
+    }
+
+    private void AddThemeChip(string mode, string label)
+    {
+        var text = new TextBlock
+        {
+            Text = label,
+            FontSize = 12,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        var chip = new Border
+        {
+            CornerRadius = new CornerRadius(9),
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(15, 7, 15, 7),
+            Margin = new Thickness(0, 0, 8, 8),
+            Cursor = Cursors.Hand,
+            Tag = mode,
+            Child = text
+        };
+
+        chip.MouseLeftButtonUp += ThemeChip_Click;
+        ThemeModePanel.Children.Add(chip);
+    }
+
+    private void ThemeChip_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not Border { Tag: string mode }) return;
+        if (MaterialTheme.NormalizeMode(AppServices.Settings.Current.ThemeMode) == mode) return;
+
+        AppServices.Settings.Current.ThemeMode = mode;
+        ApplyThemeChange();
+        ShowToast("Тема обновлена");
+    }
+
+    private void RefreshThemeSelection()
+    {
+        var mode = MaterialTheme.NormalizeMode(AppServices.Settings.Current.ThemeMode);
+
+        foreach (var child in ThemeModePanel.Children)
+        {
+            if (child is not Border chip) continue;
+
+            var selected = chip.Tag is string tag && tag == mode;
+            chip.SetResourceReference(Border.BackgroundProperty, selected ? "AccentBrush" : "OverlaySoftBrush");
+            chip.SetResourceReference(Border.BorderBrushProperty, selected ? "AccentBrush" : "BorderSubtleBrush");
+
+            if (chip.Child is TextBlock text)
+            {
+                text.SetResourceReference(TextBlock.ForegroundProperty,
+                    selected ? "OnAccentBrush" : "TextSecondaryBrush");
+                text.FontWeight = selected ? FontWeights.SemiBold : FontWeights.Normal;
+            }
+        }
+
+        var material = MaterialTheme.IsMaterial(mode);
+        BaseColorSection.Opacity = material ? 1 : 0.45;
+        BaseColorSection.IsEnabled = material;
+    }
+
+    private void BuildBaseSwatches()
+    {
+        BaseSwatches.Children.Clear();
+
+        foreach (var hex in AccentPalette.BasePresets)
+        {
+            var color = (Color)ColorConverter.ConvertFromString(hex);
+            var brush = new SolidColorBrush(color);
+            brush.Freeze();
+
+            var swatch = new Border
+            {
+                Width = 26,
+                Height = 26,
+                CornerRadius = new CornerRadius(13),
+                Background = brush,
+                BorderThickness = new Thickness(1),
+                Cursor = Cursors.Hand,
+                Margin = new Thickness(0, 0, 10, 10),
+                Tag = hex
+            };
+
+            swatch.SetResourceReference(Border.BorderBrushProperty, "BorderSubtleBrush");
+            swatch.MouseLeftButtonUp += Base_Click;
+            BaseSwatches.Children.Add(swatch);
+        }
+    }
+
+    private void Base_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: string hex }) return;
+        ApplyBase(hex, toast: true);
+    }
+
+    private void BasePicker_ColorChanged(Color color) => ApplyBase(ToHex(color), toast: false);
+
+    private void CustomBase_Click(object sender, RoutedEventArgs e)
+    {
+        var show = CustomBasePanel.Visibility != Visibility.Visible;
+        CustomBasePanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        CustomBaseButton.Content = show ? "Скрыть цветовой круг" : "Свой цвет…";
+
+        if (!show) return;
+
+        if (TryParseAccent(AppServices.Settings.Current.BaseColor, out var color))
+            BasePicker.SetColor(color);
+
+        CustomBasePanel.BringIntoView();
+    }
+
+    private void ApplyBase(string hex, bool toast)
+    {
+        AppServices.Settings.Current.BaseColor = hex;
+        HighlightBase(hex);
+        ApplyThemeChange();
+
+        if (toast) ShowToast("Основной цвет обновлён");
+    }
+
+    private void HighlightBase(string color)
+    {
+        var hasColor = TryParseAccent(color, out var activeColor);
+
+        foreach (var child in BaseSwatches.Children)
+        {
+            if (child is not Border swatch) continue;
+
+            var isActive = hasColor && swatch.Tag is string tag &&
+                           TryParseAccent(tag, out var swatchColor) &&
+                           ColorsEqual(swatchColor, activeColor);
+
+            swatch.BorderThickness = new Thickness(isActive ? 3 : 1);
+            swatch.SetResourceReference(Border.BorderBrushProperty,
+                isActive ? "TextPrimaryBrush" : "BorderSubtleBrush");
+        }
+
+        if (hasColor && !ColorsEqual(activeColor, BasePicker.SelectedColor))
+            BasePicker.SetColor(activeColor);
+    }
+
+    private void ApplyThemeChange()
+    {
+        (Window.GetWindow(this) as MainWindow)?.ApplyAppearance();
+        RefreshThemeSelection();
+        ScheduleSave();
+    }
+
+    // ------------------------------------------------------------------ icons
+
+    private void BuildIconTiles()
+    {
+        IconGrid.Children.Clear();
+        _iconTiles.Clear();
+
+        foreach (var icon in IconCatalog.All)
+        {
+            var preview = new System.Windows.Shapes.Path
+            {
+                Data = IconCatalog.CreateGeometry(icon.Key),
+                Width = 18,
+                Height = 18,
+                Stretch = Stretch.Uniform,
+                StrokeThickness = 1.5,
+                StrokeLineJoin = PenLineJoin.Round,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            preview.SetResourceReference(System.Windows.Shapes.Shape.StrokeProperty, "TextSecondaryBrush");
+
+            var tile = new Border
+            {
+                Width = 42,
+                Height = 42,
+                CornerRadius = new CornerRadius(11),
+                BorderThickness = new Thickness(1),
+                Margin = new Thickness(0, 0, 8, 8),
+                Cursor = Cursors.Hand,
+                Tag = icon.Key,
+                ToolTip = icon.Label,
+                Child = preview
+            };
+
+            tile.SetResourceReference(Border.BackgroundProperty, "OverlaySoftBrush");
+            tile.SetResourceReference(Border.BorderBrushProperty, "BorderSubtleBrush");
+            tile.MouseLeftButtonUp += IconTile_Click;
+
+            _iconTiles[icon.Key] = tile;
+            IconGrid.Children.Add(tile);
+        }
+    }
+
+    private void IconTile_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not Border { Tag: string key }) return;
+        SelectIcon(key);
+    }
+
+    private void SelectIcon(string key)
+    {
+        var icon = IconCatalog.Find(key);
+        if (icon is null) return;
+
+        _iconKey = key;
+        IconEditor.Visibility = Visibility.Visible;
+        IconEditorTitle.Text = icon.Label;
+        IconErrorText.Text = "";
+
+        var custom = AppServices.Settings.Current.IconOverrides.TryGetValue(key, out var stored) &&
+                     !string.IsNullOrWhiteSpace(stored)
+            ? stored
+            : icon.PathData;
+
+        IconPathBox.Text = custom;
+        IconEditorPreview.Data = IconTheme.TryParse(custom, out var geometry)
+            ? geometry
+            : IconCatalog.CreateGeometry(key);
+
+        foreach (var pair in _iconTiles)
+        {
+            var selected = pair.Key == key;
+            pair.Value.BorderThickness = new Thickness(selected ? 2 : 1);
+            pair.Value.SetResourceReference(Border.BorderBrushProperty,
+                selected ? "AccentBrush" : "BorderSubtleBrush");
+        }
+
+        IconEditor.BringIntoView();
+    }
+
+    private void ApplyIcon_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(_iconKey)) return;
+
+        var text = (IconPathBox.Text ?? "").Trim();
+        if (!IconTheme.TryParse(text, out var geometry))
+        {
+            IconErrorText.Text = "Некорректный SVG-путь";
+            return;
+        }
+
+        var settings = AppServices.Settings.Current;
+        var icon = IconCatalog.Find(_iconKey);
+
+        if (icon is not null && string.Equals(text, icon.PathData, StringComparison.Ordinal))
+            settings.IconOverrides.Remove(_iconKey);
+        else
+            settings.IconOverrides[_iconKey] = text;
+
+        IconErrorText.Text = "";
+        IconEditorPreview.Data = geometry;
+        ApplyThemeChange();
+        ShowToast("Иконка обновлена");
+    }
+
+    private void ResetIcon_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(_iconKey)) return;
+
+        var icon = IconCatalog.Find(_iconKey);
+        AppServices.Settings.Current.IconOverrides.Remove(_iconKey);
+
+        if (icon is not null)
+        {
+            IconPathBox.Text = icon.PathData;
+            IconEditorPreview.Data = IconCatalog.CreateGeometry(_iconKey);
+        }
+
+        IconErrorText.Text = "";
+        ApplyThemeChange();
+        ShowToast("Иконка сброшена");
+    }
+
+    private void ResetAllIcons_Click(object sender, RoutedEventArgs e)
+    {
+        var settings = AppServices.Settings.Current;
+        if (settings.IconOverrides.Count == 0)
+        {
+            ShowToast("Своих иконок нет");
+            return;
+        }
+
+        settings.IconOverrides.Clear();
+        if (!string.IsNullOrEmpty(_iconKey)) SelectIcon(_iconKey);
+        ApplyThemeChange();
+        ShowToast("Все иконки сброшены");
+    }
+
     private static bool TryParseAccent(string? text, out Color color)
     {
         color = Colors.White;
@@ -702,7 +1004,10 @@ public partial class SettingsView : UserControl, IRefreshable
         settings.BlurEnabled = true;
         settings.BackgroundGlow = true;
         settings.ShowSplash = true;
-        settings.AccentColor = "#FFFFFFFF";
+        settings.AccentColor = MaterialTheme.DefaultSeedHex;
+        settings.ThemeMode = MaterialTheme.ModeMaterial;
+        settings.BaseColor = MaterialTheme.DefaultBaseHex;
+        settings.IconOverrides.Clear();
         settings.ResolutionWidth = 1280;
         settings.ResolutionHeight = 720;
         settings.GameDirectory = AppPaths.DefaultGameDirectory;

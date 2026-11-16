@@ -17,17 +17,17 @@
             <StackPanel>
                 <TextBlock Text="Сборки" Style="{StaticResource SectionTitle}" />
                 <TextBlock x:Name="SubHeader" Text="Готовые сборки Modrinth (.mrpack) или импорт из файла"
-                           FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,5,0,0" />
+                           FontSize="12.5" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,5,0,0" />
             </StackPanel>
 
-            <Border HorizontalAlignment="Right" VerticalAlignment="Center" Background="#0BFFFFFF"
-                    BorderBrush="#1AFFFFFF" BorderThickness="1" CornerRadius="10" Padding="12,7">
+            <Border HorizontalAlignment="Right" VerticalAlignment="Center" Background="{DynamicResource OverlayFaintBrush}"
+                    BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1" CornerRadius="10" Padding="12,7">
                 <StackPanel Orientation="Horizontal">
-                    <Path Data="{StaticResource IconPack}" Width="12" Height="12" Stretch="Uniform"
-                          Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                    <Path Data="{DynamicResource IconPack}" Width="12" Height="12" Stretch="Uniform"
+                          Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4"
                           StrokeStartLineCap="Round" StrokeEndLineCap="Round" VerticalAlignment="Center" />
                     <TextBlock x:Name="CountBadge" Text="0" FontSize="10.5" FontWeight="SemiBold" Margin="8,0,0,0"
-                               Foreground="{StaticResource TextSecondaryBrush}" />
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
                 </StackPanel>
             </Border>
         </Grid>
@@ -50,7 +50,7 @@
                             Content="Импорт .mrpack" Margin="8,0,0,0" VerticalAlignment="Center" Click="Import_Click" />
                 </Grid>
 
-                <TextBlock x:Name="StatusText" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                <TextBlock x:Name="StatusText" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"
                            Margin="2,10,0,0" TextTrimming="CharacterEllipsis"
                            Text="Сборка установится в папку игры: моды, конфиги и ресурсы — автоматически" />
 
@@ -77,10 +77,10 @@
                                             <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="Medium"
                                                        TextTrimming="CharacterEllipsis" />
                                             <TextBlock Text="{Binding Description}" FontSize="11"
-                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
                                                        TextTrimming="CharacterEllipsis" Margin="0,3,0,0" />
                                             <TextBlock Text="{Binding Meta}" FontSize="10"
-                                                       Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0" />
+                                                       Foreground="{DynamicResource TextMutedBrush}" Margin="0,4,0,0" />
                                         </StackPanel>
 
                                         <Button Grid.Column="1" Style="{StaticResource SmallGhostButton}" Content="Установить"
@@ -93,17 +93,17 @@
                 </ScrollViewer>
 
                 <StackPanel x:Name="ResultsEmpty" VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <Border Width="54" Height="54" CornerRadius="16" Background="#FF0B0B0F"
-                            BorderBrush="#FF232330" BorderThickness="1" HorizontalAlignment="Center">
-                        <Path Data="{StaticResource IconPack}" Width="22" Height="22" Stretch="Uniform"
-                              Stroke="{StaticResource TextMutedBrush}" StrokeThickness="1.4"
+                    <Border Width="54" Height="54" CornerRadius="16" Background="{DynamicResource BgSoftBrush}"
+                            BorderBrush="{DynamicResource StrokeStrongBrush}" BorderThickness="1" HorizontalAlignment="Center">
+                        <Path Data="{DynamicResource IconPack}" Width="22" Height="22" Stretch="Uniform"
+                              Stroke="{DynamicResource TextMutedBrush}" StrokeThickness="1.4"
                               StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                               HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <TextBlock Text="Найди сборку или импортируй .mrpack" FontSize="15" FontWeight="SemiBold"
                                HorizontalAlignment="Center" Margin="0,16,0,0" />
                     <TextBlock Text="Мы скачаем все моды сборки с Modrinth и распакуем настройки прямо в папку игры."
-                               FontSize="12" Foreground="{StaticResource TextMutedBrush}" MaxWidth="400"
+                               FontSize="12" Foreground="{DynamicResource TextMutedBrush}" MaxWidth="400"
                                TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,0" />
                 </StackPanel>
             </Grid>
@@ -115,7 +115,7 @@
                 <TextBlock Text="УСТАНОВЛЕННЫЕ СБОРКИ" Style="{StaticResource Overline}" />
 
                 <TextBlock x:Name="InstalledEmpty" Text="Пока пусто." FontSize="12"
-                           Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,2" />
+                           Foreground="{DynamicResource TextMutedBrush}" Margin="0,8,0,2" />
 
                 <ItemsControl x:Name="InstalledList" Margin="0,8,0,0">
                     <ItemsControl.ItemTemplate>
@@ -125,10 +125,10 @@
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <Border Width="30" Height="30" CornerRadius="9" Background="#FF101016"
-                                        BorderBrush="#FF1E1E26" BorderThickness="1">
-                                    <Path Data="{StaticResource IconCheck}" Width="14" Height="14" Stretch="Uniform"
-                                          Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.6"
+                                <Border Width="30" Height="30" CornerRadius="9" Background="{DynamicResource SurfaceHoverBrush}"
+                                        BorderBrush="{DynamicResource StrokeStrongBrush}" BorderThickness="1">
+                                    <Path Data="{DynamicResource IconCheck}" Width="14" Height="14" Stretch="Uniform"
+                                          Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.6"
                                           StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 </Border>
@@ -136,7 +136,7 @@
                                     <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="Medium"
                                                TextTrimming="CharacterEllipsis" />
                                     <TextBlock Text="{Binding Subtitle}" FontSize="10.5"
-                                               Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                                               Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
                                 </StackPanel>
                             </Grid>
                         </DataTemplate>

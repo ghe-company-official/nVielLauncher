@@ -17,17 +17,17 @@
             <StackPanel>
                 <TextBlock Text="Моды" Style="{StaticResource SectionTitle}" />
                 <TextBlock x:Name="SubHeader" Text="Файлы из папки mods устанавливаются в игру автоматически"
-                           FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,5,0,0" />
+                           FontSize="12.5" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,5,0,0" />
             </StackPanel>
 
-            <Border HorizontalAlignment="Right" VerticalAlignment="Center" Background="#0BFFFFFF"
-                    BorderBrush="#1AFFFFFF" BorderThickness="1" CornerRadius="10" Padding="12,7">
+            <Border HorizontalAlignment="Right" VerticalAlignment="Center" Background="{DynamicResource OverlayFaintBrush}"
+                    BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1" CornerRadius="10" Padding="12,7">
                 <StackPanel Orientation="Horizontal">
-                    <Path Data="{StaticResource IconMods}" Width="12" Height="12" Stretch="Uniform"
-                          Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
+                    <Path Data="{DynamicResource IconMods}" Width="12" Height="12" Stretch="Uniform"
+                          Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
                           VerticalAlignment="Center" />
                     <TextBlock x:Name="CountBadge" Text="0" FontSize="10.5" FontWeight="SemiBold" Margin="8,0,0,0"
-                               Foreground="{StaticResource TextSecondaryBrush}" />
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
                 </StackPanel>
             </Border>
         </Grid>
@@ -45,42 +45,42 @@
 
                 <StackPanel Orientation="Horizontal" Margin="14,11">
                     <Border Style="{StaticResource IconTile}" Width="30" Height="30" CornerRadius="9">
-                        <Path Data="{StaticResource IconMods}" Width="14" Height="14" Stretch="Uniform"
-                              Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
+                        <Path Data="{DynamicResource IconMods}" Width="14" Height="14" Stretch="Uniform"
+                              Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
                               HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
                         <TextBlock x:Name="TotalModsText" Text="0" FontSize="16" FontWeight="SemiBold" />
-                        <TextBlock Text="в папке mods" FontSize="10" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                        <TextBlock Text="в папке mods" FontSize="10" Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
                     </StackPanel>
                 </StackPanel>
 
-                <Border Grid.Column="1" Background="{StaticResource StrokeSoftBrush}" Margin="0,10" />
+                <Border Grid.Column="1" Background="{DynamicResource StrokeSoftBrush}" Margin="0,10" />
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="14,11">
                     <Border Style="{StaticResource IconTile}" Width="30" Height="30" CornerRadius="9">
-                        <Path Data="{StaticResource IconCheck}" Width="14" Height="14" Stretch="Uniform"
-                              Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.6"
+                        <Path Data="{DynamicResource IconCheck}" Width="14" Height="14" Stretch="Uniform"
+                              Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.6"
                               StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                               HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
                         <TextBlock x:Name="InstalledModsText" Text="0" FontSize="16" FontWeight="SemiBold" />
-                        <TextBlock Text="уже в игре" FontSize="10" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                        <TextBlock Text="уже в игре" FontSize="10" Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
                     </StackPanel>
                 </StackPanel>
 
-                <Border Grid.Column="3" Background="{StaticResource StrokeSoftBrush}" Margin="0,10" />
+                <Border Grid.Column="3" Background="{DynamicResource StrokeSoftBrush}" Margin="0,10" />
 
                 <StackPanel Grid.Column="4" Orientation="Horizontal" Margin="14,11">
                     <Border Style="{StaticResource IconTile}" Width="30" Height="30" CornerRadius="9">
-                        <Path Data="{StaticResource IconBolt}" Width="14" Height="14" Stretch="Uniform"
-                              Fill="{StaticResource TextSecondaryBrush}"
+                        <Path Data="{DynamicResource IconBolt}" Width="14" Height="14" Stretch="Uniform"
+                              Fill="{DynamicResource TextSecondaryBrush}"
                               HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
                         <TextBlock x:Name="PendingModsText" Text="0" FontSize="16" FontWeight="SemiBold" />
-                        <TextBlock Text="ждут установки" FontSize="10" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                        <TextBlock Text="ждут установки" FontSize="10" Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
                     </StackPanel>
                 </StackPanel>
             </Grid>
@@ -96,7 +96,7 @@
                 <StackPanel VerticalAlignment="Center">
                     <TextBlock Text="ПАПКА С МОДАМИ" Style="{StaticResource Overline}" />
                     <TextBlock x:Name="SourcePathText" Text="—" FontSize="12" Margin="0,5,0,0"
-                               Foreground="{StaticResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                               Foreground="{DynamicResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
@@ -134,7 +134,7 @@
                             Margin="8,0,0,0" VerticalAlignment="Center" Visibility="Collapsed" Click="BackToLocal_Click" />
                 </Grid>
 
-                <TextBlock x:Name="SearchStatus" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                <TextBlock x:Name="SearchStatus" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"
                            Margin="2,10,0,0" TextTrimming="CharacterEllipsis"
                            Text="Поиск и установка модов прямо с Modrinth — зависимости подтянутся автоматически" />
             </StackPanel>
@@ -155,10 +155,10 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
 
-                                        <Border Width="34" Height="34" CornerRadius="10" Background="#FF101016"
-                                                BorderBrush="#FF1E1E26" BorderThickness="1">
-                                            <Path Data="{StaticResource IconMods}" Width="15" Height="15" Stretch="Uniform"
-                                                  Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.4"
+                                        <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource SurfaceHoverBrush}"
+                                                BorderBrush="{DynamicResource StrokeStrongBrush}" BorderThickness="1">
+                                            <Path Data="{DynamicResource IconMods}" Width="15" Height="15" Stretch="Uniform"
+                                                  Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4"
                                                   StrokeLineJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                         </Border>
 
@@ -166,7 +166,7 @@
                                             <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Medium"
                                                        TextTrimming="CharacterEllipsis" />
                                             <TextBlock Text="{Binding SizeText}" FontSize="11"
-                                                       Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0" />
+                                                       Foreground="{DynamicResource TextMutedBrush}" Margin="0,3,0,0" />
                                         </StackPanel>
 
                                         <Border Grid.Column="2" CornerRadius="8" Padding="9,4" VerticalAlignment="Center"
@@ -183,16 +183,16 @@
 
                 <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center"
                             Visibility="Collapsed">
-                    <Border Width="54" Height="54" CornerRadius="16" Background="#FF0B0B0F"
-                            BorderBrush="#FF232330" BorderThickness="1" HorizontalAlignment="Center">
-                        <Path Data="{StaticResource IconPlus}" Width="20" Height="20" Stretch="Uniform"
-                              Stroke="{StaticResource TextMutedBrush}" StrokeThickness="1.4" StrokeStartLineCap="Round"
+                    <Border Width="54" Height="54" CornerRadius="16" Background="{DynamicResource BgSoftBrush}"
+                            BorderBrush="{DynamicResource StrokeStrongBrush}" BorderThickness="1" HorizontalAlignment="Center">
+                        <Path Data="{DynamicResource IconPlus}" Width="20" Height="20" Stretch="Uniform"
+                              Stroke="{DynamicResource TextMutedBrush}" StrokeThickness="1.4" StrokeStartLineCap="Round"
                               StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <TextBlock Text="Модов пока нет" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center"
                                Margin="0,16,0,0" />
                     <TextBlock Text="Закинь .jar файлы в папку mods — они появятся здесь и установятся при запуске."
-                               FontSize="12" Foreground="{StaticResource TextMutedBrush}" MaxWidth="380"
+                               FontSize="12" Foreground="{DynamicResource TextMutedBrush}" MaxWidth="380"
                                TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,0" />
                 </StackPanel>
                 </Grid>
@@ -213,10 +213,10 @@
                                                 <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="Medium"
                                                            TextTrimming="CharacterEllipsis" />
                                                 <TextBlock Text="{Binding Description}" FontSize="11"
-                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
                                                            TextTrimming="CharacterEllipsis" Margin="0,3,0,0" />
                                                 <TextBlock Text="{Binding Meta}" FontSize="10"
-                                                           Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0" />
+                                                           Foreground="{DynamicResource TextMutedBrush}" Margin="0,4,0,0" />
                                             </StackPanel>
 
                                             <Button Grid.Column="1" Style="{StaticResource SmallGhostButton}"
@@ -232,7 +232,7 @@
                                 Visibility="Collapsed">
                         <TextBlock Text="Ничего не найдено" FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center" />
                         <TextBlock Text="Попробуй другой запрос." FontSize="12"
-                                   Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0" HorizontalAlignment="Center" />
+                                   Foreground="{DynamicResource TextMutedBrush}" Margin="0,8,0,0" HorizontalAlignment="Center" />
                     </StackPanel>
                 </Grid>
 
@@ -258,15 +258,15 @@
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="Medium"
                                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                                    <Border Grid.Column="1" CornerRadius="6" Background="#14FFFFFF"
+                                                    <Border Grid.Column="1" CornerRadius="6" Background="{DynamicResource OverlayBrush}"
                                                             Padding="6,2" Margin="8,0,0,0" VerticalAlignment="Center"
                                                             Visibility="{Binding BadgeVisibility}">
                                                         <TextBlock Text="ВЫКЛ" FontSize="9" FontWeight="SemiBold"
-                                                                   Foreground="{StaticResource TextMutedBrush}" />
+                                                                   Foreground="{DynamicResource TextMutedBrush}" />
                                                     </Border>
                                                 </Grid>
                                                 <TextBlock Text="{Binding Meta}" FontSize="11"
-                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
                                                            TextTrimming="CharacterEllipsis" Margin="0,3,0,0" />
                                             </StackPanel>
 
@@ -288,7 +288,7 @@
                                 Visibility="Collapsed">
                         <TextBlock Text="Установленных модов нет" FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center" />
                         <TextBlock Text="Найди мод на Modrinth — он появится здесь и его можно будет обновлять."
-                                   FontSize="12" Foreground="{StaticResource TextMutedBrush}" MaxWidth="420"
+                                   FontSize="12" Foreground="{DynamicResource TextMutedBrush}" MaxWidth="420"
                                    TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,0" />
                     </StackPanel>
                 </Grid>

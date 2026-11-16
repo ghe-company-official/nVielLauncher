@@ -11,15 +11,15 @@
             <Image x:Name="WheelImage" Stretch="Fill" SnapsToDevicePixels="True" />
             <Canvas x:Name="MarkerCanvas" IsHitTestVisible="False">
                 <Ellipse x:Name="Marker" Width="12" Height="12" Stroke="#FFFFFFFF" StrokeThickness="2"
-                         Fill="#33000000" />
+                         Fill="{DynamicResource ScrimSoftBrush}" />
             </Canvas>
         </Grid>
 
         <StackPanel Margin="18,0,0,0" Width="198" VerticalAlignment="Center">
             <Grid>
-                <TextBlock Text="Яркость" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" />
+                <TextBlock Text="Яркость" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
                 <TextBlock x:Name="ValueText" Text="100%" HorizontalAlignment="Right" FontSize="11"
-                           Foreground="{StaticResource TextMutedBrush}" />
+                           Foreground="{DynamicResource TextMutedBrush}" />
             </Grid>
             <Slider x:Name="ValueSlider" Minimum="0" Maximum="1" Value="1" Margin="0,6,0,0"
                     Style="{StaticResource SlimSlider}" ValueChanged="ValueSlider_ValueChanged" />
@@ -30,14 +30,14 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <Border x:Name="Preview" Width="38" Height="38" CornerRadius="10"
-                        BorderBrush="#33FFFFFF" BorderThickness="1" />
+                        BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="1" />
                 <TextBox x:Name="HexBox" Grid.Column="1" Style="{StaticResource InputBox}" Margin="10,0,0,0"
                          FontFamily="{StaticResource MonoFont}" FontSize="12" MaxLength="9"
                          KeyDown="HexBox_KeyDown" LostFocus="HexBox_LostFocus" />
             </Grid>
 
             <TextBlock Text="Круг задаёт оттенок и насыщенность, ползунок — яркость. Можно ввести HEX вручную."
-                       FontSize="10" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"
+                       FontSize="10" Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap"
                        Margin="0,10,0,0" LineHeight="14" />
         </StackPanel>
     </StackPanel>
