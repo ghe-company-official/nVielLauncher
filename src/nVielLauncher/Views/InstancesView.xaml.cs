@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using nVielLauncher.Services;
 
 namespace nVielLauncher.Views;
@@ -37,6 +38,8 @@ public partial class InstancesView : UserControl, IRefreshable
     private readonly ObservableCollection<InstanceRow> _rows = new();
     private bool _busy;
     private bool _loading;
+    private Storyboard? _ambientStoryboard;
+    private bool _ambientStarted;
     private string? _editingId;
     private string? _deletingId;
     private string? _editingSettingsId;
@@ -45,7 +48,71 @@ public partial class InstancesView : UserControl, IRefreshable
     {
         InitializeComponent();
         InstanceList.ItemsSource = _rows;
-        Loaded += (_, _) => Refresh();
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        Refresh();
+        SyncAmbientAnimations();
+        AnimateEntrance();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        _ambientStoryboard?.Stop(this);
+        _ambientStoryboard = null;
+        _ambientStarted = false;
+        ActiveStatusDot.BeginAnimation(OpacityProperty, null);
+        ActiveStatusDot.Opacity = 1;
+    }
+
+    private void SyncAmbientAnimations()
+    {
+        if (!AppServices.Settings.Current.AnimationsEnabled)
+        {
+            _ambientStoryboard?.Stop(this);
+            _ambientStoryboard = null;
+            _ambientStarted = false;
+            ActiveStatusDot.BeginAnimation(OpacityProperty, null);
+            ActiveStatusDot.Opacity = 1;
+            return;
+        }
+
+        if (_ambientStarted) return;
+        _ambientStarted = true;
+        if (Resources["InstanceAmbient"] is Storyboard storyboard)
+        {
+            _ambientStoryboard = storyboard;
+            storyboard.Begin(this, true);
+        }
+
+        ActiveStatusDot.BeginAnimation(OpacityProperty, new DoubleAnimation(0.55, 1, TimeSpan.FromMilliseconds(1200))
+        {
+            AutoReverse = true,
+            RepeatBehavior = RepeatBehavior.Forever
+        });
+    }
+
+    private void AnimateEntrance()
+    {
+        if (!AppServices.Settings.Current.AnimationsEnabled)
+        {
+            ActiveCard.Opacity = 1;
+            ActiveCard.RenderTransform = Transform.Identity;
+            return;
+        }
+
+        ActiveCard.Opacity = 0;
+        ActiveCard.RenderTransform = new TranslateTransform(0, 10);
+        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+        ActiveCard.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(320))
+        {
+            EasingFunction = ease
+        });
+        ((TranslateTransform)ActiveCard.RenderTransform).BeginAnimation(TranslateTransform.YProperty,
+            new DoubleAnimation(10, 0, TimeSpan.FromMilliseconds(320)) { EasingFunction = ease });
     }
 
     public void Refresh()

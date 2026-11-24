@@ -45,6 +45,8 @@
         </EventTrigger>
     </Window.Triggers>
 
+    <!-- adorner host: cards draw their pressed-in dent at the click point here -->
+    <AdornerDecorator>
     <Border x:Name="RootBorder" Background="{DynamicResource BgBrush}" BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1"
             CornerRadius="16" ClipToBounds="True">
         <Grid x:Name="RootGrid">
@@ -549,4 +551,5 @@
             </Grid>
         </Grid>
     </Border>
+    </AdornerDecorator>
 </Window>

@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using nVielLauncher.Services;
 
@@ -30,12 +31,84 @@ public partial class ModpacksView : UserControl, IRefreshable
     private readonly ObservableCollection<ModpackRow> _results = new();
     private readonly ObservableCollection<InstalledPackRow> _installed = new();
     private bool _busy;
+    private Storyboard? _ambientStoryboard;
+    private bool _ambientStarted;
 
     public ModpacksView()
     {
         InitializeComponent();
         ResultsList.ItemsSource = _results;
         InstalledList.ItemsSource = _installed;
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        SyncAmbientAnimations();
+        Refresh();
+        AnimateEntrance();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        _ambientStoryboard?.Stop(this);
+        _ambientStoryboard = null;
+        _ambientStarted = false;
+    }
+
+    private void SyncAmbientAnimations()
+    {
+        if (!AppServices.Settings.Current.AnimationsEnabled)
+        {
+            _ambientStoryboard?.Stop(this);
+            _ambientStoryboard = null;
+            _ambientStarted = false;
+            return;
+        }
+
+        if (_ambientStarted) return;
+        _ambientStarted = true;
+        if (Resources["ModpacksAmbient"] is Storyboard storyboard)
+        {
+            _ambientStoryboard = storyboard;
+            storyboard.Begin(this, true);
+        }
+    }
+
+    private void AnimateEntrance()
+    {
+        if (!AppServices.Settings.Current.AnimationsEnabled)
+        {
+            PackHeroCard.Opacity = 1;
+            PackHeroCard.RenderTransform = Transform.Identity;
+            return;
+        }
+
+        PackHeroCard.Opacity = 0;
+        PackHeroCard.RenderTransform = new TranslateTransform(0, 8);
+        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+        PackHeroCard.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300))
+        {
+            EasingFunction = ease
+        });
+        ((TranslateTransform)PackHeroCard.RenderTransform).BeginAnimation(TranslateTransform.YProperty,
+            new DoubleAnimation(8, 0, TimeSpan.FromMilliseconds(300)) { EasingFunction = ease });
+    }
+
+    private void AnimateFadeIn(UIElement element, int durationMs)
+    {
+        if (!AppServices.Settings.Current.AnimationsEnabled)
+        {
+            element.BeginAnimation(OpacityProperty, null);
+            element.Opacity = 1;
+            return;
+        }
+
+        element.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(durationMs))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        });
     }
 
     public void Refresh()
@@ -52,7 +125,7 @@ public partial class ModpacksView : UserControl, IRefreshable
         }
 
         InstalledEmpty.Visibility = _installed.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        CountBadge.Text = _installed.Count.ToString();
+        CountBadge.Text = _installed.Count + " " + Plural(_installed.Count, "сборка", "сборки", "сборок");
     }
 
     // ------------------------------------------------------------------ search
@@ -94,10 +167,7 @@ public partial class ModpacksView : UserControl, IRefreshable
                 ? "Ничего не найдено для Fabric 1.21.4."
                 : $"Найдено: {_results.Count}.";
 
-            ResultsList.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(240))
-            {
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            });
+            AnimateFadeIn(ResultsList, 240);
         }
         catch (Exception ex)
         {
@@ -208,6 +278,19 @@ public partial class ModpacksView : UserControl, IRefreshable
             _busy = false;
             InstallProgress.Visibility = Visibility.Collapsed;
         }
+    }
+
+    private static string Plural(int count, string one, string few, string many)
+    {
+        var mod100 = Math.Abs(count) % 100;
+        var mod10 = mod100 % 10;
+        if (mod100 is >= 11 and <= 14) return many;
+        return mod10 switch
+        {
+            1 => one,
+            2 or 3 or 4 => few,
+            _ => many
+        };
     }
 
     private static string FormatDownloads(long value)

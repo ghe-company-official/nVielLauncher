@@ -3,6 +3,25 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              FontFamily="{StaticResource TextFont}">
 
+    <UserControl.Resources>
+        <Storyboard x:Key="ModsAmbient">
+            <DoubleAnimation Storyboard.TargetName="ModsOrbitA" Storyboard.TargetProperty="Angle"
+                             From="0" To="360" Duration="0:0:44" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="ModsOrbitB" Storyboard.TargetProperty="Angle"
+                             From="360" To="0" Duration="0:0:29" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="ModsCoreScale" Storyboard.TargetProperty="ScaleX"
+                             From="0.9" To="1.08" Duration="0:0:3.1" AutoReverse="True" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="ModsCoreScale" Storyboard.TargetProperty="ScaleY"
+                             From="0.9" To="1.08" Duration="0:0:3.1" AutoReverse="True" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="ModsGlow" Storyboard.TargetProperty="Opacity"
+                             From="0.08" To="0.22" Duration="0:0:3.1" AutoReverse="True" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="ModsSparkA" Storyboard.TargetProperty="Opacity"
+                             From="0.2" To="1" Duration="0:0:1.8" AutoReverse="True" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="ModsSparkB" Storyboard.TargetProperty="Opacity"
+                             From="0.1" To="0.85" Duration="0:0:2.3" BeginTime="0:0:0.4" AutoReverse="True" RepeatBehavior="Forever" />
+        </Storyboard>
+    </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -13,10 +32,10 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="2,6,2,18">
+        <Grid Grid.Row="0" Margin="2,6,2,16">
             <StackPanel>
                 <TextBlock Text="Моды" Style="{StaticResource SectionTitle}" />
-                <TextBlock x:Name="SubHeader" Text="Файлы из папки mods устанавливаются в игру автоматически"
+                <TextBlock x:Name="SubHeader" Text="Собери игру под себя — моды, обновления и зависимости в одном месте."
                            FontSize="12.5" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,5,0,0" />
             </StackPanel>
 
@@ -24,65 +43,91 @@
                     BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1" CornerRadius="10" Padding="12,7">
                 <StackPanel Orientation="Horizontal">
                     <Path Data="{DynamicResource IconMods}" Width="12" Height="12" Stretch="Uniform"
-                          Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
+                          Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" StrokeLineJoin="Round"
                           VerticalAlignment="Center" />
-                    <TextBlock x:Name="CountBadge" Text="0" FontSize="10.5" FontWeight="SemiBold" Margin="8,0,0,0"
+                    <TextBlock x:Name="CountBadge" Text="0 модов" FontSize="10.5" FontWeight="SemiBold" Margin="8,0,0,0"
                                Foreground="{DynamicResource TextSecondaryBrush}" />
                 </StackPanel>
             </Border>
         </Grid>
 
-        <!-- stats -->
-        <Border Grid.Row="1" Style="{StaticResource Card}" Padding="4,2" Margin="0,0,0,12">
-            <Grid>
+        <!-- overview -->
+        <Border x:Name="ModsHeroCard" Grid.Row="1" Style="{StaticResource Card}" Padding="0" Margin="0,0,0,12" ClipToBounds="True">
+            <Grid MinHeight="156">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="1" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="1" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="190" />
                 </Grid.ColumnDefinitions>
-
-                <StackPanel Orientation="Horizontal" Margin="14,11">
-                    <Border Style="{StaticResource IconTile}" Width="30" Height="30" CornerRadius="9">
-                        <Path Data="{DynamicResource IconMods}" Width="14" Height="14" Stretch="Uniform"
-                              Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4" StrokeLineJoin="Round"
-                              HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
-                    <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
-                        <TextBlock x:Name="TotalModsText" Text="0" FontSize="16" FontWeight="SemiBold" />
-                        <TextBlock Text="в папке mods" FontSize="10" Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
+                <StackPanel Margin="20,16,8,15" VerticalAlignment="Center">
+                    <TextBlock Text="СБОРКА ПОД ТЕБЯ" Style="{StaticResource Overline}" />
+                    <TextBlock Text="Твой Minecraft. Твои правила." FontFamily="{StaticResource DisplayFont}"
+                               FontSize="21" FontWeight="SemiBold" Margin="0,6,0,0" />
+                    <TextBlock Text="Добавляй моды в папку или находи новые на Modrinth — зависимости подтянутся автоматически."
+                               FontSize="11.5" Foreground="{DynamicResource TextSecondaryBrush}"
+                               TextWrapping="Wrap" Margin="0,4,0,0" />
+                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                        <Border Background="{DynamicResource OverlayFaintBrush}" CornerRadius="8" Padding="9,6" Margin="0,0,8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{DynamicResource IconMods}" Width="13" Height="13" Stretch="Uniform"
+                                      Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" />
+                                <StackPanel Margin="7,0,0,0">
+                                    <TextBlock x:Name="TotalModsText" Text="0" FontSize="13" FontWeight="SemiBold" />
+                                    <TextBlock Text="В СБОРКЕ" FontSize="8" Foreground="{DynamicResource TextMutedBrush}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="{DynamicResource OverlayFaintBrush}" CornerRadius="8" Padding="9,6" Margin="0,0,8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{DynamicResource IconCheck}" Width="13" Height="13" Stretch="Uniform"
+                                      Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.6"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                <StackPanel Margin="7,0,0,0">
+                                    <TextBlock x:Name="InstalledModsText" Text="0" FontSize="13" FontWeight="SemiBold" />
+                                    <TextBlock Text="ГОТОВЫ" FontSize="8" Foreground="{DynamicResource TextMutedBrush}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="{DynamicResource OverlayFaintBrush}" CornerRadius="8" Padding="9,6">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{DynamicResource IconBolt}" Width="13" Height="13" Stretch="Uniform"
+                                      Fill="{DynamicResource AccentBrush}" />
+                                <StackPanel Margin="7,0,0,0">
+                                    <TextBlock x:Name="PendingModsText" Text="0" FontSize="13" FontWeight="SemiBold" />
+                                    <TextBlock Text="К УСТАНОВКЕ" FontSize="8" Foreground="{DynamicResource TextMutedBrush}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </StackPanel>
-
-                <Border Grid.Column="1" Background="{DynamicResource StrokeSoftBrush}" Margin="0,10" />
-
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="14,11">
-                    <Border Style="{StaticResource IconTile}" Width="30" Height="30" CornerRadius="9">
-                        <Path Data="{DynamicResource IconCheck}" Width="14" Height="14" Stretch="Uniform"
-                              Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.6"
-                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                <Grid Grid.Column="1" Width="176" Height="148" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Ellipse Width="104" Height="104" Fill="{DynamicResource AccentBrush}" Opacity="0.12">
+                        <Ellipse.Effect><BlurEffect Radius="26" /></Ellipse.Effect>
+                    </Ellipse>
+                    <Ellipse Width="136" Height="136" Stroke="{DynamicResource BorderSubtleBrush}"
+                             StrokeThickness="1" StrokeDashArray="1 5" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform><RotateTransform x:Name="ModsOrbitA" /></Ellipse.RenderTransform>
+                    </Ellipse>
+                    <Ellipse Width="102" Height="102" Stroke="{DynamicResource AccentBrush}"
+                             StrokeThickness="1.3" StrokeDashArray="14 12" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform><RotateTransform x:Name="ModsOrbitB" /></Ellipse.RenderTransform>
+                    </Ellipse>
+                    <Ellipse x:Name="ModsGlow" Width="74" Height="74" Fill="{DynamicResource AccentBrush}"
+                             Opacity="0.14" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.Effect><BlurEffect Radius="16" /></Ellipse.Effect>
+                        <Ellipse.RenderTransform><ScaleTransform x:Name="ModsCoreScale" /></Ellipse.RenderTransform>
+                    </Ellipse>
+                    <Border Width="52" Height="52" CornerRadius="17" Background="{DynamicResource BgSoftBrush}"
+                            BorderBrush="{DynamicResource OverlayStrongBrush}" BorderThickness="1">
+                        <Path Data="{DynamicResource IconMods}" Width="25" Height="25" Stretch="Uniform"
+                              Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.6" StrokeLineJoin="Round"
                               HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
-                    <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
-                        <TextBlock x:Name="InstalledModsText" Text="0" FontSize="16" FontWeight="SemiBold" />
-                        <TextBlock Text="уже в игре" FontSize="10" Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
-                    </StackPanel>
-                </StackPanel>
-
-                <Border Grid.Column="3" Background="{DynamicResource StrokeSoftBrush}" Margin="0,10" />
-
-                <StackPanel Grid.Column="4" Orientation="Horizontal" Margin="14,11">
-                    <Border Style="{StaticResource IconTile}" Width="30" Height="30" CornerRadius="9">
-                        <Path Data="{DynamicResource IconBolt}" Width="14" Height="14" Stretch="Uniform"
-                              Fill="{DynamicResource TextSecondaryBrush}"
-                              HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
-                    <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
-                        <TextBlock x:Name="PendingModsText" Text="0" FontSize="16" FontWeight="SemiBold" />
-                        <TextBlock Text="ждут установки" FontSize="10" Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
-                    </StackPanel>
-                </StackPanel>
+                    <Path x:Name="ModsSparkA" Data="{DynamicResource IconPlus}" Width="12" Height="12" Stretch="Uniform"
+                          Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.8" StrokeStartLineCap="Round"
+                          StrokeEndLineCap="Round" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,22,15,0" />
+                    <Ellipse x:Name="ModsSparkB" Width="5" Height="5" Fill="{DynamicResource TextSecondaryBrush}"
+                             HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="20,0,0,20" />
+                </Grid>
             </Grid>
         </Border>
 
@@ -94,15 +139,37 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="ПАПКА С МОДАМИ" Style="{StaticResource Overline}" />
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="{DynamicResource IconFolder}" Width="13" Height="13" Stretch="Uniform"
+                              Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.4" />
+                        <TextBlock Text=" ПАПКА С МОДАМИ" Style="{StaticResource Overline}" />
+                    </StackPanel>
                     <TextBlock x:Name="SourcePathText" Text="—" FontSize="12" Margin="0,5,0,0"
                                Foreground="{DynamicResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Style="{StaticResource SmallGhostButton}" Content="Открыть папку" Click="OpenSource_Click" />
-                    <Button Style="{StaticResource SmallGhostButton}" Content="Папка игры" Margin="8,0,0,0" Click="OpenGame_Click" />
-                    <Button Style="{StaticResource SmallGhostButton}" Content="Обновить" Margin="8,0,0,0" Click="Refresh_Click" />
+                    <Button Style="{StaticResource SmallGhostButton}" Click="OpenSource_Click" ToolTip="Открыть папку с модами">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{DynamicResource IconFolder}" Width="12" Height="12" Stretch="Uniform"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.4" />
+                            <TextBlock Text="Папка модов" Margin="6,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource SmallGhostButton}" Margin="8,0,0,0" Click="OpenGame_Click" ToolTip="Открыть папку игры">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{DynamicResource IconHome}" Width="12" Height="12" Stretch="Uniform"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.4" />
+                            <TextBlock Text="Папка игры" Margin="6,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource SmallGhostButton}" Margin="8,0,0,0" Click="Refresh_Click" ToolTip="Обновить список модов">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{DynamicResource IconRefresh}" Width="12" Height="12" Stretch="Uniform"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.4" />
+                            <TextBlock Text="Обновить" Margin="6,0,0,0" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>
@@ -121,17 +188,47 @@
 
                     <TextBox x:Name="SearchBox" Style="{StaticResource InputBox}" Tag="Название мода на Modrinth..."
                              KeyDown="SearchBox_KeyDown" />
-                    <Button Grid.Column="1" x:Name="ManagedButton" Style="{StaticResource SmallGhostButton}" Content="Установленные"
-                            Margin="8,0,0,0" VerticalAlignment="Center" Click="Managed_Click" />
-                    <Button Grid.Column="2" x:Name="DependenciesButton" Style="{StaticResource SmallGhostButton}" Content="Зависимости"
-                            Margin="8,0,0,0" VerticalAlignment="Center" Click="CheckDependencies_Click" />
-                    <Button Grid.Column="3" x:Name="ConflictsButton" Style="{StaticResource SmallGhostButton}" Content="Конфликты"
+                    <Button Grid.Column="1" x:Name="ManagedButton" Style="{StaticResource SmallGhostButton}"
+                            Margin="8,0,0,0" VerticalAlignment="Center" Click="Managed_Click" ToolTip="Установленные моды">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{DynamicResource IconInstance}" Width="12" Height="12" Stretch="Uniform"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.4" />
+                            <TextBlock Text="Установленные" Margin="6,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                    <Button Grid.Column="2" x:Name="DependenciesButton" Style="{StaticResource SmallGhostButton}"
+                            Margin="8,0,0,0" VerticalAlignment="Center" Click="CheckDependencies_Click" ToolTip="Проверить зависимости">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{DynamicResource IconLink}" Width="12" Height="12" Stretch="Uniform"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.4" />
+                            <TextBlock Text="Зависимости" Margin="6,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                    <Button Grid.Column="3" x:Name="ConflictsButton" Style="{StaticResource SmallGhostButton}"
                             Margin="8,0,0,0" VerticalAlignment="Center" Click="Conflicts_Click"
-                            ToolTip="Дубликаты, несовместимости и нехватка зависимостей" />
-                    <Button Grid.Column="4" Style="{StaticResource SmallGhostButton}" Content="Найти"
-                            Margin="8,0,0,0" VerticalAlignment="Center" Click="Search_Click" />
-                    <Button Grid.Column="5" x:Name="BackButton" Style="{StaticResource SmallGhostButton}" Content="Мои моды"
-                            Margin="8,0,0,0" VerticalAlignment="Center" Visibility="Collapsed" Click="BackToLocal_Click" />
+                            ToolTip="Дубликаты, несовместимости и нехватка зависимостей">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{DynamicResource IconWarning}" Width="12" Height="12" Stretch="Uniform"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.4" />
+                            <TextBlock Text="Конфликты" Margin="6,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                    <Button Grid.Column="4" Style="{StaticResource SmallGhostButton}" Margin="8,0,0,0"
+                            VerticalAlignment="Center" Click="Search_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{DynamicResource IconSearch}" Width="12" Height="12" Stretch="Uniform"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.5" />
+                            <TextBlock Text="Найти" Margin="6,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                    <Button Grid.Column="5" x:Name="BackButton" Style="{StaticResource SmallGhostButton}" Margin="8,0,0,0"
+                            VerticalAlignment="Center" Visibility="Collapsed" Click="BackToLocal_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{DynamicResource IconMods}" Width="12" Height="12" Stretch="Uniform"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.4" />
+                            <TextBlock Text="Мои моды" Margin="6,0,0,0" />
+                        </StackPanel>
+                    </Button>
                 </Grid>
 
                 <TextBlock x:Name="SearchStatus" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"

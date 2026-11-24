@@ -23,6 +23,8 @@ public partial class SettingsView : UserControl, IRefreshable
     private bool _javaChecked;
     private bool _started;
     private bool _checkingUpdates;
+    private Storyboard? _ambientStoryboard;
+    private bool _ambientStarted;
     private readonly Dictionary<string, Border> _iconTiles = new();
     private string _iconKey = "";
 
@@ -63,7 +65,7 @@ public partial class SettingsView : UserControl, IRefreshable
     {
         Refresh();
         AnimateCards();
-        StartAmbientAnimations();
+        SyncAmbientAnimations();
         StartMonitor();
 
         AboutVersionText.Text = $"{AppInfo.DisplayName} · {AppInfo.Codename} · Fabric 1.21.4";
@@ -79,6 +81,11 @@ public partial class SettingsView : UserControl, IRefreshable
     {
         _monitorTimer.Stop();
         _saveTimer.Stop();
+        _ambientStoryboard?.Stop(this);
+        _ambientStoryboard = null;
+        _ambientStarted = false;
+        AboutRingRotate.BeginAnimation(RotateTransform.AngleProperty, null);
+        AboutRingRotate.Angle = 0;
     }
 
     public void Refresh()
@@ -146,6 +153,20 @@ public partial class SettingsView : UserControl, IRefreshable
 
     private void AnimateCards()
     {
+        if (!AppServices.Settings.Current.AnimationsEnabled)
+        {
+            foreach (var child in CardsPanel.Children)
+            {
+                if (child is FrameworkElement element)
+                {
+                    element.BeginAnimation(OpacityProperty, null);
+                    element.Opacity = 1;
+                    element.RenderTransform = Transform.Identity;
+                }
+            }
+            return;
+        }
+
         var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
 
         for (var i = 0; i < CardsPanel.Children.Count; i++)
@@ -172,25 +193,30 @@ public partial class SettingsView : UserControl, IRefreshable
         }
     }
 
-    private void StartAmbientAnimations()
+    private void SyncAmbientAnimations()
     {
-        if (AboutRing.RenderTransform is not RotateTransform)
+        if (!AppServices.Settings.Current.AnimationsEnabled)
         {
-            AboutRing.RenderTransformOrigin = new Point(0.5, 0.5);
-            AboutRing.RenderTransform = new RotateTransform();
+            _ambientStoryboard?.Stop(this);
+            _ambientStoryboard = null;
+            _ambientStarted = false;
+            LiveDot.BeginAnimation(OpacityProperty, null);
+            LiveDot.Opacity = 1;
+            AboutRingRotate.BeginAnimation(RotateTransform.AngleProperty, null);
+            AboutRingRotate.Angle = 0;
+            return;
         }
 
-        if (AboutRing.RenderTransform is RotateTransform rotate)
+        if (_ambientStarted) return;
+        _ambientStarted = true;
+        if (Resources["SettingsAmbient"] is Storyboard storyboard)
         {
-            rotate.BeginAnimation(RotateTransform.AngleProperty,
-                new DoubleAnimation(0, 360, TimeSpan.FromSeconds(26)) { RepeatBehavior = RepeatBehavior.Forever });
+            _ambientStoryboard = storyboard;
+            storyboard.Begin(this, true);
         }
 
-        LiveDot.BeginAnimation(OpacityProperty, new DoubleAnimation(1, 0.2, TimeSpan.FromMilliseconds(720))
-        {
-            AutoReverse = true,
-            RepeatBehavior = RepeatBehavior.Forever
-        });
+        AboutRingRotate.BeginAnimation(RotateTransform.AngleProperty,
+            new DoubleAnimation(0, 360, TimeSpan.FromSeconds(26)) { RepeatBehavior = RepeatBehavior.Forever });
     }
 
     // ------------------------------------------------------------------ monitor
@@ -329,6 +355,7 @@ public partial class SettingsView : UserControl, IRefreshable
         settings.ShowSplash = SplashToggle.IsChecked == true;
 
         UpdateResolutionState();
+        SyncAmbientAnimations();
         (Window.GetWindow(this) as MainWindow)?.ApplyAppearance();
         ScheduleSave();
     }

@@ -42,6 +42,8 @@ public partial class ModsView : UserControl, IRefreshable
     private readonly ObservableCollection<ModRow> _rows = new();
     private readonly ObservableCollection<ModrinthRow> _results = new();
     private readonly ObservableCollection<ManagedRow> _managed = new();
+    private Storyboard? _ambientStoryboard;
+    private bool _ambientStarted;
 
     public ModsView()
     {
@@ -49,6 +51,74 @@ public partial class ModsView : UserControl, IRefreshable
         ModsList.ItemsSource = _rows;
         ResultsList.ItemsSource = _results;
         ManagedList.ItemsSource = _managed;
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        SyncAmbientAnimations();
+        Refresh();
+        AnimateEntrance();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        _ambientStoryboard?.Stop(this);
+        _ambientStoryboard = null;
+        _ambientStarted = false;
+    }
+
+    private void SyncAmbientAnimations()
+    {
+        if (!AppServices.Settings.Current.AnimationsEnabled)
+        {
+            _ambientStoryboard?.Stop(this);
+            _ambientStoryboard = null;
+            _ambientStarted = false;
+            return;
+        }
+
+        if (_ambientStarted) return;
+        _ambientStarted = true;
+        if (Resources["ModsAmbient"] is Storyboard storyboard)
+        {
+            _ambientStoryboard = storyboard;
+            storyboard.Begin(this, true);
+        }
+    }
+
+    private void AnimateEntrance()
+    {
+        if (!AppServices.Settings.Current.AnimationsEnabled)
+        {
+            ModsHeroCard.Opacity = 1;
+            ModsHeroCard.RenderTransform = Transform.Identity;
+            return;
+        }
+
+        ModsHeroCard.Opacity = 0;
+        ModsHeroCard.RenderTransform = new TranslateTransform(0, 8);
+        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+        ModsHeroCard.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300))
+        {
+            EasingFunction = ease
+        });
+        ((TranslateTransform)ModsHeroCard.RenderTransform).BeginAnimation(TranslateTransform.YProperty,
+            new DoubleAnimation(8, 0, TimeSpan.FromMilliseconds(300)) { EasingFunction = ease });
+    }
+
+    private static string Plural(int count, string one, string few, string many)
+    {
+        var mod100 = Math.Abs(count) % 100;
+        var mod10 = mod100 % 10;
+        if (mod100 is >= 11 and <= 14) return many;
+        return mod10 switch
+        {
+            1 => one,
+            2 or 3 or 4 => few,
+            _ => many
+        };
     }
 
     public void Refresh()
@@ -78,7 +148,7 @@ public partial class ModsView : UserControl, IRefreshable
             });
         }
 
-        CountBadge.Text = _rows.Count == 0 ? "0" : _rows.Count.ToString();
+        CountBadge.Text = _rows.Count + " " + Plural(_rows.Count, "мод", "мода", "модов");
 
         var installed = _rows.Count(r => r.State == "УСТАНОВЛЕН");
         TotalModsText.Text = _rows.Count.ToString();
@@ -86,12 +156,24 @@ public partial class ModsView : UserControl, IRefreshable
         PendingModsText.Text = (_rows.Count - installed).ToString();
 
         SubHeader.Text = _rows.Count == 0
-            ? "Файлы из папки mods устанавливаются в игру автоматически"
-            : $"{_rows.Count} мод(ов) готовы к установке";
+            ? "Собери игру под себя — моды, обновления и зависимости в одном месте."
+            : $"{_rows.Count} {Plural(_rows.Count, "мод готов", "мода готовы", "модов готовы")} к установке";
 
         EmptyState.Visibility = _rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
-        ModsList.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(260))
+        AnimateFadeIn(ModsList, 260);
+    }
+
+    private void AnimateFadeIn(UIElement element, int durationMs)
+    {
+        if (!AppServices.Settings.Current.AnimationsEnabled)
+        {
+            element.BeginAnimation(OpacityProperty, null);
+            element.Opacity = 1;
+            return;
+        }
+
+        element.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(durationMs))
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         });
@@ -142,10 +224,7 @@ public partial class ModsView : UserControl, IRefreshable
                 ? "Ничего не найдено. Попробуй другое название."
                 : $"Найдено: {_results.Count}. Нажми «Установить».";
 
-            ResultsList.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(240))
-            {
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            });
+            AnimateFadeIn(ResultsList, 240);
         }
         catch (Exception ex)
         {

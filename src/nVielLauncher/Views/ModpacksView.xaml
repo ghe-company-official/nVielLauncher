@@ -3,6 +3,23 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              FontFamily="{StaticResource TextFont}">
 
+    <UserControl.Resources>
+        <Storyboard x:Key="ModpacksAmbient">
+            <DoubleAnimation Storyboard.TargetName="PacksOrbitA" Storyboard.TargetProperty="Angle"
+                             From="0" To="360" Duration="0:0:46" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="PacksOrbitB" Storyboard.TargetProperty="Angle"
+                             From="360" To="0" Duration="0:0:32" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="PacksCoreScale" Storyboard.TargetProperty="ScaleX"
+                             From="0.92" To="1.07" Duration="0:0:3.2" AutoReverse="True" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="PacksCoreScale" Storyboard.TargetProperty="ScaleY"
+                             From="0.92" To="1.07" Duration="0:0:3.2" AutoReverse="True" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="PacksGlow" Storyboard.TargetProperty="Opacity"
+                             From="0.08" To="0.22" Duration="0:0:3.2" AutoReverse="True" RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="PacksSpark" Storyboard.TargetProperty="Opacity"
+                             From="0.2" To="1" Duration="0:0:1.9" AutoReverse="True" RepeatBehavior="Forever" />
+        </Storyboard>
+    </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -24,9 +41,9 @@
                     BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1" CornerRadius="10" Padding="12,7">
                 <StackPanel Orientation="Horizontal">
                     <Path Data="{DynamicResource IconPack}" Width="12" Height="12" Stretch="Uniform"
-                          Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4"
+                          Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5"
                           StrokeStartLineCap="Round" StrokeEndLineCap="Round" VerticalAlignment="Center" />
-                    <TextBlock x:Name="CountBadge" Text="0" FontSize="10.5" FontWeight="SemiBold" Margin="8,0,0,0"
+                    <TextBlock x:Name="CountBadge" Text="0 сборок" FontSize="10.5" FontWeight="SemiBold" Margin="8,0,0,0"
                                Foreground="{DynamicResource TextSecondaryBrush}" />
                 </StackPanel>
             </Border>
@@ -35,7 +52,12 @@
         <!-- search + import -->
         <Border Grid.Row="1" Style="{StaticResource Card}" Padding="16,14" Margin="0,0,0,12">
             <StackPanel>
-                <Grid>
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{DynamicResource IconSparkles}" Width="14" Height="14" Stretch="Uniform"
+                          Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.4" />
+                    <TextBlock Text=" НАЙДИ СВОЮ СБОРКУ" Style="{StaticResource Overline}" Margin="7,0,0,0" />
+                </StackPanel>
+                <Grid Margin="0,11,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
@@ -44,10 +66,22 @@
 
                     <TextBox x:Name="SearchBox" Style="{StaticResource InputBox}"
                              Tag="Поиск сборок на Modrinth..." KeyDown="SearchBox_KeyDown" />
-                    <Button Grid.Column="1" Style="{StaticResource SmallGhostButton}" Content="Найти"
-                            Margin="8,0,0,0" VerticalAlignment="Center" Click="Search_Click" />
+                    <Button Grid.Column="1" Style="{StaticResource SmallGhostButton}"
+                            Margin="8,0,0,0" VerticalAlignment="Center" Click="Search_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{DynamicResource IconSearch}" Width="12" Height="12" Stretch="Uniform"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.5" />
+                            <TextBlock Text="Найти" Margin="6,0,0,0" />
+                        </StackPanel>
+                    </Button>
                     <Button Grid.Column="2" x:Name="ImportButton" Style="{StaticResource SmallGhostButton}"
-                            Content="Импорт .mrpack" Margin="8,0,0,0" VerticalAlignment="Center" Click="Import_Click" />
+                            Margin="8,0,0,0" VerticalAlignment="Center" Click="Import_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="{DynamicResource IconPack}" Width="12" Height="12" Stretch="Uniform"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.4" />
+                            <TextBlock Text="Импорт .mrpack" Margin="6,0,0,0" />
+                        </StackPanel>
+                    </Button>
                 </Grid>
 
                 <TextBlock x:Name="StatusText" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"
@@ -62,6 +96,37 @@
         <!-- results -->
         <Border Grid.Row="2" Style="{StaticResource Card}" Padding="14,14,10,6" Margin="0,0,0,12">
             <Grid>
+                <Border x:Name="PackHeroCard" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,8,18,0"
+                        Width="160" Height="142" IsHitTestVisible="False" ClipToBounds="False">
+                    <Grid>
+                        <Ellipse Width="92" Height="92" Fill="{DynamicResource AccentBrush}" Opacity="0.12">
+                            <Ellipse.Effect><BlurEffect Radius="22" /></Ellipse.Effect>
+                        </Ellipse>
+                        <Ellipse Width="126" Height="126" Stroke="{DynamicResource BorderSubtleBrush}"
+                                 StrokeThickness="1" StrokeDashArray="1 5" RenderTransformOrigin="0.5,0.5">
+                            <Ellipse.RenderTransform><RotateTransform x:Name="PacksOrbitA" /></Ellipse.RenderTransform>
+                        </Ellipse>
+                        <Ellipse Width="96" Height="96" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.3"
+                                 StrokeDashArray="14 12" RenderTransformOrigin="0.5,0.5">
+                            <Ellipse.RenderTransform><RotateTransform x:Name="PacksOrbitB" /></Ellipse.RenderTransform>
+                        </Ellipse>
+                        <Ellipse x:Name="PacksGlow" Width="68" Height="68" Fill="{DynamicResource AccentBrush}"
+                                 Opacity="0.14" RenderTransformOrigin="0.5,0.5">
+                            <Ellipse.Effect><BlurEffect Radius="15" /></Ellipse.Effect>
+                            <Ellipse.RenderTransform><ScaleTransform x:Name="PacksCoreScale" /></Ellipse.RenderTransform>
+                        </Ellipse>
+                        <Border Width="50" Height="50" CornerRadius="16" Background="{DynamicResource BgSoftBrush}"
+                                BorderBrush="{DynamicResource OverlayStrongBrush}" BorderThickness="1">
+                            <Path Data="{DynamicResource IconPack}" Width="24" Height="24" Stretch="Uniform"
+                                  Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <Path x:Name="PacksSpark" Data="{DynamicResource IconSparkles}" Width="15" Height="15" Stretch="Uniform"
+                              Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.3"
+                              HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,18,13,0" />
+                    </Grid>
+                </Border>
+                <Grid x:Name="ResultsContent" Margin="0,0,0,0">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <ItemsControl x:Name="ResultsList" Margin="0,0,6,0">
                         <ItemsControl.ItemTemplate>
@@ -106,6 +171,7 @@
                                FontSize="12" Foreground="{DynamicResource TextMutedBrush}" MaxWidth="400"
                                TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,0" />
                 </StackPanel>
+                </Grid>
             </Grid>
         </Border>
 

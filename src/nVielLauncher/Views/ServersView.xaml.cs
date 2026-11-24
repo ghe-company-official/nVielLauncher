@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
 using nVielLauncher.Services;
 
 namespace nVielLauncher.Views;
@@ -16,11 +18,68 @@ public sealed class ServerRow
 public partial class ServersView : UserControl, IRefreshable
 {
     private readonly ObservableCollection<ServerRow> _rows = new();
+    private Storyboard? _ambientStoryboard;
+    private bool _ambientStarted;
 
     public ServersView()
     {
         InitializeComponent();
         ServersList.ItemsSource = _rows;
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        Refresh();
+        SyncAmbientAnimations();
+        AnimateEntrance();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        _ambientStoryboard?.Stop(this);
+        _ambientStoryboard = null;
+        _ambientStarted = false;
+    }
+
+    private void SyncAmbientAnimations()
+    {
+        if (!AppServices.Settings.Current.AnimationsEnabled)
+        {
+            _ambientStoryboard?.Stop(this);
+            _ambientStoryboard = null;
+            _ambientStarted = false;
+            return;
+        }
+
+        if (_ambientStarted) return;
+        _ambientStarted = true;
+        if (Resources["ServersAmbient"] is Storyboard storyboard)
+        {
+            _ambientStoryboard = storyboard;
+            storyboard.Begin(this, true);
+        }
+    }
+
+    private void AnimateEntrance()
+    {
+        if (!AppServices.Settings.Current.AnimationsEnabled)
+        {
+            ServersHeroCard.Opacity = 1;
+            ServersHeroCard.RenderTransform = Transform.Identity;
+            return;
+        }
+
+        ServersHeroCard.Opacity = 0;
+        ServersHeroCard.RenderTransform = new TranslateTransform(0, 8);
+        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+        ServersHeroCard.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300))
+        {
+            EasingFunction = ease
+        });
+        ((TranslateTransform)ServersHeroCard.RenderTransform).BeginAnimation(TranslateTransform.YProperty,
+            new DoubleAnimation(8, 0, TimeSpan.FromMilliseconds(300)) { EasingFunction = ease });
     }
 
     public void Refresh()
@@ -46,13 +105,13 @@ public partial class ServersView : UserControl, IRefreshable
             });
         }
 
-        CountBadge.Text = _rows.Count.ToString();
+        CountBadge.Text = _rows.Count + " " + Plural(_rows.Count, "сервер", "сервера", "серверов");
         EmptyState.Visibility = _rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         SubHeader.Text = instance is null
-            ? "Сохрани любимые сервера и заходи в один клик"
+            ? "Сохрани любимые серверы и заходи в один клик"
             : _rows.Count == 0
                 ? $"Список принадлежит инстансу «{instance.Name}»"
-                : $"{_rows.Count} сервер(ов) · инстанс «{instance.Name}»";
+                : $"{_rows.Count} {Plural(_rows.Count, "сервер", "сервера", "серверов")} · инстанс «{instance.Name}»";
     }
 
     private void Add_Click(object sender, RoutedEventArgs e)
@@ -111,6 +170,19 @@ public partial class ServersView : UserControl, IRefreshable
 
         Refresh();
         Notify.Show("Сервер добавлен", host + ":" + port, "success");
+    }
+
+    private static string Plural(int count, string one, string few, string many)
+    {
+        var mod100 = Math.Abs(count) % 100;
+        var mod10 = mod100 % 10;
+        if (mod100 is >= 11 and <= 14) return many;
+        return mod10 switch
+        {
+            1 => one,
+            2 or 3 or 4 => few,
+            _ => many
+        };
     }
 
     private void Play_Click(object sender, RoutedEventArgs e)

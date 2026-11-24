@@ -57,6 +57,8 @@
         </EventTrigger>
     </Window.Triggers>
 
+    <!-- adorner host: cards draw their pressed-in dent at the click point here -->
+    <AdornerDecorator>
     <Border x:Name="RootBorder" Background="{DynamicResource BgBrush}" BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1" CornerRadius="16" ClipToBounds="True">
         <Grid x:Name="RootGrid">
             <Grid.RenderTransform>
@@ -184,62 +186,105 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- ================= sidebar ================= -->
-                    <Border x:Name="Sidebar" Grid.Column="0" Width="232" Margin="16,0,0,16"
-                            BorderBrush="{DynamicResource OverlayStrongBrush}" BorderThickness="1" CornerRadius="16" Visibility="Collapsed">
+                    <Border x:Name="Sidebar" Grid.Column="0" Width="252" Margin="16,0,0,16"
+                            BorderBrush="{DynamicResource OverlayStrongBrush}" BorderThickness="1" CornerRadius="18" Visibility="Collapsed">
                         <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="0.75,1">
-                                <GradientStop Color="#10FFFFFF" Offset="0" />
-                                <GradientStop Color="#07FFFFFF" Offset="0.55" />
-                                <GradientStop Color="#04FFFFFF" Offset="1" />
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0.8,1">
+                                <GradientStop Color="#18FFFFFF" Offset="0" />
+                                <GradientStop Color="#0BFFFFFF" Offset="0.45" />
+                                <GradientStop Color="#06FFFFFF" Offset="1" />
                             </LinearGradientBrush>
                         </Border.Background>
                         <Grid Margin="12">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <Button Grid.Row="0" x:Name="ProfileBlock" Margin="6,8,6,14" Cursor="Hand"
+                            <!-- launcher identity -->
+                            <Grid Grid.Row="0" Margin="5,5,5,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Border Width="38" Height="38" CornerRadius="13" Background="{DynamicResource AccentBrush}"
+                                        BorderBrush="{DynamicResource OverlayStrongBrush}" BorderThickness="1">
+                                    <TextBlock Text="n" FontFamily="{StaticResource DisplayFont}" FontSize="24" FontWeight="Bold"
+                                               Foreground="{DynamicResource OnAccentBrush}" HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" Margin="0,-2,0,0" />
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="nViel" FontFamily="{StaticResource DisplayFont}" FontSize="16" FontWeight="SemiBold" />
+                                    <TextBlock Text="GAME LAUNCHER" FontSize="8.5" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <Ellipse Grid.Column="2" Width="6" Height="6" Fill="{DynamicResource AccentBrush}"
+                                         VerticalAlignment="Top" Margin="0,5,2,0" />
+                            </Grid>
+
+                            <!-- active player -->
+                            <Button Grid.Row="1" x:Name="ProfileBlock" Margin="0,0,0,16" Cursor="Hand"
                                     Click="ProfileBlock_Click" ToolTip="Профили игрока"
                                     HorizontalContentAlignment="Stretch" Background="Transparent"
                                     BorderThickness="0" Padding="0">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
-                                        <Border Background="Transparent" Padding="0">
+                                        <Border x:Name="ProfileCard" Background="{DynamicResource OverlayFaintBrush}"
+                                                BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1" CornerRadius="14" Padding="10">
                                             <ContentPresenter />
                                         </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="ProfileCard" Property="Background" Value="{DynamicResource OverlaySoftBrush}" />
+                                                <Setter TargetName="ProfileCard" Property="BorderBrush" Value="{DynamicResource OverlayStrongBrush}" />
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter TargetName="ProfileCard" Property="Opacity" Value="0.82" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <Border Width="42" Height="42" CornerRadius="21" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource OverlayStrongBrush}" BorderThickness="1">
+                                    <Grid Width="42" Height="42">
+                                        <Ellipse Fill="{DynamicResource AccentBrush}" Opacity="0.13" />
+                                        <Ellipse Margin="3" Fill="{DynamicResource SurfaceBrush}"
+                                                 Stroke="{DynamicResource OverlayStrongBrush}" StrokeThickness="1" />
                                         <TextBlock x:Name="ProfileLetter" Text="S" FontSize="16" FontWeight="SemiBold"
                                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock x:Name="ProfileName" Text="Steve" FontSize="13.5" FontWeight="SemiBold"
-                                                   TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Text="Оффлайн-профиль" FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
+                                    </Grid>
+                                    <StackPanel Grid.Column="1" Margin="11,0,4,0" VerticalAlignment="Center">
+                                        <TextBlock Text="АКТИВНЫЙ ПРОФИЛЬ" FontSize="8" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextMutedBrush}" />
+                                        <TextBlock x:Name="ProfileName" Text="Steve" FontSize="13" FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis" Margin="0,3,0,0" />
                                     </StackPanel>
+                                    <Path Grid.Column="2" Data="{DynamicResource IconChevronRight}" Width="11" Height="11"
+                                          Stretch="Uniform" Stroke="{DynamicResource TextMutedBrush}" StrokeThickness="1.5"
+                                          VerticalAlignment="Center" />
                                 </Grid>
                             </Button>
 
-                            <Border Grid.Row="1" Height="1" Background="{DynamicResource StrokeSoftBrush}" Margin="6,0,6,12" />
-
+                            <!-- navigation -->
                             <Grid Grid.Row="2" x:Name="NavArea">
-                                <Border x:Name="NavPill" Height="46" Background="{DynamicResource OverlaySoftBrush}" BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1"
-                                        CornerRadius="12" VerticalAlignment="Top" IsHitTestVisible="False">
+                                <Border x:Name="NavPill" Height="46" Background="{DynamicResource OverlaySoftBrush}"
+                                        BorderBrush="{DynamicResource OverlayBrush}" BorderThickness="1" CornerRadius="12"
+                                        VerticalAlignment="Top" IsHitTestVisible="False">
                                     <Border.RenderTransform>
                                         <TranslateTransform x:Name="NavPillTransform" />
                                     </Border.RenderTransform>
+                                    <Grid>
+                                        <Border Width="3" Height="23" CornerRadius="2" Background="{DynamicResource AccentBrush}"
+                                                HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,0,0" />
+                                    </Grid>
                                 </Border>
-
                                 <StackPanel>
                                     <Button x:Name="NavHomeButton" Style="{StaticResource NavButton}" Tag="home" Click="Nav_Click"
                                             Foreground="{DynamicResource TextPrimaryBrush}" ToolTip="Главная (Ctrl+1)">
@@ -254,7 +299,7 @@
                                         <StackPanel Orientation="Horizontal">
                                             <Path Data="{DynamicResource IconInstance}" Width="17" Height="17" Stretch="Uniform"
                                                   Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                                  StrokeThickness="1.4" StrokeLineJoin="Round" />
+                                                  StrokeThickness="1.5" StrokeLineJoin="Round" />
                                             <TextBlock Text="Инстансы" Margin="13,0,0,0" FontSize="13.5" />
                                         </StackPanel>
                                     </Button>
@@ -263,7 +308,7 @@
                                         <StackPanel Orientation="Horizontal">
                                             <Path Data="{DynamicResource IconMods}" Width="17" Height="17" Stretch="Uniform"
                                                   Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                                  StrokeThickness="1.4" StrokeLineJoin="Round" />
+                                                  StrokeThickness="1.5" StrokeLineJoin="Round" />
                                             <TextBlock Text="Моды" Margin="13,0,0,0" FontSize="13.5" />
                                         </StackPanel>
                                     </Button>
@@ -272,7 +317,7 @@
                                         <StackPanel Orientation="Horizontal">
                                             <Path Data="{DynamicResource IconPack}" Width="17" Height="17" Stretch="Uniform"
                                                   Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                                  StrokeThickness="1.4" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                  StrokeThickness="1.5" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                             <TextBlock Text="Сборки" Margin="13,0,0,0" FontSize="13.5" />
                                         </StackPanel>
                                     </Button>
@@ -281,7 +326,7 @@
                                         <StackPanel Orientation="Horizontal">
                                             <Path Data="{DynamicResource IconGlobe}" Width="17" Height="17" Stretch="Uniform"
                                                   Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                                  StrokeThickness="1.4" StrokeLineJoin="Round" />
+                                                  StrokeThickness="1.5" StrokeLineJoin="Round" />
                                             <TextBlock Text="Сервера" Margin="13,0,0,0" FontSize="13.5" />
                                         </StackPanel>
                                     </Button>
@@ -296,7 +341,9 @@
                                 </StackPanel>
                             </Grid>
 
-                            <StackPanel Grid.Row="4" Margin="6,0,6,8">
+                            <!-- utilities and game target -->
+                            <StackPanel Grid.Row="3" Margin="0,14,0,2">
+                                <Border Height="1" Background="{DynamicResource StrokeSoftBrush}" Margin="5,0,5,12" />
                                 <Button Style="{StaticResource ActionTile}" Padding="10,9" Margin="0,0,0,10"
                                         Click="OpenRe_Click" ToolTip="nVielRE — обслуживание и восстановление">
                                     <Grid>
@@ -305,36 +352,37 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-
-                                        <Border Style="{StaticResource IconTile}" Width="30" Height="30" CornerRadius="9">
-                                            <Path Data="{DynamicResource IconRefresh}" Width="14" Height="14" Stretch="Uniform"
-                                                  Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.4"
+                                        <Border Style="{StaticResource IconTile}" Width="32" Height="32" CornerRadius="10">
+                                            <Path Data="{DynamicResource IconRefresh}" Width="15" Height="15" Stretch="Uniform"
+                                                  Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.5"
                                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
                                         </Border>
-
                                         <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="nVielRE" FontSize="12.5" FontWeight="SemiBold" />
-                                            <TextBlock Text="Repair &amp; Recovery" FontSize="9.5"
+                                            <TextBlock Text="Восстановление" FontSize="9.5"
                                                        Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
                                         </StackPanel>
-
-                                        <Border Grid.Column="2" Background="{DynamicResource OverlayBrush}" BorderBrush="{DynamicResource OverlayStrongBrush}"
-                                                BorderThickness="1" CornerRadius="6" Padding="6,2" VerticalAlignment="Center">
+                                        <Border Grid.Column="2" Background="{DynamicResource OverlayBrush}"
+                                                BorderBrush="{DynamicResource OverlayStrongBrush}" BorderThickness="1"
+                                                CornerRadius="6" Padding="6,2" VerticalAlignment="Center">
                                             <TextBlock Text="RE" FontSize="9" FontWeight="Bold"
                                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                                         </Border>
                                     </Grid>
                                 </Button>
-
                                 <Border Style="{StaticResource InsetCard}" Padding="12,11">
                                     <StackPanel>
-                                        <TextBlock Text="FABRIC LOADER" Style="{StaticResource Overline}" />
-                                        <TextBlock Text="Minecraft 1.21.4" FontSize="13.5" FontWeight="SemiBold" Margin="0,4,0,0" />
-                                        <TextBlock Text="Java 21 · лицензия не требуется" FontSize="10" Foreground="{DynamicResource TextMutedBrush}" Margin="0,3,0,0" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <Ellipse Width="6" Height="6" Fill="{DynamicResource AccentBrush}"
+                                                     VerticalAlignment="Center" />
+                                            <TextBlock Text="  ИГРОВОЙ ПРОФИЛЬ" Style="{StaticResource Overline}" />
+                                        </StackPanel>
+                                        <TextBlock Text="Minecraft 1.21.4" FontSize="13.5" FontWeight="SemiBold" Margin="0,6,0,0" />
+                                        <TextBlock Text="Fabric · Java 21" FontSize="10" Foreground="{DynamicResource TextMutedBrush}" Margin="0,3,0,0" />
                                     </StackPanel>
                                 </Border>
-                                <Button Style="{StaticResource LinkButton}" Margin="0,10,0,0" HorizontalAlignment="Center"
+                                <Button Style="{StaticResource LinkButton}" Margin="0,9,0,0" HorizontalAlignment="Center"
                                         Click="ChangeNick_Click" Content="Сменить ник" />
                             </StackPanel>
                         </Grid>
@@ -1002,4 +1050,5 @@
             </Grid>
         </Grid>
     </Border>
+    </AdornerDecorator>
 </Window>
